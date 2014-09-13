@@ -127,7 +127,8 @@ def retrieve_data(args, template, query_args=None, single_request=False):
         }.items() + query_args.items()))
 
         request = urllib2.Request(template + '?' + querystring)
-        request.add_header('Authorization', 'Basic ' + auth)
+        if auth is not None:
+            request.add_header('Authorization', 'Basic ' + auth)
         r = urllib2.urlopen(request)
 
         errors = []
