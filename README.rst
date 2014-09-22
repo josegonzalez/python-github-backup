@@ -21,12 +21,12 @@ Usage
 CLI Usage is as follows::
 
     Github Backup [-h] [-u USERNAME] [-p PASSWORD] [-t TOKEN]
-                         [-o OUTPUT_DIRECTORY] [--starred] [--watched] [--all]
-                         [--issues] [--issue-comments] [--issue-events]
-                         [--repositories] [--wikis] [--skip-existing]
-                         [-L [LANGUAGES [LANGUAGES ...]]] [-N NAME_REGEX]
-                         [-R REPOSITORY] [-P] [-F] [-v]
-                         USER
+                     [-o OUTPUT_DIRECTORY] [--starred] [--watched] [--all]
+                     [--issues] [--issue-comments] [--issue-events]
+                     [--repositories] [--wikis] [--skip-existing]
+                     [-L [LANGUAGES [LANGUAGES ...]]] [-N NAME_REGEX] [-O]
+                     [-R REPOSITORY] [-P] [-F] [-v]
+                     USER
 
     Backup a github users account
 
@@ -56,6 +56,7 @@ CLI Usage is as follows::
                             only allow these languages
       -N NAME_REGEX, --name-regex NAME_REGEX
                             python regex to match names against
+      -O, --organization    whether or not this is a query for an organization
       -R REPOSITORY, --repository REPOSITORY
                             name of repository to limit backup to
       -P, --private         include private repositories

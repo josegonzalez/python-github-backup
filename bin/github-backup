@@ -91,6 +91,7 @@ def parse_args():
     parser.add_argument('--skip-existing', action='store_true', dest='skip_existing', help='skip project if a backup directory exists')
     parser.add_argument('-L', '--languages', dest='languages', help='only allow these languages', nargs='*')
     parser.add_argument('-N', '--name-regex', dest='name_regex', help='python regex to match names against')
+    parser.add_argument('-O', '--organization', action='store_true', dest='organization', help='whether or not this is a query for an organization')
     parser.add_argument('-R', '--repository', dest='repository', help='name of repository to limit backup to')
     parser.add_argument('-P', '--private', action='store_true', dest='private', help='include private repositories')
     parser.add_argument('-F', '--fork', action='store_true', dest='fork', help='include forked repositories')
@@ -168,6 +169,8 @@ def retrieve_repositories(args):
     log_info('Retrieving repositories')
     single_request = False
     template = 'https://api.github.com/users/{0}/repos'.format(args.user)
+    if args.organization:
+        template = 'https://api.github.com/orgs/{0}/repos'.format(args.user)
 
     if args.repository:
         single_request = True
