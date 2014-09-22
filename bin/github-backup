@@ -66,10 +66,11 @@ def mkdir_p(*args):
     for path in args:
         try:
             os.makedirs(path)
-        except OSError as exc: # Python >2.5
+        except OSError as exc:  # Python >2.5
             if exc.errno == errno.EEXIST and os.path.isdir(path):
                 pass
-            else: raise
+            else:
+                raise
 
 
 def parse_args():
@@ -79,15 +80,15 @@ def parse_args():
     parser.add_argument('-p', '--password', dest='password', help='password for basic auth')
     parser.add_argument('-t', '--token', dest='token', help='personal access or OAuth token')
     parser.add_argument('-o', '--output-directory', default='.', dest='output_directory', help='directory at which to backup the repositories')
-    parser.add_argument('--starred', action='store_true',  dest='include_starred', help='include starred repositories in backup')
-    parser.add_argument('--watched', action='store_true',  dest='include_watched', help='include watched repositories in backup')
-    parser.add_argument('--all', action='store_true',  dest='include_everything', help='include everything in backup')
-    parser.add_argument('--issues', action='store_true',  dest='include_issues', help='include issues in backup')
+    parser.add_argument('--starred', action='store_true', dest='include_starred', help='include starred repositories in backup')
+    parser.add_argument('--watched', action='store_true', dest='include_watched', help='include watched repositories in backup')
+    parser.add_argument('--all', action='store_true', dest='include_everything', help='include everything in backup')
+    parser.add_argument('--issues', action='store_true', dest='include_issues', help='include issues in backup')
     parser.add_argument('--issue-comments', action='store_true', dest='include_issue_comments', help='include issue comments in backup')
     parser.add_argument('--issue-events', action='store_true', dest='include_issue_events', help='include issue events in backup')
-    parser.add_argument('--repositories', action='store_true',  dest='include_repository', help='include repository clone in backup')
-    parser.add_argument('--wikis', action='store_true',  dest='include_wiki', help='include wiki clone in backup')
-    parser.add_argument('--skip-existing', action='store_true',  dest='skip_existing', help='skip project if a backup directory exists')
+    parser.add_argument('--repositories', action='store_true', dest='include_repository', help='include repository clone in backup')
+    parser.add_argument('--wikis', action='store_true', dest='include_wiki', help='include wiki clone in backup')
+    parser.add_argument('--skip-existing', action='store_true', dest='skip_existing', help='skip project if a backup directory exists')
     parser.add_argument('-L', '--languages', dest='languages', help='only allow these languages', nargs='*')
     parser.add_argument('-N', '--name-regex', dest='name_regex', help='python regex to match names against')
     parser.add_argument('-R', '--repository', dest='repository', help='name of repository to limit backup to')
@@ -100,7 +101,7 @@ def parse_args():
 def get_auth(args):
     auth = None
     if args.token:
-        auth = base64.b64encode(args.token + ':'+ 'x-oauth-basic')
+        auth = base64.b64encode(args.token + ':' + 'x-oauth-basic')
     elif args.username and args.password:
         auth = base64.b64encode(args.username + ':' + args.password)
     elif args.username and not args.password:
