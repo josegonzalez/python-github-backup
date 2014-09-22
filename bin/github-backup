@@ -13,6 +13,8 @@ import sys
 import urllib
 import urllib2
 
+from github_backup import __version__
+
 
 def log_error(message):
     if type(message) == str:
@@ -95,7 +97,7 @@ def parse_args():
     parser.add_argument('-R', '--repository', dest='repository', help='name of repository to limit backup to')
     parser.add_argument('-P', '--private', action='store_true', dest='private', help='include private repositories')
     parser.add_argument('-F', '--fork', action='store_true', dest='fork', help='include forked repositories')
-    parser.add_argument('-v', '--version', action='version', version='%(prog)s 0.0.1')
+    parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__)
     return parser.parse_args()
 
 
