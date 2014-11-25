@@ -82,6 +82,7 @@ def parse_args():
     parser.add_argument('-p', '--password', dest='password', help='password for basic auth')
     parser.add_argument('-t', '--token', dest='token', help='personal access or OAuth token')
     parser.add_argument('-o', '--output-directory', default='.', dest='output_directory', help='directory at which to backup the repositories')
+    parser.add_argument('--ssh', action='store_true', dest='clone_ssh', help='clone repositories with SSH instead of default HTTPs')
     parser.add_argument('--starred', action='store_true', dest='include_starred', help='include starred repositories in backup')
     parser.add_argument('--watched', action='store_true', dest='include_watched', help='include watched repositories in backup')
     parser.add_argument('--all', action='store_true', dest='include_everything', help='include everything in backup')
@@ -102,21 +103,38 @@ def parse_args():
 
 
 def get_auth(args):
-    auth = None
-    if args.token:
-        auth = base64.b64encode(args.token + ':' + 'x-oauth-basic')
-    elif args.username and args.password:
-        auth = base64.b64encode(args.username + ':' + args.password)
-    elif args.username and not args.password:
-        log_error('You must specify a password for basic auth when specifying a username')
-    elif args.password and not args.username:
-        log_error('You must specify a username for basic auth when specifying a password')
+    try:
+        return get_auth.auth
+    except AttributeError:
+        auth = None
+        if args.token:
+            auth = base64.b64encode(args.token + ':' + 'x-oauth-basic')
+            username = retrieve_data(args, 'https://api.github.com/user', single_request=True, auth=auth)[0]['login']
+            if args.username:
+                if args.username != username:
+                    log_error("Specified username {0}, but {1}'s token!".format(args.username, username))
+            else:
+                args.username = username
+                log_info('Authenticating with token for user {0}'.format(args.username))
+                if args.private and args.user != args.username:
+                    log_error("Requested {0}'s private repositories while authenticated as {1}!".format(args.user, args.username))
+        elif args.username and args.password:
+            auth = base64.b64encode(args.username + ':' + args.password)
+            log_info('Authenticating with username/password for user {0}'.format(args.username))
+            if args.private and args.user != args.username:
+                log_error("Requested %s's private repositories while authenticated as %s!" % (args.user, args.username))
+        elif args.username and not args.password:
+            log_error('You must specify a password for basic auth when specifying a username')
+        elif args.password and not args.username:
+            log_error('You must specify a username for basic auth when specifying a password')
 
-    return auth
+        get_auth.auth = auth
+        return auth
 
 
-def retrieve_data(args, template, query_args=None, single_request=False):
-    auth = get_auth(args)
+def retrieve_data(args, template, query_args=None, single_request=False, auth=None):
+    if not auth:
+        auth = get_auth(args)
     per_page = 100
     page = 0
     data = []
@@ -170,7 +188,10 @@ def retrieve_data(args, template, query_args=None, single_request=False):
 def retrieve_repositories(args):
     log_info('Retrieving repositories')
     single_request = False
-    template = 'https://api.github.com/users/{0}/repos'.format(args.user)
+    if args.user == args.username:
+        template = 'https://api.github.com/user/repos'
+    else:
+        template = 'https://api.github.com/users/{0}/repos'.format(args.user)
     if args.organization:
         template = 'https://api.github.com/orgs/{0}/repos'.format(args.user)
 
@@ -225,7 +246,10 @@ def backup_repositories(args, output_directory, repositories):
                 logging_subprocess(git_command, logger=None, cwd=os.path.join(repo_cwd, 'repository'))
             else:
                 log_info('Cloning {0} repository'.format(repository['full_name']))
-                git_command = ["git", "clone", repository['clone_url'], 'repository']
+                if args.clone_ssh:
+                    git_command = ["git", "clone", repository['ssh_url'], 'repository']
+                else:
+                    git_command = ["git", "clone", repository['clone_url'], 'repository']
                 logging_subprocess(git_command, logger=None, cwd=repo_cwd)
 
         if repository['has_wiki'] and (args.include_wiki or args.include_everything):
@@ -304,6 +328,8 @@ def backup_account(args, output_directory):
 
 def main():
     args = parse_args()
+
+    get_auth(args)
 
     output_directory = os.path.realpath(args.output_directory)
     if not os.path.isdir(output_directory):
