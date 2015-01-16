@@ -88,6 +88,9 @@ def parse_args():
     parser.add_argument('--issues', action='store_true', dest='include_issues', help='include issues in backup')
     parser.add_argument('--issue-comments', action='store_true', dest='include_issue_comments', help='include issue comments in backup')
     parser.add_argument('--issue-events', action='store_true', dest='include_issue_events', help='include issue events in backup')
+    parser.add_argument('--pulls', action='store_true', dest='include_pulls', help='include pull requests in backup')
+    parser.add_argument('--pull-comments', action='store_true', dest='include_pull_comments', help='include pull request review comments in backup')
+    parser.add_argument('--pull-commits', action='store_true', dest='include_pull_commits', help='include pull request commits in backup')
     parser.add_argument('--repositories', action='store_true', dest='include_repository', help='include repository clone in backup')
     parser.add_argument('--wikis', action='store_true', dest='include_wiki', help='include wiki clone in backup')
     parser.add_argument('--skip-existing', action='store_true', dest='skip_existing', help='skip project if a backup directory exists')
@@ -221,10 +224,11 @@ def filter_repositories(args, repositories):
 
 def backup_repositories(args, output_directory, repositories):
     log_info('Backing up repositories')
-    issue_template = 'https://{0}/repos'.format(get_github_api_host(args))
+    repos_template = 'https://{0}/repos'.format(get_github_api_host(args))
     wiki_template = "git@{0}:{1}.wiki.git"
 
     issue_states = ['open', 'closed']
+    pull_states = ['open', 'closed']
     for repository in repositories:
         backup_cwd = os.path.join(output_directory, 'repositories')
         repo_cwd = os.path.join(backup_cwd, repository['name'])
@@ -268,7 +272,7 @@ def backup_repositories(args, output_directory, repositories):
             mkdir_p(backup_cwd, repo_cwd, issue_cwd)
 
             issues = {}
-            _issue_template = '{0}/{1}/issues'.format(issue_template, repository['full_name'])
+            _issue_template = '{0}/{1}/issues'.format(repos_template, repository['full_name'])
 
             for issue_state in issue_states:
                 query_args = {
@@ -291,6 +295,39 @@ def backup_repositories(args, output_directory, repositories):
 
                 with open('{0}/{1}.json'.format(issue_cwd, number), 'w') as issue_file:
                     json.dump(issue, issue_file, sort_keys=True, indent=4, separators=(',', ': '))
+
+        if args.include_pulls or args.include_everything:
+            if args.skip_existing and os.path.isdir('{0}/pulls/.git'.format(repo_cwd)):
+                continue
+
+            log_info('Retrieving {0} pull requests'.format(repository['full_name']))
+            pulls_cwd = os.path.join(repo_cwd, 'pulls')
+            mkdir_p(backup_cwd, repo_cwd, pulls_cwd)
+
+            pulls = {}
+            _pulls_template = '{0}/{1}/pulls'.format(repos_template, repository['full_name'])
+
+            for pull_state in pull_states:
+                query_args = {
+                    'filter': 'all',
+                    'state': pull_state
+                }
+
+                _pulls = retrieve_data(args, _pulls_template, query_args=query_args)
+                for pull in _pulls:
+                    pulls[pull['number']] = pull
+
+            log_info('Saving {0} pull requests to disk'.format(len(pulls.keys())))
+            for number, pull in pulls.iteritems():
+                comments_template = _pulls_template + '/{0}/comments'
+                commits_template = _pulls_template + '/{0}/commits'
+                if args.include_pull_comments or args.include_everything:
+                    pulls[number]['comment_data'] = retrieve_data(args, comments_template.format(number))
+                if args.include_pull_commits or args.include_everything:
+                    pulls[number]['commit_data'] = retrieve_data(args, commits_template.format(number))
+
+                with open('{0}/{1}.json'.format(pulls_cwd, number), 'w') as pull_file:
+                    json.dump(pull, pull_file, sort_keys=True, indent=4, separators=(',', ': '))
 
 
 def backup_account(args, output_directory):

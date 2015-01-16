@@ -22,8 +22,9 @@ CLI Usage is as follows::
 
     Github Backup [-h] [-u USERNAME] [-p PASSWORD] [-t TOKEN]
                      [-o OUTPUT_DIRECTORY] [--starred] [--watched] [--all]
-                     [--issues] [--issue-comments] [--issue-events]
-                     [--repositories] [--wikis] [--skip-existing]
+                     [--issues] [--issue-comments] [--issue-events] [--pulls]
+                     [--pull-comments] [--pull-commits] [--repositories]
+                     [--wikis] [--skip-existing]
                      [-L [LANGUAGES [LANGUAGES ...]]] [-N NAME_REGEX]
                      [-H GITHUB_HOST] [-O] [-R REPOSITORY] [-P] [-F] [-v]
                      USER
@@ -49,6 +50,9 @@ CLI Usage is as follows::
       --issues              include issues in backup
       --issue-comments      include issue comments in backup
       --issue-events        include issue events in backup
+      --pulls               include pull requests in backup
+      --pull-comments       include pull request review comments in backup
+      --pull-commits        include pull request commits in backup
       --repositories        include repository clone in backup
       --wikis               include wiki clone in backup
       --skip-existing       skip project if a backup directory exists
