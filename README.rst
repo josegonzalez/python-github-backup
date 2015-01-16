@@ -24,8 +24,8 @@ CLI Usage is as follows::
                      [-o OUTPUT_DIRECTORY] [--starred] [--watched] [--all]
                      [--issues] [--issue-comments] [--issue-events]
                      [--repositories] [--wikis] [--skip-existing]
-                     [-L [LANGUAGES [LANGUAGES ...]]] [-N NAME_REGEX] [-O]
-                     [-R REPOSITORY] [-P] [-F] [-v]
+                     [-L [LANGUAGES [LANGUAGES ...]]] [-N NAME_REGEX]
+                     [-H GITHUB_HOST] [-O] [-R REPOSITORY] [-P] [-F] [-v]
                      USER
 
     Backup a github users account
@@ -56,6 +56,8 @@ CLI Usage is as follows::
                             only allow these languages
       -N NAME_REGEX, --name-regex NAME_REGEX
                             python regex to match names against
+      -H GITHUB_HOST, --github-host GITHUB_HOST
+                            GitHub Enterprise hostname
       -O, --organization    whether or not this is a query for an organization
       -R REPOSITORY, --repository REPOSITORY
                             name of repository to limit backup to
