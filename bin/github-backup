@@ -101,6 +101,7 @@ def parse_args():
     parser.add_argument('-R', '--repository', dest='repository', help='name of repository to limit backup to')
     parser.add_argument('-P', '--private', action='store_true', dest='private', help='include private repositories')
     parser.add_argument('-F', '--fork', action='store_true', dest='fork', help='include forked repositories')
+    parser.add_argument('--prefer-ssh', action='store_true', help='Clone repositories using SSH instead of HTTPS')
     parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__)
     return parser.parse_args()
 
@@ -245,7 +246,14 @@ def backup_repositories(args, output_directory, repositories):
                 logging_subprocess(git_command, logger=None, cwd=os.path.join(repo_cwd, 'repository'))
             else:
                 log_info('Cloning {0} repository'.format(repository['full_name']))
-                git_command = ["git", "clone", repository['clone_url'], 'repository']
+
+                repo_url = repository['clone_url']
+                if args.prefer_ssh:
+                    git_url = repository.get('git_url')
+                    if git_url:
+                        repo_url = git_url
+
+                git_command = ['git', 'clone', repo_url, 'repository']
                 logging_subprocess(git_command, logger=None, cwd=repo_cwd)
 
         if repository['has_wiki'] and (args.include_wiki or args.include_everything):
