@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
-import base64
+import calendar
 import errno
 import json
 import logging
@@ -10,8 +10,9 @@ import re
 import select
 import subprocess
 import sys
-import urllib
-import urllib2
+import time
+
+import requests
 
 from github_backup import __version__
 
@@ -108,16 +109,18 @@ def parse_args():
 
 def get_auth(args):
     auth = None
+
     if args.token:
-        auth = base64.b64encode(args.token + ':' + 'x-oauth-basic')
+        auth = (args.token, 'x-oauth-basic')
     elif args.username and args.password:
-        auth = base64.b64encode(args.username + ':' + args.password)
+        auth = (args.username, args.password)
     elif args.username and not args.password:
         log_error('You must specify a password for basic auth when specifying a username')
     elif args.password and not args.username:
         log_error('You must specify a username for basic auth when specifying a password')
 
     return auth
+
 
 def get_github_api_host(args):
     if args.github_host:
@@ -127,6 +130,7 @@ def get_github_api_host(args):
 
     return host
 
+
 def get_github_ssh_host(args):
     if args.github_host:
         host = args.github_host
@@ -135,7 +139,8 @@ def get_github_ssh_host(args):
 
     return host
 
-def retrieve_data(args, template, query_args=None, single_request=False):
+
+def retrieve_data(args, url, query_args=None, single_request=False):
     auth = get_auth(args)
     per_page = 100
     page = 0
@@ -143,40 +148,35 @@ def retrieve_data(args, template, query_args=None, single_request=False):
     if not query_args:
         query_args = {}
 
+    s = requests.session()
+    if auth:
+        s.auth = auth
+
     while True:
         page = page + 1
-        querystring = urllib.urlencode(dict({
+
+        qs = {
             'per_page': per_page,
             'page': page
-        }.items() + query_args.items()))
-
-        request = urllib2.Request(template + '?' + querystring)
-        if auth is not None:
-            request.add_header('Authorization', 'Basic ' + auth)
-        r = urllib2.urlopen(request)
+        }
+        qs.update(query_args)
 
         errors = []
-        if int(r.getcode()) != 200:
-            errors.append('Bad response from api')
 
-        if 'X-RateLimit-Limit' in r.headers and int(r.headers['X-RateLimit-Limit']) == 0:
-            ratelimit_error = 'No more requests remaining'
-            if auth is None:
-                ratelimit_error = ratelimit_error + ', specify username/password or token to raise your github ratelimit'
+        response = s.get(url, params=qs)
 
-            errors.append(ratelimit_error)
-
-        if int(r.getcode()) != 200:
+        if response.status_code != 200:
+            errors.append('API request returned HTTP {}: {}'.format(response.status_code, response.reason))
             log_error(errors)
 
-        response = json.loads(r.read())
+        json_data = response.json()
         if len(errors) == 0:
-            if type(response) == list:
-                data.extend(response)
-                if len(response) < per_page:
+            if type(json_data) == list:
+                data.extend(json_data)
+                if len(json_data) < per_page:
                     break
-            elif type(response) == dict and single_request:
-                data.append(response)
+            elif type(json_data) == dict and single_request:
+                data.append(json_data)
 
         if len(errors) > 0:
             log_error(errors)
