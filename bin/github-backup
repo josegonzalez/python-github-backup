@@ -163,7 +163,27 @@ def retrieve_data(args, url, query_args=None, single_request=False):
 
         errors = []
 
-        response = s.get(url, params=qs)
+        while True:
+            response = s.get(url, params=qs)
+
+            limit_remaining = int(response.headers.get('x-ratelimit-remaining', 0))
+
+            # GitHub's rate limiting is the only situation where we'll retry a request. Conveniently, the
+            # response includes a timestamp telling us when the limit will reset so we can calculate how long
+            # to wait rather than inefficiently polling:
+            if response.status_code == 403 and limit_remaining == 0:
+                gm_now = calendar.timegm(time.gmtime())
+                reset = int(response.headers.get('x-ratelimit-reset', 0)) or gm_now
+                # We'll never sleep for less than 10 seconds:
+                delta = max(10, reset - gm_now)
+
+                limit = response.headers.get('x-ratelimit-limit')
+                print('Exceeded rate limit of {} requests; waiting {} seconds to reset'.format(limit, delta),
+                      file=sys.stderr)
+                time.sleep(delta)
+                continue
+            else:
+                break
 
         if response.status_code != 200:
             errors.append('API request returned HTTP {}: {}'.format(response.status_code, response.reason))
