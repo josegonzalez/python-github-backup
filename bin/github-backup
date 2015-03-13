@@ -249,9 +249,7 @@ def backup_repositories(args, output_directory, repositories):
 
                 repo_url = repository['clone_url']
                 if args.prefer_ssh:
-                    git_url = repository.get('git_url')
-                    if git_url:
-                        repo_url = git_url
+                    repo_url = repository['ssh_url']
 
                 git_command = ['git', 'clone', repo_url, 'repository']
                 logging_subprocess(git_command, logger=None, cwd=repo_cwd)
