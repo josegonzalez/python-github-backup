@@ -4,6 +4,7 @@ from __future__ import print_function
 
 import argparse
 import base64
+import calendar
 import errno
 import json
 import logging
@@ -12,6 +13,7 @@ import re
 import select
 import subprocess
 import sys
+import time
 import urllib
 import urllib2
 
@@ -161,20 +163,45 @@ def retrieve_data(args, template, query_args=None, single_request=False):
         request = urllib2.Request(template + '?' + querystring)
         if auth is not None:
             request.add_header('Authorization', 'Basic ' + auth)
-        r = urllib2.urlopen(request)
 
         errors = []
-        if int(r.getcode()) != 200:
-            errors.append('Bad response from api')
 
-        if 'X-RateLimit-Limit' in r.headers and int(r.headers['X-RateLimit-Limit']) == 0:
-            ratelimit_error = 'No more requests remaining'
-            if auth is None:
-                ratelimit_error = ratelimit_error + ', specify username/password or token to raise your github ratelimit'
+        # We'll make requests in a loop so we can delay and retry in the case of rate-limiting
+        while True:
+            try:
+                r = urllib2.urlopen(request)
+            except urllib2.HTTPError as exc:
+                # HTTPError behaves like a Response so we can check the status code and headers to see exactly
+                # what failed.
 
-            errors.append(ratelimit_error)
+                limit_remaining = int(exc.headers.get('x-ratelimit-remaining', 0))
 
-        if int(r.getcode()) != 200:
+                if exc.code == 403 and limit_remaining < 1:
+                    # The X-RateLimit-Reset header includes a timestamp telling us when the limit will reset
+                    # so we can calculate how long to wait rather than inefficiently polling:
+                    gm_now = calendar.timegm(time.gmtime())
+                    reset = int(exc.headers.get('x-ratelimit-reset', 0)) or gm_now
+                    # We'll never sleep for less than 10 seconds:
+                    delta = max(10, reset - gm_now)
+
+                    limit = exc.headers.get('x-ratelimit-limit')
+                    print('Exceeded rate limit of {} requests; waiting {} seconds to reset'.format(limit, delta),
+                          file=sys.stderr)
+
+                    ratelimit_error = 'No more requests remaining'
+                    if auth is None:
+                        ratelimit_error = ratelimit_error + '; authenticate to raise your GitHub rate limit'
+                    errors.append(ratelimit_error)
+
+                    time.sleep(delta)
+                    continue
+
+            break
+
+        status_code = int(r.getcode())
+
+        if status_code != 200:
+            errors.append('API request returned HTTP {}: {}'.format(status_code, r.reason))
             log_error(errors)
 
         response = json.loads(r.read())
