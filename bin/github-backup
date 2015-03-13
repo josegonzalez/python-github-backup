@@ -234,48 +234,28 @@ def filter_repositories(args, repositories):
 def backup_repositories(args, output_directory, repositories):
     log_info('Backing up repositories')
     repos_template = 'https://{0}/repos'.format(get_github_api_host(args))
-    wiki_template = "git@{0}:{1}.wiki.git"
 
     issue_states = ['open', 'closed']
     pull_states = ['open', 'closed']
+
     for repository in repositories:
         backup_cwd = os.path.join(output_directory, 'repositories')
         repo_cwd = os.path.join(backup_cwd, repository['name'])
+        repo_dir = os.path.join(repo_cwd, 'repository')
+
+        if args.prefer_ssh:
+            repo_url = repository['ssh_url']
+        else:
+            repo_url = repository['git_url']
 
         if args.include_repository or args.include_everything:
-            mkdir_p(backup_cwd, repo_cwd)
-            exists = os.path.isdir('{0}/repository/.git'.format(repo_cwd))
-            if args.skip_existing and exists:
-                continue
-
-            if exists:
-                log_info('Updating {0} repository'.format(repository['full_name']))
-                git_command = ["git", "pull", 'origin', 'master']
-                logging_subprocess(git_command, logger=None, cwd=os.path.join(repo_cwd, 'repository'))
-            else:
-                log_info('Cloning {0} repository'.format(repository['full_name']))
-
-                repo_url = repository['clone_url']
-                if args.prefer_ssh:
-                    repo_url = repository['ssh_url']
-
-                git_command = ['git', 'clone', repo_url, 'repository']
-                logging_subprocess(git_command, logger=None, cwd=repo_cwd)
+            fetch_repository(repository['name'], repo_url, repo_dir, skip_existing=args.skip_existing)
 
         if repository['has_wiki'] and (args.include_wiki or args.include_everything):
-            mkdir_p(backup_cwd, repo_cwd)
-            exists = os.path.isdir('{0}/wiki/.git'.format(repo_cwd))
-            if args.skip_existing and exists:
-                continue
-
-            if exists:
-                log_info('Updating {0} wiki'.format(repository['full_name']))
-                git_command = ["git", "pull", 'origin', 'master']
-                logging_subprocess(git_command, logger=None, cwd=os.path.join(repo_cwd, 'wiki'))
-            else:
-                log_info('Cloning {0} wiki'.format(repository['full_name']))
-                git_command = ["git", "clone", wiki_template.format(get_github_ssh_host(args), repository['full_name']), 'wiki']
-                logging_subprocess(git_command, logger=None, cwd=repo_cwd)
+            fetch_repository(repository['name'],
+                             repo_url.replace('.git', '.wiki.git'),
+                             os.path.join(repo_cwd, 'wiki'),
+                             skip_existing=args.skip_existing)
 
         if args.include_issues or args.include_everything:
             if args.skip_existing and os.path.isdir('{0}/issues/.git'.format(repo_cwd)):
@@ -342,6 +322,22 @@ def backup_repositories(args, output_directory, repositories):
 
                 with open('{0}/{1}.json'.format(pulls_cwd, number), 'w') as pull_file:
                     json.dump(pull, pull_file, sort_keys=True, indent=4, separators=(',', ': '))
+
+
+def fetch_repository(name, remote_url, local_dir, skip_existing=False):
+    clone_exists = os.path.exists(os.path.join(local_dir, '.git'))
+
+    if clone_exists and skip_existing:
+        return
+
+    if clone_exists:
+        log_info('Updating {} in {}'.format(name, local_dir))
+        git_command = ['git', 'fetch', '--all', '--tags', '--prune']
+        logging_subprocess(git_command, None, cwd=local_dir)
+    else:
+        log_info('Cloning {} repository from {} to {}'.format(name, remote_url, local_dir))
+        git_command = ['git', 'clone', remote_url, local_dir]
+        logging_subprocess(git_command, None)
 
 
 def backup_account(args, output_directory):
