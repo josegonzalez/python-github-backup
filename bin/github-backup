@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import argparse
 import base64
 import errno
@@ -61,7 +63,13 @@ def logging_subprocess(popenargs, logger, stdout_log_level=logging.DEBUG, stderr
 
     check_io()  # check again to catch anything after the process exits
 
-    return child.wait()
+    rc = child.wait()
+
+    if rc != 0:
+        print(u'{} returned {}:'.format(popenargs[0], rc), file=sys.stderr)
+        print('\t', u' '.join(popenargs), file=sys.stderr)
+
+    return rc
 
 
 def mkdir_p(*args):
