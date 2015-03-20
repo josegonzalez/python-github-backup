@@ -26,8 +26,10 @@ CLI Usage is as follows::
                      [--pull-comments] [--pull-commits] [--repositories]
                      [--wikis] [--skip-existing]
                      [-L [LANGUAGES [LANGUAGES ...]]] [-N NAME_REGEX]
-                     [-H GITHUB_HOST] [-O] [-R REPOSITORY] [-P] [-F] [-v]
+                     [-H GITHUB_HOST] [-O] [-R REPOSITORY] [-P] [-F]
+                     [--prefer-ssh] [-v]
                      USER
+
 
     Backup a github users account
 
@@ -67,6 +69,8 @@ CLI Usage is as follows::
                             name of repository to limit backup to
       -P, --private         include private repositories
       -F, --fork            include forked repositories
+      --prefer-ssh          Clone repositories using SSH instead of HTTPS
       -v, --version         show program's version number and exit
+      
 
 The package can be used to backup an *entire* organization or repository, including issues and wikis in the most appropriate format (clones for wikis, json files for issues).
