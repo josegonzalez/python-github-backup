@@ -19,6 +19,7 @@ import urllib2
 
 from github_backup import __version__
 
+FNULL = open(os.devnull, 'w')
 
 def log_error(message):
     if type(message) == str:
