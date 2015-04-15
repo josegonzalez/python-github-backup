@@ -359,9 +359,9 @@ def fetch_repository(name, remote_url, local_dir, skip_existing=False):
         return
 
     initalized = subprocess.call('git ls-remote ' + remote_url,  stdout=FNULL, stderr=FNULL, shell=True)
-	if initalized == 128:
-		log_info("Skipping {} since it's not initalized".format(name))
-		return
+    if initalized == 128:
+        log_info("Skipping {} since it's not initalized".format(name))
+        return
     
     if clone_exists:
         log_info('Updating {} in {}'.format(name, local_dir))
