@@ -16,6 +16,7 @@ import sys
 import time
 import urllib
 import urllib2
+import codecs
 
 from github_backup import __version__
 
@@ -116,6 +117,7 @@ def parse_args():
     parser.add_argument('-F', '--fork', action='store_true', dest='fork', help='include forked repositories')
     parser.add_argument('--prefer-ssh', action='store_true', help='Clone repositories using SSH instead of HTTPS')
     parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__)
+    parser.add_argument('--write-unicode', action='store_true', dest='write_unicode', help='preserve unicode characters in the output files')
     return parser.parse_args()
 
 
@@ -317,8 +319,13 @@ def backup_repositories(args, output_directory, repositories):
                 if args.include_issue_events or args.include_everything:
                     issues[number]['event_data'] = retrieve_data(args, events_template.format(number))
 
-                with open('{0}/{1}.json'.format(issue_cwd, number), 'w') as issue_file:
-                    json.dump(issue, issue_file, sort_keys=True, indent=4, separators=(',', ': '))
+                if args.write_unicode:
+                    with codecs.open('{0}/{1}.json'.format(issue_cwd, number), 'w', encoding='utf-8') as issue_file:
+                        json.dump(issue, issue_file, ensure_ascii=False, sort_keys=True, indent=4, separators=(',', ': '))
+                else:
+                    with open('{0}/{1}.json'.format(issue_cwd, number), 'w') as issue_file:
+                        json.dump(issue, issue_file, sort_keys=True, indent=4, separators=(',', ': '))
+                    
 
         if args.include_pulls or args.include_everything:
             if args.skip_existing and os.path.isdir('{0}/pulls/.git'.format(repo_cwd)):
@@ -350,8 +357,12 @@ def backup_repositories(args, output_directory, repositories):
                 if args.include_pull_commits or args.include_everything:
                     pulls[number]['commit_data'] = retrieve_data(args, commits_template.format(number))
 
-                with open('{0}/{1}.json'.format(pulls_cwd, number), 'w') as pull_file:
-                    json.dump(pull, pull_file, sort_keys=True, indent=4, separators=(',', ': '))
+                if args.write_unicode:
+                    with codecs.open('{0}/{1}.json'.format(pulls_cwd, number), 'w', encoding='utf-8') as pull_file:
+                        json.dump(pull, pull_file, ensure_ascii=False, sort_keys=True, indent=4, separators=(',', ': '))
+                else:
+                    with open('{0}/{1}.json'.format(pulls_cwd, number), 'w') as pull_file:
+                        json.dump(pull, pull_file, sort_keys=True, indent=4, separators=(',', ': '))                    
 
         if args.include_milestones or args.include_everything:
             if args.skip_existing and os.path.isdir('{0}/milestones/.git'.format(repo_cwd)):
@@ -375,8 +386,11 @@ def backup_repositories(args, output_directory, repositories):
 
             log_info('Saving {0} milestones to disk'.format(len(milestones.keys())))
             for number, milestone in milestones.iteritems():
-                with open('{0}/{1}.json'.format(milestone_cwd, number), 'w') as milestone_file:
-                    json.dump(milestone, milestone_file, sort_keys=True, indent=4, separators=(',', ': '))
+                if args.write_unicode:
+                    with codecs.open('{0}/{1}.json'.format(milestone_cwd, number), 'w', encoding='utf-8') as milestone_file:
+                        json.dump(milestone, milestone_file, ensure_ascii=False, sort_keys=True, indent=4, separators=(',', ': '))
+                    with open('{0}/{1}.json'.format(milestone_cwd, number), 'w') as milestone_file:
+                        json.dump(milestone, milestone_file, sort_keys=True, indent=4, separators=(',', ': '))
 
         if args.include_labels or args.include_everything:
             if args.skip_existing and os.path.isdir('{0}/labels/.git'.format(repo_cwd)):
@@ -391,8 +405,11 @@ def backup_repositories(args, output_directory, repositories):
             labels = retrieve_data(args, _label_template, query_args={})
 
             log_info('Saving {0} labels to disk'.format(len(labels)))
-            with open('{0}/labels.json'.format(label_cwd), 'w') as label_file:
-                json.dump(labels, label_file, sort_keys=True, indent=4, separators=(',', ': '))
+            if args.write_unicode:            
+                with codecs.open('{0}/labels.json'.format(label_cwd), 'w', encoding='utf-8') as label_file:
+                    json.dump(labels, label_file, ensure_ascii=False, sort_keys=True, indent=4, separators=(',', ': '))
+                with open('{0}/labels.json'.format(label_cwd), 'w') as label_file:
+                    json.dump(labels, label_file, sort_keys=True, indent=4, separators=(',', ': '))
 
 
 def fetch_repository(name, remote_url, local_dir, skip_existing=False):
@@ -426,8 +443,11 @@ def backup_account(args, output_directory):
             starred_template = "https://{0}/users/{1}/starred"
             starred = retrieve_data(args, starred_template.format(get_github_api_host(args), args.user))
             log_info('Writing {0} starred repositories'.format(len(starred)))
-            with open('{0}/starred.json'.format(account_cwd), 'w') as starred_file:
-                json.dump(starred, starred_file, sort_keys=True, indent=4, separators=(',', ': '))
+            if args.write_unicode:            
+                with codecs.open('{0}/starred.json'.format(account_cwd), 'w', encoding='utf-8') as starred_file:
+                    json.dump(starred, starred_file, ensure_ascii=False, sort_keys=True, indent=4, separators=(',', ': '))
+                with open('{0}/starred.json'.format(account_cwd), 'w') as starred_file:
+                    json.dump(starred, starred_file, sort_keys=True, indent=4, separators=(',', ': '))                    
 
     if args.include_watched or args.include_everything:
         if not args.skip_existing or not os.path.exists('{0}/watched.json'.format(account_cwd)):
@@ -437,8 +457,11 @@ def backup_account(args, output_directory):
             watched_template = "https://{0}/users/{1}/subscriptions"
             watched = retrieve_data(args, watched_template.format(get_github_api_host(args), args.user))
             log_info('Writing {0} watched repositories'.format(len(watched)))
-            with open('{0}/watched.json'.format(account_cwd), 'w') as watched_file:
-                json.dump(watched, watched_file, sort_keys=True, indent=4, separators=(',', ': '))
+            if args.write_unicode:            
+                with codecs.open('{0}/watched.json'.format(account_cwd), 'w', encoding='utf-8') as watched_file:
+                    json.dump(watched, watched_file, ensure_ascii=False, sort_keys=True, indent=4, separators=(',', ': '))
+                with open('{0}/watched.json'.format(account_cwd), 'w') as watched_file:
+                    json.dump(watched, watched_file, sort_keys=True, indent=4, separators=(',', ': '))                    
 
 
 def main():
