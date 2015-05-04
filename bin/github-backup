@@ -440,7 +440,7 @@ def backup_account(args, output_directory):
             log_info('Writing {0} watched repositories'.format(len(watched)))
             with codecs.open('{0}/watched.json'.format(account_cwd), 'w', encoding='utf-8') as watched_file:
                 json.dump(watched, watched_file, ensure_ascii=False, sort_keys=True, indent=4, separators=(',', ': '))
-  
+
 
 def main():
     args = parse_args()
