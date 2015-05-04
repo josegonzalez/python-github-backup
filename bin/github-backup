@@ -378,7 +378,7 @@ def backup_repositories(args, output_directory, repositories):
             for number, milestone in milestones.iteritems():
                 with codecs.open('{0}/{1}.json'.format(milestone_cwd, number), 'w', encoding='utf-8') as milestone_file:
                     json.dump(milestone, milestone_file, ensure_ascii=False, sort_keys=True, indent=4, separators=(',', ': '))
-            
+
         if args.include_labels or args.include_everything:
             if args.skip_existing and os.path.isdir('{0}/labels/.git'.format(repo_cwd)):
                 continue
@@ -394,7 +394,7 @@ def backup_repositories(args, output_directory, repositories):
             log_info('Saving {0} labels to disk'.format(len(labels)))
             with codecs.open('{0}/labels.json'.format(label_cwd), 'w', encoding='utf-8') as label_file:
                 json.dump(labels, label_file, ensure_ascii=False, sort_keys=True, indent=4, separators=(',', ': '))
-    
+
 
 def fetch_repository(name, remote_url, local_dir, skip_existing=False):
     clone_exists = os.path.exists(os.path.join(local_dir, '.git'))
@@ -429,7 +429,7 @@ def backup_account(args, output_directory):
             log_info('Writing {0} starred repositories'.format(len(starred)))
             with codecs.open('{0}/starred.json'.format(account_cwd), 'w', encoding='utf-8') as starred_file:
                 json.dump(starred, starred_file, ensure_ascii=False, sort_keys=True, indent=4, separators=(',', ': '))
-        
+
     if args.include_watched or args.include_everything:
         if not args.skip_existing or not os.path.exists('{0}/watched.json'.format(account_cwd)):
             log_info('Retrieving {0} watched repositories'.format(args.user))
@@ -440,7 +440,7 @@ def backup_account(args, output_directory):
             log_info('Writing {0} watched repositories'.format(len(watched)))
             with codecs.open('{0}/watched.json'.format(account_cwd), 'w', encoding='utf-8') as watched_file:
                 json.dump(watched, watched_file, ensure_ascii=False, sort_keys=True, indent=4, separators=(',', ': '))
-        
+  
 
 def main():
     args = parse_args()
