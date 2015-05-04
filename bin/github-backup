@@ -5,6 +5,7 @@ from __future__ import print_function
 import argparse
 import base64
 import calendar
+import codecs
 import errno
 import json
 import logging
@@ -16,7 +17,6 @@ import sys
 import time
 import urllib
 import urllib2
-import codecs
 
 from github_backup import __version__
 
