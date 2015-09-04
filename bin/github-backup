@@ -169,6 +169,7 @@ def retrieve_data(args, template, query_args=None, single_request=False):
             request.add_header('Authorization', 'Basic ' + auth)
 
         errors = []
+        retry_timeout = 3
 
         # We'll make requests in a loop so we can delay and retry in the case of rate-limiting
         while True:
@@ -199,6 +200,16 @@ def retrieve_data(args, template, query_args=None, single_request=False):
 
                     time.sleep(delta)
                     continue
+            except urllib2.URLError:
+                # Incase of a connection timing out, we can retry a few time
+                # But we won't crash and not back-up the rest now
+                log_info('{} timed out'.format(template))
+                retry_timeout -= 1
+
+                if retry_timeout >= 0:
+                    continue
+                
+                log_error('{} timed out to much, skipping!')
 
             break
 
