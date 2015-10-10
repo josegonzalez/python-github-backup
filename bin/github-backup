@@ -22,6 +22,7 @@ from github_backup import __version__
 
 FNULL = open(os.devnull, 'w')
 
+
 def log_error(message):
     if type(message) == str:
         message = [message]
@@ -40,7 +41,11 @@ def log_info(message):
         sys.stdout.write("{0}\n".format(msg))
 
 
-def logging_subprocess(popenargs, logger, stdout_log_level=logging.DEBUG, stderr_log_level=logging.ERROR, **kwargs):
+def logging_subprocess(popenargs,
+                       logger,
+                       stdout_log_level=logging.DEBUG,
+                       stderr_log_level=logging.ERROR,
+                       **kwargs):
     """
     Variant of subprocess.call that accepts a logger instead of stdout/stderr,
     and logs stdout messages via logger.debug and stderr messages via
@@ -53,7 +58,10 @@ def logging_subprocess(popenargs, logger, stdout_log_level=logging.DEBUG, stderr
                  child.stderr: stderr_log_level}
 
     def check_io():
-        ready_to_read = select.select([child.stdout, child.stderr], [], [], 1000)[0]
+        ready_to_read = select.select([child.stdout, child.stderr],
+                                      [],
+                                      [],
+                                      1000)[0]
         for io in ready_to_read:
             line = io.readline()
             if not logger:
@@ -88,35 +96,121 @@ def mkdir_p(*args):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Backup a github users account', prog='Github Backup')
-    parser.add_argument('user', metavar='USER', type=str, help='github username')
-    parser.add_argument('-u', '--username', dest='username', help='username for basic auth')
-    parser.add_argument('-p', '--password', dest='password', help='password for basic auth')
-    parser.add_argument('-t', '--token', dest='token', help='personal access or OAuth token')
-    parser.add_argument('-o', '--output-directory', default='.', dest='output_directory', help='directory at which to backup the repositories')
-    parser.add_argument('--starred', action='store_true', dest='include_starred', help='include starred repositories in backup')
-    parser.add_argument('--watched', action='store_true', dest='include_watched', help='include watched repositories in backup')
-    parser.add_argument('--all', action='store_true', dest='include_everything', help='include everything in backup')
-    parser.add_argument('--issues', action='store_true', dest='include_issues', help='include issues in backup')
-    parser.add_argument('--issue-comments', action='store_true', dest='include_issue_comments', help='include issue comments in backup')
-    parser.add_argument('--issue-events', action='store_true', dest='include_issue_events', help='include issue events in backup')
-    parser.add_argument('--pulls', action='store_true', dest='include_pulls', help='include pull requests in backup')
-    parser.add_argument('--pull-comments', action='store_true', dest='include_pull_comments', help='include pull request review comments in backup')
-    parser.add_argument('--pull-commits', action='store_true', dest='include_pull_commits', help='include pull request commits in backup')
-    parser.add_argument('--labels', action='store_true', dest='include_labels', help='include labels in backup')
-    parser.add_argument('--milestones', action='store_true', dest='include_milestones', help='include milestones in backup')
-    parser.add_argument('--repositories', action='store_true', dest='include_repository', help='include repository clone in backup')
-    parser.add_argument('--wikis', action='store_true', dest='include_wiki', help='include wiki clone in backup')
-    parser.add_argument('--skip-existing', action='store_true', dest='skip_existing', help='skip project if a backup directory exists')
-    parser.add_argument('-L', '--languages', dest='languages', help='only allow these languages', nargs='*')
-    parser.add_argument('-N', '--name-regex', dest='name_regex', help='python regex to match names against')
-    parser.add_argument('-H', '--github-host', dest='github_host', help='GitHub Enterprise hostname')
-    parser.add_argument('-O', '--organization', action='store_true', dest='organization', help='whether or not this is a query for an organization')
-    parser.add_argument('-R', '--repository', dest='repository', help='name of repository to limit backup to')
-    parser.add_argument('-P', '--private', action='store_true', dest='private', help='include private repositories')
-    parser.add_argument('-F', '--fork', action='store_true', dest='fork', help='include forked repositories')
-    parser.add_argument('--prefer-ssh', action='store_true', help='Clone repositories using SSH instead of HTTPS')
-    parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__)
+    parser = argparse.ArgumentParser(description='Backup a github account',
+                                     prog='Github Backup')
+    parser.add_argument('user',
+                        metavar='USER',
+                        type=str,
+                        help='github username')
+    parser.add_argument('-u',
+                        '--username',
+                        dest='username',
+                        help='username for basic auth')
+    parser.add_argument('-p',
+                        '--password',
+                        dest='password',
+                        help='password for basic auth')
+    parser.add_argument('-t',
+                        '--token',
+                        dest='token',
+                        help='personal access or OAuth token')
+    parser.add_argument('-o',
+                        '--output-directory',
+                        default='.',
+                        dest='output_directory',
+                        help='directory at which to backup the repositories')
+    parser.add_argument('--starred',
+                        action='store_true',
+                        dest='include_starred',
+                        help='include starred repositories in backup')
+    parser.add_argument('--watched',
+                        action='store_true',
+                        dest='include_watched',
+                        help='include watched repositories in backup')
+    parser.add_argument('--all',
+                        action='store_true',
+                        dest='include_everything',
+                        help='include everything in backup')
+    parser.add_argument('--issues',
+                        action='store_true',
+                        dest='include_issues',
+                        help='include issues in backup')
+    parser.add_argument('--issue-comments',
+                        action='store_true',
+                        dest='include_issue_comments',
+                        help='include issue comments in backup')
+    parser.add_argument('--issue-events',
+                        action='store_true',
+                        dest='include_issue_events',
+                        help='include issue events in backup')
+    parser.add_argument('--pulls',
+                        action='store_true',
+                        dest='include_pulls',
+                        help='include pull requests in backup')
+    parser.add_argument('--pull-comments',
+                        action='store_true',
+                        dest='include_pull_comments',
+                        help='include pull request review comments in backup')
+    parser.add_argument('--pull-commits',
+                        action='store_true',
+                        dest='include_pull_commits',
+                        help='include pull request commits in backup')
+    parser.add_argument('--labels',
+                        action='store_true',
+                        dest='include_labels',
+                        help='include labels in backup')
+    parser.add_argument('--milestones',
+                        action='store_true',
+                        dest='include_milestones',
+                        help='include milestones in backup')
+    parser.add_argument('--repositories',
+                        action='store_true',
+                        dest='include_repository',
+                        help='include repository clone in backup')
+    parser.add_argument('--wikis',
+                        action='store_true',
+                        dest='include_wiki',
+                        help='include wiki clone in backup')
+    parser.add_argument('--skip-existing',
+                        action='store_true',
+                        dest='skip_existing',
+                        help='skip project if a backup directory exists')
+    parser.add_argument('-L',
+                        '--languages',
+                        dest='languages',
+                        help='only allow these languages',
+                        nargs='*')
+    parser.add_argument('-N',
+                        '--name-regex',
+                        dest='name_regex',
+                        help='python regex to match names against')
+    parser.add_argument('-H',
+                        '--github-host',
+                        dest='github_host',
+                        help='GitHub Enterprise hostname')
+    parser.add_argument('-O',
+                        '--organization',
+                        action='store_true',
+                        dest='organization',
+                        help='whether or not this is an organization user')
+    parser.add_argument('-R',
+                        '--repository',
+                        dest='repository',
+                        help='name of repository to limit backup to')
+    parser.add_argument('-P', '--private',
+                        action='store_true',
+                        dest='private',
+                        help='include private repositories')
+    parser.add_argument('-F', '--fork',
+                        action='store_true',
+                        dest='fork',
+                        help='include forked repositories')
+    parser.add_argument('--prefer-ssh',
+                        action='store_true',
+                        help='Clone repositories using SSH instead of HTTPS')
+    parser.add_argument('-v', '--version',
+                        action='version',
+                        version='%(prog)s ' + __version__)
     return parser.parse_args()
 
 
@@ -127,11 +221,12 @@ def get_auth(args):
     elif args.username and args.password:
         auth = base64.b64encode(args.username + ':' + args.password)
     elif args.username and not args.password:
-        log_error('You must specify a password for basic auth when specifying a username')
+        log_error('You must specify a password for basic auth')
     elif args.password and not args.username:
-        log_error('You must specify a username for basic auth when specifying a password')
+        log_error('You must specify a username for basic auth')
 
     return auth
+
 
 def get_github_api_host(args):
     if args.github_host:
@@ -141,6 +236,7 @@ def get_github_api_host(args):
 
     return host
 
+
 def get_github_ssh_host(args):
     if args.github_host:
         host = args.github_host
@@ -149,74 +245,24 @@ def get_github_ssh_host(args):
 
     return host
 
+
 def retrieve_data(args, template, query_args=None, single_request=False):
     auth = get_auth(args)
+    query_args = get_query_args(query_args)
     per_page = 100
     page = 0
     data = []
-    if not query_args:
-        query_args = {}
 
     while True:
         page = page + 1
-        querystring = urllib.urlencode(dict({
-            'per_page': per_page,
-            'page': page
-        }.items() + query_args.items()))
-
-        request = urllib2.Request(template + '?' + querystring)
-        if auth is not None:
-            request.add_header('Authorization', 'Basic ' + auth)
-
-        errors = []
-        retry_timeout = 3
-
-        # We'll make requests in a loop so we can delay and retry in the case of rate-limiting
-        while True:
-            try:
-                r = urllib2.urlopen(request)
-            except urllib2.HTTPError as exc:
-                # HTTPError behaves like a Response so we can check the status code and headers to see exactly
-                # what failed.
-
-                limit_remaining = int(exc.headers.get('x-ratelimit-remaining', 0))
-
-                if exc.code == 403 and limit_remaining < 1:
-                    # The X-RateLimit-Reset header includes a timestamp telling us when the limit will reset
-                    # so we can calculate how long to wait rather than inefficiently polling:
-                    gm_now = calendar.timegm(time.gmtime())
-                    reset = int(exc.headers.get('x-ratelimit-reset', 0)) or gm_now
-                    # We'll never sleep for less than 10 seconds:
-                    delta = max(10, reset - gm_now)
-
-                    limit = exc.headers.get('x-ratelimit-limit')
-                    print('Exceeded rate limit of {} requests; waiting {} seconds to reset'.format(limit, delta),
-                          file=sys.stderr)
-
-                    ratelimit_error = 'No more requests remaining'
-                    if auth is None:
-                        ratelimit_error = ratelimit_error + '; authenticate to raise your GitHub rate limit'
-                    errors.append(ratelimit_error)
-
-                    time.sleep(delta)
-                    continue
-            except urllib2.URLError:
-                # Incase of a connection timing out, we can retry a few time
-                # But we won't crash and not back-up the rest now
-                log_info('{} timed out'.format(template))
-                retry_timeout -= 1
-
-                if retry_timeout >= 0:
-                    continue
-                
-                log_error('{} timed out to much, skipping!')
-
-            break
+        request = _construct_request(per_page, page, query_args, template, auth)  # noqa
+        r, errors = _get_response(request, template)
 
         status_code = int(r.getcode())
 
         if status_code != 200:
-            errors.append('API request returned HTTP {}: {}'.format(status_code, r.reason))
+            template = 'API request returned HTTP {0}: {1}'
+            errors.append(template.format(status_code, r.reason))
             log_error(errors)
 
         response = json.loads(r.read())
@@ -237,16 +283,108 @@ def retrieve_data(args, template, query_args=None, single_request=False):
     return data
 
 
+def get_query_args(query_args=None):
+    if not query_args:
+        query_args = {}
+    return query_args
+
+
+def _get_response(request, template):
+    retry_timeout = 3
+    errors = []
+    # We'll make requests in a loop so we can
+    # delay and retry in the case of rate-limiting
+    while True:
+        should_continue = False
+        try:
+            r = urllib2.urlopen(request)
+        except urllib2.HTTPError as exc:
+            errors, should_continue = _request_http_error(exc, auth, errors)  # noqa
+        except urllib2.URLError:
+            should_continue = _request_url_error(template, retry_timeout)
+
+        if should_continue:
+            continue
+
+        break
+    return r, errors
+
+
+def _construct_request(per_page, page, query_args, template, auth):
+    querystring = urllib.urlencode(dict({
+        'per_page': per_page,
+        'page': page
+    }.items() + query_args.items()))
+
+    request = urllib2.Request(template + '?' + querystring)
+    if auth is not None:
+        request.add_header('Authorization', 'Basic ' + auth)
+    return request
+
+
+def _request_http_error(exc, auth, errors):
+    # HTTPError behaves like a Response so we can
+    # check the status code and headers to see exactly
+    # what failed.
+
+    should_continue = False
+    headers = exc.headers
+    limit_remaining = int(headers.get('x-ratelimit-remaining', 0))
+
+    if exc.code == 403 and limit_remaining < 1:
+        # The X-RateLimit-Reset header includes a
+        # timestamp telling us when the limit will reset
+        # so we can calculate how long to wait rather
+        # than inefficiently polling:
+        gm_now = calendar.timegm(time.gmtime())
+        reset = int(headers.get('x-ratelimit-reset', 0)) or gm_now
+        # We'll never sleep for less than 10 seconds:
+        delta = max(10, reset - gm_now)
+
+        limit = headers.get('x-ratelimit-limit')
+        print('Exceeded rate limit of {} requests; waiting {} seconds to reset'.format(limit, delta),  # noqa
+              file=sys.stderr)
+
+        ratelimit_error = 'No more requests remaining'
+        if auth is None:
+            ratelimit_error += '; authenticate to raise your GitHub rate limit'  # noqa
+        errors.append(ratelimit_error)
+
+        time.sleep(delta)
+        should_continue = True
+    return errors, should_continue
+
+
+def _request_url_error(template, retry_timeout):
+    # Incase of a connection timing out, we can retry a few time
+    # But we won't crash and not back-up the rest now
+    log_info('{} timed out'.format(template))
+    retry_timeout -= 1
+
+    if retry_timeout >= 0:
+        return True
+
+    log_error('{} timed out to much, skipping!')
+    return False
+
+
 def retrieve_repositories(args):
     log_info('Retrieving repositories')
     single_request = False
-    template = 'https://{0}/users/{1}/repos'.format(get_github_api_host(args), args.user)
+    template = 'https://{0}/users/{1}/repos'.format(
+        get_github_api_host(args),
+        args.user)
     if args.organization:
-        template = 'https://{0}/orgs/{1}/repos'.format(get_github_api_host(args), args.user)
+        template = 'https://{0}/orgs/{1}/repos'.format(
+            get_github_api_host(args),
+            args.user)
 
     if args.repository:
         single_request = True
-        template = 'https://{0}/repos/{1}/{2}'.format(get_github_api_host(args), args.user, args.repository)
+        template = 'https://{0}/repos/{1}/{2}'.format(
+            get_github_api_host(args),
+            args.user,
+            args.repository)
 
     return retrieve_data(args, template, single_request=single_request)
 
@@ -266,7 +404,7 @@ def filter_repositories(args, repositories):
     if not args.private:
         repositories = [r for r in repositories if not r['private']]
     if languages:
-        repositories = [r for r in repositories if r['language'] and r['language'].lower() in languages]
+        repositories = [r for r in repositories if r['language'] and r['language'].lower() in languages]  # noqa
     if name_regex:
         repositories = [r for r in repositories if name_regex.match(r['name'])]
 
@@ -277,9 +415,6 @@ def backup_repositories(args, output_directory, repositories):
     log_info('Backing up repositories')
     repos_template = 'https://{0}/repos'.format(get_github_api_host(args))
 
-    issue_states = ['open', 'closed']
-    pull_states = ['open', 'closed']
-
     for repository in repositories:
         backup_cwd = os.path.join(output_directory, 'repositories')
         repo_cwd = os.path.join(backup_cwd, repository['name'])
@@ -288,123 +423,156 @@ def backup_repositories(args, output_directory, repositories):
         if args.prefer_ssh:
             repo_url = repository['ssh_url']
         else:
-            repo_url = repository['git_url']
+            repo_url = repository['clone_url']
 
         if args.include_repository or args.include_everything:
-            fetch_repository(repository['name'], repo_url, repo_dir, skip_existing=args.skip_existing)
+            fetch_repository(repository['name'],
+                             repo_url,
+                             repo_dir,
+                             skip_existing=args.skip_existing)
 
-        if repository['has_wiki'] and (args.include_wiki or args.include_everything):
+        download_wiki = (args.include_wiki or args.include_everything)
+        if repository['has_wiki'] and download_wiki:
             fetch_repository(repository['name'],
                              repo_url.replace('.git', '.wiki.git'),
                              os.path.join(repo_cwd, 'wiki'),
                              skip_existing=args.skip_existing)
 
         if args.include_issues or args.include_everything:
-            if args.skip_existing and os.path.isdir('{0}/issues/.git'.format(repo_cwd)):
-                continue
-
-            log_info('Retrieving {0} issues'.format(repository['full_name']))
-            issue_cwd = os.path.join(repo_cwd, 'issues')
-            mkdir_p(backup_cwd, repo_cwd, issue_cwd)
-
-            issues = {}
-            _issue_template = '{0}/{1}/issues'.format(repos_template, repository['full_name'])
-
-            for issue_state in issue_states:
-                query_args = {
-                    'filter': 'all',
-                    'state': issue_state
-                }
-
-                _issues = retrieve_data(args, _issue_template, query_args=query_args)
-                for issue in _issues:
-                    issues[issue['number']] = issue
-
-            log_info('Saving {0} issues to disk'.format(len(issues.keys())))
-            for number, issue in issues.iteritems():
-                comments_template = _issue_template + '/{0}/comments'
-                events_template = _issue_template + '/{0}/events'
-                if args.include_issue_comments or args.include_everything:
-                    issues[number]['comment_data'] = retrieve_data(args, comments_template.format(number))
-                if args.include_issue_events or args.include_everything:
-                    issues[number]['event_data'] = retrieve_data(args, events_template.format(number))
-
-                with codecs.open('{0}/{1}.json'.format(issue_cwd, number), 'w', encoding='utf-8') as issue_file:
-                    json.dump(issue, issue_file, ensure_ascii=False, sort_keys=True, indent=4, separators=(',', ': '))                    
+            backup_issues(args, repo_cwd, repository, repos_template)
 
         if args.include_pulls or args.include_everything:
-            if args.skip_existing and os.path.isdir('{0}/pulls/.git'.format(repo_cwd)):
-                continue
-
-            log_info('Retrieving {0} pull requests'.format(repository['full_name']))
-            pulls_cwd = os.path.join(repo_cwd, 'pulls')
-            mkdir_p(backup_cwd, repo_cwd, pulls_cwd)
-
-            pulls = {}
-            _pulls_template = '{0}/{1}/pulls'.format(repos_template, repository['full_name'])
-
-            for pull_state in pull_states:
-                query_args = {
-                    'filter': 'all',
-                    'state': pull_state
-                }
-
-                _pulls = retrieve_data(args, _pulls_template, query_args=query_args)
-                for pull in _pulls:
-                    pulls[pull['number']] = pull
-
-            log_info('Saving {0} pull requests to disk'.format(len(pulls.keys())))
-            for number, pull in pulls.iteritems():
-                comments_template = _pulls_template + '/{0}/comments'
-                commits_template = _pulls_template + '/{0}/commits'
-                if args.include_pull_comments or args.include_everything:
-                    pulls[number]['comment_data'] = retrieve_data(args, comments_template.format(number))
-                if args.include_pull_commits or args.include_everything:
-                    pulls[number]['commit_data'] = retrieve_data(args, commits_template.format(number))
-
-                with codecs.open('{0}/{1}.json'.format(pulls_cwd, number), 'w', encoding='utf-8') as pull_file:
-                    json.dump(pull, pull_file, ensure_ascii=False, sort_keys=True, indent=4, separators=(',', ': '))
+            backup_pulls(args, repo_cwd, repository, repos_template)
 
         if args.include_milestones or args.include_everything:
-            if args.skip_existing and os.path.isdir('{0}/milestones/.git'.format(repo_cwd)):
-                continue
-
-            log_info('Retrieving {0} milestones'.format(repository['full_name']))
-            milestone_cwd = os.path.join(repo_cwd, 'milestones')
-            mkdir_p(backup_cwd, repo_cwd, milestone_cwd)
-
-            milestones = {}
-            _milestone_template = '{0}/{1}/milestones'.format(repos_template, repository['full_name'])
-
-            query_args = {
-                'state': 'all'
-            }
-
-            _milestones = retrieve_data(args, _milestone_template, query_args=query_args)
-
-            for milestone in _milestones:
-                milestones[milestone['number']] = milestone
-
-            log_info('Saving {0} milestones to disk'.format(len(milestones.keys())))
-            for number, milestone in milestones.iteritems():
-                with codecs.open('{0}/{1}.json'.format(milestone_cwd, number), 'w', encoding='utf-8') as milestone_file:
-                    json.dump(milestone, milestone_file, ensure_ascii=False, sort_keys=True, indent=4, separators=(',', ': '))
+            backup_milestones(args, repo_cwd, repository, repos_template)
 
         if args.include_labels or args.include_everything:
-            if args.skip_existing and os.path.isdir('{0}/labels/.git'.format(repo_cwd)):
-                continue
+            backup_labels(args, repo_cwd, repository, repos_template)
 
-            log_info('Retrieving {0} labels'.format(repository['full_name']))
-            label_cwd = os.path.join(repo_cwd, 'labels')
-            mkdir_p(backup_cwd, repo_cwd, label_cwd)
 
-            _label_template = '{0}/{1}/labels'.format(repos_template, repository['full_name'])
+def backup_issues(args, repo_cwd, repository, repos_template):
+    has_issues_dir = os.path.isdir('{0}/issues/.git'.format(repo_cwd))
+    if args.skip_existing and has_issues_dir:
+        return
 
-            labels = retrieve_data(args, _label_template, query_args={})
+    log_info('Retrieving {0} issues'.format(repository['full_name']))
+    issue_cwd = os.path.join(repo_cwd, 'issues')
+    mkdir_p(repo_cwd, issue_cwd)
 
-            log_info('Saving {0} labels to disk'.format(len(labels)))
-            with codecs.open('{0}/labels.json'.format(label_cwd), 'w', encoding='utf-8') as label_file:
-                json.dump(labels, label_file, ensure_ascii=False, sort_keys=True, indent=4, separators=(',', ': '))
+    issues = {}
+    _issue_template = '{0}/{1}/issues'.format(repos_template,
+                                              repository['full_name'])
+
+    issue_states = ['open', 'closed']
+    for issue_state in issue_states:
+        query_args = {
+            'filter': 'all',
+            'state': issue_state
+        }
+
+        _issues = retrieve_data(args,
+                                _issue_template,
+                                query_args=query_args)
+        for issue in _issues:
+            issues[issue['number']] = issue
+
+    log_info('Saving {0} issues to disk'.format(len(issues.keys())))
+    comments_template = _issue_template + '/{0}/comments'
+    events_template = _issue_template + '/{0}/events'
+    for number, issue in issues.iteritems():
+        if args.include_issue_comments or args.include_everything:
+            template = comments_template.format(number)
+            issues[number]['comment_data'] = retrieve_data(args, template)
+        if args.include_issue_events or args.include_everything:
+            template = events_template.format(number)
+            issues[number]['event_data'] = retrieve_data(args, template)
+
+        issue_file = '{0}/{1}.json'.format(issue_cwd, number)
+        with codecs.open(issue_file, 'w', encoding='utf-8') as f:
+            json_dump(issue, f)
+
+
+def backup_pulls(args, repo_cwd, repository, repos_template):
+    has_pulls_dir = os.path.isdir('{0}/pulls/.git'.format(repo_cwd))
+    if args.skip_existing and has_pulls_dir:
+        return
+
+    log_info('Retrieving {0} pull requests'.format(repository['full_name']))  # noqa
+    pulls_cwd = os.path.join(repo_cwd, 'pulls')
+    mkdir_p(repo_cwd, pulls_cwd)
+
+    pulls = {}
+    _pulls_template = '{0}/{1}/pulls'.format(repos_template,
+                                             repository['full_name'])
+
+    pull_states = ['open', 'closed']
+    for pull_state in pull_states:
+        query_args = {
+            'filter': 'all',
+            'state': pull_state
+        }
+
+        _pulls = retrieve_data(args,
+                               _pulls_template,
+                               query_args=query_args)
+        for pull in _pulls:
+            pulls[pull['number']] = pull
+
+    log_info('Saving {0} pull requests to disk'.format(len(pulls.keys())))
+    comments_template = _pulls_template + '/{0}/comments'
+    commits_template = _pulls_template + '/{0}/commits'
+    for number, pull in pulls.iteritems():
+        if args.include_pull_comments or args.include_everything:
+            template = comments_template.format(number)
+            pulls[number]['comment_data'] = retrieve_data(args, template)
+        if args.include_pull_commits or args.include_everything:
+            template = commits_template.format(number)
+            pulls[number]['commit_data'] = retrieve_data(args, template)
+
+        pull_file = '{0}/{1}.json'.format(pulls_cwd, number)
+        with codecs.open(pull_file, 'w', encoding='utf-8') as f:
+            json_dump(pull, f)
+
+
+def backup_milestones(args, repo_cwd, repository, repos_template):
+    milestone_cwd = os.path.join(repo_cwd, 'milestones')
+    if args.skip_existing and os.path.isdir(milestone_cwd):
+        return
+
+    log_info('Retrieving {0} milestones'.format(repository['full_name']))
+    mkdir_p(repo_cwd, milestone_cwd)
+
+    template = '{0}/{1}/milestones'.format(repos_template,
+                                           repository['full_name'])
+
+    query_args = {
+        'state': 'all'
+    }
+
+    _milestones = retrieve_data(args, template, query_args=query_args)
+
+    milestones = {}
+    for milestone in _milestones:
+        milestones[milestone['number']] = milestone
+
+    log_info('Saving {0} milestones to disk'.format(len(milestones.keys())))
+    for number, milestone in milestones.iteritems():
+        milestone_file = '{0}/{1}.json'.format(milestone_cwd, number)
+        with codecs.open(milestone_file, 'w', encoding='utf-8') as f:
+            json_dump(milestone, f)
+
+
+def backup_labels(args, repo_cwd, repository, repos_template):
+    label_cwd = os.path.join(repo_cwd, 'labels')
+    output_file = '{0}/labels.json'.format(label_cwd)
+    template = '{0}/{1}/labels'.format(repos_template,
+                                       repository['full_name'])
+    _backup_data(args,
+                 'labels',
+                 template,
+                 output_file,
+                 label_cwd)
 
 
 def fetch_repository(name, remote_url, local_dir, skip_existing=False):
@@ -413,44 +581,69 @@ def fetch_repository(name, remote_url, local_dir, skip_existing=False):
     if clone_exists and skip_existing:
         return
 
-    initalized = subprocess.call('git ls-remote ' + remote_url,  stdout=FNULL, stderr=FNULL, shell=True)
+    initalized = subprocess.call('git ls-remote ' + remote_url,
+                                 stdout=FNULL,
+                                 stderr=FNULL,
+                                 shell=True)
     if initalized == 128:
-        log_info("Skipping {} since it's not initalized".format(name))
+        log_info("Skipping {0} since it's not initalized".format(name))
         return
 
     if clone_exists:
-        log_info('Updating {} in {}'.format(name, local_dir))
+        log_info('Updating {0} in {1}'.format(name, local_dir))
         git_command = ['git', 'fetch', '--all', '--tags', '--prune']
         logging_subprocess(git_command, None, cwd=local_dir)
     else:
-        log_info('Cloning {} repository from {} to {}'.format(name, remote_url, local_dir))
+        log_info('Cloning {0} repository from {1} to {2}'.format(name,
+                                                                 remote_url,
+                                                                 local_dir))
         git_command = ['git', 'clone', remote_url, local_dir]
         logging_subprocess(git_command, None)
 
 
 def backup_account(args, output_directory):
     account_cwd = os.path.join(output_directory, 'account')
-    if args.include_starred or args.include_everything:
-        if not args.skip_existing or not os.path.exists('{0}/starred.json'.format(account_cwd)):
-            log_info('Retrieving {0} starred repositories'.format(args.user))
-            mkdir_p(account_cwd)
 
-            starred_template = "https://{0}/users/{1}/starred"
-            starred = retrieve_data(args, starred_template.format(get_github_api_host(args), args.user))
-            log_info('Writing {0} starred repositories'.format(len(starred)))
-            with codecs.open('{0}/starred.json'.format(account_cwd), 'w', encoding='utf-8') as starred_file:
-                json.dump(starred, starred_file, ensure_ascii=False, sort_keys=True, indent=4, separators=(',', ': '))
+    if args.include_starred or args.include_everything:
+        output_file = '{0}/starred.json'.format(account_cwd)
+        template = "https://{0}/users/{1}/starred"
+        template = template.format(get_github_api_host(args), args.user)
+        _backup_data(args,
+                     'starred repositories',
+                     template,
+                     output_file,
+                     account_cwd)
 
     if args.include_watched or args.include_everything:
-        if not args.skip_existing or not os.path.exists('{0}/watched.json'.format(account_cwd)):
-            log_info('Retrieving {0} watched repositories'.format(args.user))
-            mkdir_p(account_cwd)
+        output_file = '{0}/watched.json'.format(account_cwd)
+        template = "https://{0}/users/{1}/subscriptions"
+        template = template.format(get_github_api_host(args), args.user)
+        _backup_data(args,
+                     'watched repositories',
+                     template,
+                     output_file,
+                     account_cwd)
 
-            watched_template = "https://{0}/users/{1}/subscriptions"
-            watched = retrieve_data(args, watched_template.format(get_github_api_host(args), args.user))
-            log_info('Writing {0} watched repositories'.format(len(watched)))
-            with codecs.open('{0}/watched.json'.format(account_cwd), 'w', encoding='utf-8') as watched_file:
-                json.dump(watched, watched_file, ensure_ascii=False, sort_keys=True, indent=4, separators=(',', ': '))
+
+def _backup_data(args, name, template, output_file, output_directory):
+    skip_existing = args.skip_existing
+    if not skip_existing or not os.path.exists(output_file):
+        log_info('Retrieving {0} {1}'.format(args.user, name))
+        mkdir_p(output_directory)
+        data = retrieve_data(args, template)
+
+        log_info('Writing {0} {1} to disk'.format(len(data), name))
+        with codecs.open(output_file, 'w', encoding='utf-8') as f:
+            json_dump(data, f)
+
+
+def json_dump(data, output_file):
+    json.dump(data,
+              output_file,
+              ensure_ascii=False,
+              sort_keys=True,
+              indent=4,
+              separators=(',', ': '))
 
 
 def main():
@@ -458,7 +651,8 @@ def main():
 
     output_directory = os.path.realpath(args.output_directory)
     if not os.path.isdir(output_directory):
-        log_error('Specified output directory is not a directory: {0}'.format(output_directory))
+        log_error('Specified output directory is not a directory: {0}'.format(
+            output_directory))
 
     log_info('Backing up user {0} to {1}'.format(args.user, output_directory))
 
