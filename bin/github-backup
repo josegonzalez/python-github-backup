@@ -586,7 +586,7 @@ def fetch_repository(name, remote_url, local_dir, skip_existing=False):
                                  stderr=FNULL,
                                  shell=True)
     if initalized == 128:
-        log_info("Skipping {0} since it's not initalized".format(name))
+        log_info("Skipping {0} ({1}) since it's not initalized".format(name, remote_url))
         return
 
     if clone_exists:
