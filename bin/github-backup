@@ -651,8 +651,8 @@ def main():
 
     output_directory = os.path.realpath(args.output_directory)
     if not os.path.isdir(output_directory):
-        log_error('Specified output directory is not a directory: {0}'.format(
-            output_directory))
+        log_info('Create output directory {0}'.format(output_directory))
+        mkdir_p(output_directory)
 
     log_info('Backing up user {0} to {1}'.format(args.user, output_directory))
 
