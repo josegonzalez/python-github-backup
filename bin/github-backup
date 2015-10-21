@@ -304,8 +304,11 @@ def _get_response(request, auth, template):
             r = urllib2.urlopen(request)
         except urllib2.HTTPError as exc:
             errors, should_continue = _request_http_error(exc, auth, errors)  # noqa
+            r = exc
         except urllib2.URLError:
             should_continue = _request_url_error(template, retry_timeout)
+            if not should_continue:
+                raise
 
         if should_continue:
             continue
