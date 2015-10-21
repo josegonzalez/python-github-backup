@@ -159,6 +159,10 @@ def parse_args():
                         action='store_true',
                         dest='include_labels',
                         help='include labels in backup')
+    parser.add_argument('--hooks',
+                        action='store_true',
+                        dest='include_hooks',
+                        help='include hooks in backup (works only when authenticated)')
     parser.add_argument('--milestones',
                         action='store_true',
                         dest='include_milestones',
@@ -450,6 +454,9 @@ def backup_repositories(args, output_directory, repositories):
         if args.include_labels or args.include_everything:
             backup_labels(args, repo_cwd, repository, repos_template)
 
+        if args.include_hooks or args.include_everything:
+            backup_hooks(args, repo_cwd, repository, repos_template)
+
 
 def backup_issues(args, repo_cwd, repository, repos_template):
     has_issues_dir = os.path.isdir('{0}/issues/.git'.format(repo_cwd))
@@ -573,6 +580,22 @@ def backup_labels(args, repo_cwd, repository, repos_template):
                  template,
                  output_file,
                  label_cwd)
+
+
+def backup_hooks(args, repo_cwd, repository, repos_template):
+    auth = get_auth(args)
+    if not auth:
+        log_info("Skipping hooks since no authentication provided")
+        return
+    hook_cwd = os.path.join(repo_cwd, 'hooks')
+    output_file = '{0}/hooks.json'.format(hook_cwd)
+    template = '{0}/{1}/hooks'.format(repos_template,
+                                       repository['full_name'])
+    _backup_data(args,
+                 'hooks',
+                 template,
+                 output_file,
+                 hook_cwd)
 
 
 def fetch_repository(name, remote_url, local_dir, skip_existing=False):

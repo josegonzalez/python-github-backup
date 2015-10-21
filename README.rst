@@ -24,7 +24,7 @@ CLI Usage is as follows::
                      [-o OUTPUT_DIRECTORY] [--starred] [--watched] [--all]
                      [--issues] [--issue-comments] [--issue-events] [--pulls]
                      [--pull-comments] [--pull-commits] [--repositories]
-                     [--wikis] [--skip-existing]
+                     [--wikis] [--labels] [--hooks] [--skip-existing]
                      [-L [LANGUAGES [LANGUAGES ...]]] [-N NAME_REGEX]
                      [-H GITHUB_HOST] [-O] [-R REPOSITORY] [-P] [-F]
                      [--prefer-ssh] [-v]
@@ -57,6 +57,8 @@ CLI Usage is as follows::
       --pull-commits        include pull request commits in backup
       --repositories        include repository clone in backup
       --wikis               include wiki clone in backup
+      --labels              include labels in backup
+      --hooks               include web hooks in backup (works only when authenticated)
       --skip-existing       skip project if a backup directory exists
       -L [LANGUAGES [LANGUAGES ...]], --languages [LANGUAGES [LANGUAGES ...]]
                             only allow these languages
@@ -71,6 +73,6 @@ CLI Usage is as follows::
       -F, --fork            include forked repositories
       --prefer-ssh          Clone repositories using SSH instead of HTTPS
       -v, --version         show program's version number and exit
-      
+
 
 The package can be used to backup an *entire* organization or repository, including issues and wikis in the most appropriate format (clones for wikis, json files for issues).
