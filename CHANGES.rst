@@ -1,6 +1,41 @@
 Changelog
 =========
 
+0.6.0 (2015-11-10)
+------------------
+
+- Force proper remote url. [Jose Diaz-Gonzalez]
+
+- Improve error handling in case of HTTP errors. [Enrico Tröger]
+
+  In case of a HTTP status code 404, the returned 'r' was never assigned.
+  In case of URL errors which are not timeouts, we probably should bail
+  out.
+
+
+- Add --hooks to also include web hooks into the backup. [Enrico Tröger]
+
+- Create the user specified output directory if it does not exist.
+  [Enrico Tröger]
+
+  Fixes #17.
+
+
+- Add missing auth argument to _get_response() [Enrico Tröger]
+
+  When running unauthenticated and Github starts rate-limiting the client,
+  github-backup crashes because the used auth variable in _get_response()
+  was not available. This change should fix it.
+
+
+- Add repository URL to error message for non-existing repositories.
+  [Enrico Tröger]
+
+  This makes it easier for the user to identify which repository does not
+  exist or is not initialised, i.e. whether it is the main repository or
+  the wiki repository and which clone URL was used to check.
+
+
 0.5.0 (2015-10-10)
 ------------------
 
