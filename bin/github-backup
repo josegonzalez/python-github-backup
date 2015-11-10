@@ -617,6 +617,10 @@ def fetch_repository(name, remote_url, local_dir, skip_existing=False):
 
     if clone_exists:
         log_info('Updating {0} in {1}'.format(name, local_dir))
+        git_command = ['git', 'remote', 'rm', 'origin']
+        logging_subprocess(git_command, None, cwd=local_dir)
+        git_command = ['git', 'remote', 'add', 'origin', remote_url]
+        logging_subprocess(git_command, None, cwd=local_dir)
         git_command = ['git', 'fetch', '--all', '--tags', '--prune']
         logging_subprocess(git_command, None, cwd=local_dir)
     else:
