@@ -7,6 +7,7 @@ import base64
 import calendar
 import codecs
 import errno
+import getpass
 import json
 import logging
 import os
@@ -109,7 +110,9 @@ def parse_args():
     parser.add_argument('-p',
                         '--password',
                         dest='password',
-                        help='password for basic auth')
+                        help='password for basic auth. '
+                             'If a username is given but not a password, the '
+                             'password will be prompted for.')
     parser.add_argument('-t',
                         '--token',
                         dest='token',
@@ -219,17 +222,18 @@ def parse_args():
 
 
 def get_auth(args):
-    auth = None
     if args.token:
-        auth = base64.b64encode(args.token + ':' + 'x-oauth-basic')
-    elif args.username and args.password:
-        auth = base64.b64encode(args.username + ':' + args.password)
-    elif args.username and not args.password:
-        log_error('You must specify a password for basic auth')
-    elif args.password and not args.username:
+        return base64.b64encode(args.token + ':' + 'x-oauth-basic')
+
+    if args.username:
+        if not args.password:
+            args.password = getpass.getpass()
+        return base64.b64encode(args.username + ':' + args.password)
+
+    if args.password:
         log_error('You must specify a username for basic auth')
 
-    return auth
+    return None
 
 
 def get_github_api_host(args):
