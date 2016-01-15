@@ -23,15 +23,14 @@ CLI Usage is as follows::
     Github Backup [-h] [-u USERNAME] [-p PASSWORD] [-t TOKEN]
                      [-o OUTPUT_DIRECTORY] [--starred] [--watched] [--all]
                      [--issues] [--issue-comments] [--issue-events] [--pulls]
-                     [--pull-comments] [--pull-commits] [--repositories]
-                     [--wikis] [--labels] [--hooks] [--skip-existing]
-                     [-L [LANGUAGES [LANGUAGES ...]]] [-N NAME_REGEX]
-                     [-H GITHUB_HOST] [-O] [-R REPOSITORY] [-P] [-F]
-                     [--prefer-ssh] [-v]
+                     [--pull-comments] [--pull-commits] [--labels] [--hooks]
+                     [--milestones] [--repositories] [--wikis]
+                     [--skip-existing] [-L [LANGUAGES [LANGUAGES ...]]]
+                     [-N NAME_REGEX] [-H GITHUB_HOST] [-O] [-R REPOSITORY]
+                     [-P] [-F] [--prefer-ssh] [-v]
                      USER
 
-
-    Backup a github users account
+    Backup a github account
 
     positional arguments:
       USER                  github username
@@ -41,7 +40,8 @@ CLI Usage is as follows::
       -u USERNAME, --username USERNAME
                             username for basic auth
       -p PASSWORD, --password PASSWORD
-                            password for basic auth
+                            password for basic auth. If a username is given but
+                            not a password, the password will be prompted for.
       -t TOKEN, --token TOKEN
                             personal access or OAuth token
       -o OUTPUT_DIRECTORY, --output-directory OUTPUT_DIRECTORY
@@ -55,10 +55,12 @@ CLI Usage is as follows::
       --pulls               include pull requests in backup
       --pull-comments       include pull request review comments in backup
       --pull-commits        include pull request commits in backup
+      --labels              include labels in backup
+      --hooks               include hooks in backup (works only when
+                            authenticated)
+      --milestones          include milestones in backup
       --repositories        include repository clone in backup
       --wikis               include wiki clone in backup
-      --labels              include labels in backup
-      --hooks               include web hooks in backup (works only when authenticated)
       --skip-existing       skip project if a backup directory exists
       -L [LANGUAGES [LANGUAGES ...]], --languages [LANGUAGES [LANGUAGES ...]]
                             only allow these languages
@@ -66,7 +68,7 @@ CLI Usage is as follows::
                             python regex to match names against
       -H GITHUB_HOST, --github-host GITHUB_HOST
                             GitHub Enterprise hostname
-      -O, --organization    whether or not this is a query for an organization
+      -O, --organization    whether or not this is an organization user
       -R REPOSITORY, --repository REPOSITORY
                             name of repository to limit backup to
       -P, --private         include private repositories
