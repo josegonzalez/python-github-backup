@@ -299,10 +299,10 @@ def get_query_args(query_args=None):
 
 def _get_response(request, auth, template):
     retry_timeout = 3
+    errors = []
     # We'll make requests in a loop so we can
     # delay and retry in the case of rate-limiting
     while True:
-        errors = []
         should_continue = False
         try:
             r = urllib2.urlopen(request)
@@ -356,10 +356,9 @@ def _request_http_error(exc, auth, errors):
         print('Exceeded rate limit of {} requests; waiting {} seconds to reset'.format(limit, delta),  # noqa
               file=sys.stderr)
 
-        ratelimit_error = 'No more requests remaining'
         if auth is None:
-            ratelimit_error += '; authenticate to raise your GitHub rate limit'  # noqa
-        errors.append(ratelimit_error)
+            print('Hint: Authenticate to raise your GitHub rate limit',
+                  file=sys.stderr)
 
         time.sleep(delta)
         should_continue = True
