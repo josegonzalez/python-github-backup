@@ -382,9 +382,8 @@ def _request_url_error(template, retry_timeout):
 def retrieve_repositories(args):
     log_info('Retrieving repositories')
     single_request = False
-    template = 'https://{0}/users/{1}/repos'.format(
-        get_github_api_host(args),
-        args.user)
+    template = 'https://{0}/user/repos'.format(
+        get_github_api_host(args))
     if args.organization:
         template = 'https://{0}/orgs/{1}/repos'.format(
             get_github_api_host(args),
@@ -402,6 +401,9 @@ def retrieve_repositories(args):
 
 def filter_repositories(args, repositories):
     log_info('Filtering repositories')
+
+    repositories = [r for r in repositories if r['owner']['login'] == args.user]
+
     name_regex = None
     if args.name_regex:
         name_regex = re.compile(args.name_regex)
