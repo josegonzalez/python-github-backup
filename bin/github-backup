@@ -600,11 +600,14 @@ def backup_hooks(args, repo_cwd, repository, repos_template):
     output_file = '{0}/hooks.json'.format(hook_cwd)
     template = '{0}/{1}/hooks'.format(repos_template,
                                        repository['full_name'])
-    _backup_data(args,
-                 'hooks',
-                 template,
-                 output_file,
-                 hook_cwd)
+    try:
+        _backup_data(args,
+                     'hooks',
+                     template,
+                     output_file,
+                     hook_cwd)
+    except SystemExit:
+        log_info("Unable to read hooks, skipping")
 
 
 def fetch_repository(name, remote_url, local_dir, skip_existing=False):
