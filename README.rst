@@ -78,3 +78,8 @@ CLI Usage is as follows::
 
 
 The package can be used to backup an *entire* organization or repository, including issues and wikis in the most appropriate format (clones for wikis, json files for issues).
+
+Authentication
+==============
+
+Note: Password-based authentication will fail if you have two-factor authentication enabled.
