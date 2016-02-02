@@ -1,6 +1,18 @@
 Changelog
 =========
 
+0.7.0 (2016-02-02)
+------------------
+
+- Softly fail if not able to read hooks. [Albert Wang]
+
+- Add note about 2-factor auth. [Albert Wang]
+
+- Make user repository search go through endpoint capable of reading
+  private repositories. [Albert Wang]
+
+- Prompt for password if only username given. [Alex Hall]
+
 0.6.0 (2015-11-10)
 ------------------
 
