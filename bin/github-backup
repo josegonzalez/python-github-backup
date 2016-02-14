@@ -477,6 +477,8 @@ def backup_issues(args, repo_cwd, repository, repos_template):
     mkdir_p(repo_cwd, issue_cwd)
 
     issues = {}
+    issues_skipped = 0
+    issues_skipped_message = ''
     _issue_template = '{0}/{1}/issues'.format(repos_template,
                                               repository['full_name'])
 
@@ -491,9 +493,17 @@ def backup_issues(args, repo_cwd, repository, repos_template):
                                 _issue_template,
                                 query_args=query_args)
         for issue in _issues:
+            # skip pull requests which are also returned as issues
+            # if retrieving pull requests is requested as well
+            if 'pull_request' in issue and (args.include_pulls or args.include_everything):
+                issues_skipped += 1
+                continue
+
             issues[issue['number']] = issue
 
-    log_info('Saving {0} issues to disk'.format(len(issues.keys())))
+    if issues_skipped:
+        issues_skipped_message = ' (skipped {0} pull requests)'.format(issues_skipped)
+    log_info('Saving {0} issues to disk{1}'.format(len(issues.keys()), issues_skipped_message))
     comments_template = _issue_template + '/{0}/comments'
     events_template = _issue_template + '/{0}/events'
     for number, issue in issues.iteritems():
