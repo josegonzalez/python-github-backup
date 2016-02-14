@@ -1,6 +1,17 @@
 Changelog
 =========
 
+0.8.0 (2016-02-14)
+------------------
+
+- Don't store issues which are actually pull requests. [Enrico Tröger]
+
+  This prevents storing pull requests twice since the Github API returns
+  pull requests also as issues. Those issues will be skipped but only if
+  retrieving pull requests is requested as well.
+  Closes #23.
+
+
 0.7.0 (2016-02-02)
 ------------------
 
