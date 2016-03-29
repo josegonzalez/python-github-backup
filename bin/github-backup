@@ -16,6 +16,7 @@ import select
 import subprocess
 import sys
 import time
+import urlparse
 import urllib
 import urllib2
 
@@ -95,6 +96,15 @@ def mkdir_p(*args):
             else:
                 raise
 
+def mask_password(url, secret='*****'):
+    parsed = urlparse.urlparse(url)
+
+    if not parsed.password:
+        return url
+    elif parsed.password == 'x-oauth-basic':
+        return url.replace(parsed.username, secret)
+
+    return url.replace(parsed.password, secret)
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Backup a github account',
@@ -221,19 +231,25 @@ def parse_args():
     return parser.parse_args()
 
 
-def get_auth(args):
-    if args.token:
-        return base64.b64encode(args.token + ':' + 'x-oauth-basic')
+def get_auth(args, encode=True):
+    auth = None
 
-    if args.username:
+    if args.token:
+        auth = args.token + ':' + 'x-oauth-basic'
+    elif args.username:
         if not args.password:
             args.password = getpass.getpass()
-        return base64.b64encode(args.username + ':' + args.password)
-
-    if args.password:
+        auth = args.username + ':' + args.password
+    elif args.password:
         log_error('You must specify a username for basic auth')
 
-    return None
+    if not auth:
+        return None
+
+    if encode == False:
+        return auth
+
+    return base64.b64encode(auth)
 
 
 def get_github_api_host(args):
@@ -245,7 +261,7 @@ def get_github_api_host(args):
     return host
 
 
-def get_github_ssh_host(args):
+def get_github_host(args):
     if args.github_host:
         host = args.github_host
     else:
@@ -253,6 +269,21 @@ def get_github_ssh_host(args):
 
     return host
 
+def get_github_repo_url(args, repository):
+    if args.prefer_ssh:
+        return repository['ssh_url']
+
+    auth = get_auth(args, False)
+    if auth:
+        repo_url = 'https://{0}@{1}/{2}/{3}.git'.format(
+            auth,
+            get_github_host(args),
+            args.user,
+            repository['name'])
+    else:
+        repo_url = repository['clone_url']
+
+    return repo_url
 
 def retrieve_data(args, template, query_args=None, single_request=False):
     auth = get_auth(args)
@@ -432,11 +463,7 @@ def backup_repositories(args, output_directory, repositories):
         backup_cwd = os.path.join(output_directory, 'repositories')
         repo_cwd = os.path.join(backup_cwd, repository['name'])
         repo_dir = os.path.join(repo_cwd, 'repository')
-
-        if args.prefer_ssh:
-            repo_url = repository['ssh_url']
-        else:
-            repo_url = repository['clone_url']
+        repo_url = get_github_repo_url(args, repository)
 
         if args.include_repository or args.include_everything:
             fetch_repository(repository['name'],
@@ -626,12 +653,14 @@ def fetch_repository(name, remote_url, local_dir, skip_existing=False):
     if clone_exists and skip_existing:
         return
 
+    masked_remote_url = mask_password(remote_url)
+
     initalized = subprocess.call('git ls-remote ' + remote_url,
                                  stdout=FNULL,
                                  stderr=FNULL,
                                  shell=True)
     if initalized == 128:
-        log_info("Skipping {0} ({1}) since it's not initalized".format(name, remote_url))
+        log_info("Skipping {0} ({1}) since it's not initalized".format(name, masked_remote_url))
         return
 
     if clone_exists:
@@ -644,7 +673,7 @@ def fetch_repository(name, remote_url, local_dir, skip_existing=False):
         logging_subprocess(git_command, None, cwd=local_dir)
     else:
         log_info('Cloning {0} repository from {1} to {2}'.format(name,
-                                                                 remote_url,
+                                                                 masked_remote_url,
                                                                  local_dir))
         git_command = ['git', 'clone', remote_url, local_dir]
         logging_subprocess(git_command, None)
