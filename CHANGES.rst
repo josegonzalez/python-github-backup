@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.9.0 (2016-03-29)
+------------------
+
+- Fix cloning private repos with basic auth or token. [Kazuki Suda]
+
 0.8.0 (2016-02-14)
 ------------------
 
