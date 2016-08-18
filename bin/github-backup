@@ -132,6 +132,11 @@ def parse_args():
                         default='.',
                         dest='output_directory',
                         help='directory at which to backup the repositories')
+    parser.add_argument('-i',
+                        '--incremental',
+                        action='store_true',
+                        dest='incremental',
+                        help='incremental backup')
     parser.add_argument('--starred',
                         action='store_true',
                         dest='include_starred',
@@ -459,6 +464,16 @@ def backup_repositories(args, output_directory, repositories):
     log_info('Backing up repositories')
     repos_template = 'https://{0}/repos'.format(get_github_api_host(args))
 
+    if args.incremental:
+        last_update = max(repository['updated_at'] for repository in repositories)
+        last_update_path = os.path.join(output_directory, 'last_update')
+        if os.path.exists(last_update_path):
+            args.since = open(last_update_path).read().strip()
+        else:
+            args.since = None
+    else:
+        args.since = None
+
     for repository in repositories:
         backup_cwd = os.path.join(output_directory, 'repositories')
         repo_cwd = os.path.join(backup_cwd, repository['name'])
@@ -493,6 +508,8 @@ def backup_repositories(args, output_directory, repositories):
         if args.include_hooks or args.include_everything:
             backup_hooks(args, repo_cwd, repository, repos_template)
 
+    if args.incremental:
+        open(last_update_path, 'w').write(last_update)
 
 def backup_issues(args, repo_cwd, repository, repos_template):
     has_issues_dir = os.path.isdir('{0}/issues/.git'.format(repo_cwd))
@@ -515,6 +532,8 @@ def backup_issues(args, repo_cwd, repository, repos_template):
             'filter': 'all',
             'state': issue_state
         }
+        if args.since:
+            query_args['since'] = args.since
 
         _issues = retrieve_data(args,
                                 _issue_template,
@@ -563,14 +582,18 @@ def backup_pulls(args, repo_cwd, repository, repos_template):
     for pull_state in pull_states:
         query_args = {
             'filter': 'all',
-            'state': pull_state
+            'state': pull_state,
+            'sort': 'updated',
+            'direction': 'desc',
         }
 
+        # It'd be nice to be able to apply the args.since filter here...
         _pulls = retrieve_data(args,
                                _pulls_template,
                                query_args=query_args)
         for pull in _pulls:
-            pulls[pull['number']] = pull
+            if not args.since or pull['updated_at'] >= args.since:
+                pulls[pull['number']] = pull
 
     log_info('Saving {0} pull requests to disk'.format(len(pulls.keys())))
     comments_template = _pulls_template + '/{0}/comments'
