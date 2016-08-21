@@ -4,6 +4,11 @@ github-backup
 
 backup a github user or organization
 
+Requirements
+============
+
+- GIT 1.9+
+
 Installation
 ============
 
