@@ -1,7 +1,14 @@
 Changelog
 =========
 
-0.10.1 (2016-08-20)
+0.10.2 (2016-08-20)
+-------------------
+
+- Add a note regarding git version requirement. [Jose Diaz-Gonzalez]
+
+  Closes #37
+
+0.10.0 (2016-08-18)
 -------------------
 
 - Implement incremental updates. [Robert Bradshaw]
