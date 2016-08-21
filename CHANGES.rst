@@ -1,6 +1,19 @@
 Changelog
 =========
 
+0.10.1 (2016-08-20)
+-------------------
+
+- Implement incremental updates. [Robert Bradshaw]
+
+  Guarded with an --incremental flag.
+
+  Stores the time of the last update and only downloads issue and
+  pull request data since this time.  All other data is relatively
+  small (likely fetched with a single request) and so is simply
+  re-populated from scratch as before.
+
+
 0.9.0 (2016-03-29)
 ------------------
 
