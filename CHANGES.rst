@@ -1,7 +1,27 @@
 Changelog
 =========
 
-0.10.2 (2016-08-20)
+0.10.3 (2016-08-20)
+-------------------
+
+- Fixes #29. [Jonas Michel]
+
+  Reporting an error when the user's rate limit is exceeded causes
+  the script to terminate after resuming execution from a rate limit
+  sleep. Instead of generating an explicit error we just want to
+  inform the user that the script is going to sleep until their rate
+  limit count resets.
+
+
+- Fixes #29. [Jonas Michel]
+
+  The errors list was not being cleared out after resuming a backup
+  from a rate limit sleep. When the backup was resumed, the non-empty
+  errors list caused the backup to quit after the next `retrieve_data`
+  request.
+
+
+0.10.2 (2016-08-21)
 -------------------
 
 - Add a note regarding git version requirement. [Jose Diaz-Gonzalez]
