@@ -25,15 +25,15 @@ Usage
 
 CLI Usage is as follows::
 
-    Github Backup [-h] [-u USERNAME] [-p PASSWORD] [-t TOKEN]
-                     [-o OUTPUT_DIRECTORY] [--starred] [--watched] [--all]
-                     [--issues] [--issue-comments] [--issue-events] [--pulls]
-                     [--pull-comments] [--pull-commits] [--labels] [--hooks]
-                     [--milestones] [--repositories] [--wikis]
-                     [--skip-existing] [-L [LANGUAGES [LANGUAGES ...]]]
-                     [-N NAME_REGEX] [-H GITHUB_HOST] [-O] [-R REPOSITORY]
-                     [-P] [-F] [--prefer-ssh] [-v]
-                     USER
+    github-backup [-h] [-u USERNAME] [-p PASSWORD] [-t TOKEN]
+                  [-o OUTPUT_DIRECTORY] [-i] [--starred] [--watched]
+                  [--all] [--issues] [--issue-comments] [--issue-events]
+                  [--pulls] [--pull-comments] [--pull-commits] [--labels]
+                  [--hooks] [--milestones] [--repositories] [--wikis]
+                  [--skip-existing] [-L [LANGUAGES [LANGUAGES ...]]]
+                  [-N NAME_REGEX] [-H GITHUB_HOST] [-O] [-R REPOSITORY]
+                  [-P] [-F] [--prefer-ssh] [-v]
+                  USER
 
     Backup a github account
 
@@ -51,6 +51,7 @@ CLI Usage is as follows::
                             personal access or OAuth token
       -o OUTPUT_DIRECTORY, --output-directory OUTPUT_DIRECTORY
                             directory at which to backup the repositories
+      -i, --incremental     incremental backup
       --starred             include starred repositories in backup
       --watched             include watched repositories in backup
       --all                 include everything in backup
