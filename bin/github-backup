@@ -107,8 +107,7 @@ def mask_password(url, secret='*****'):
     return url.replace(parsed.password, secret)
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Backup a github account',
-                                     prog='Github Backup')
+    parser = argparse.ArgumentParser(description='Backup a github account')
     parser.add_argument('user',
                         metavar='USER',
                         type=str,
