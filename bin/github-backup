@@ -243,7 +243,11 @@ def get_auth(args, encode=True):
     elif args.username:
         if not args.password:
             args.password = getpass.getpass()
-        auth = args.username + ':' + args.password
+        if encode:
+            password = args.password
+        else:
+            password = urllib.quote(args.password)
+        auth = args.username + ':' + password
     elif args.password:
         log_error('You must specify a username for basic auth')
 
