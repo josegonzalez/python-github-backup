@@ -110,6 +110,7 @@ def mkdir_p(*args):
             else:
                 raise
 
+
 def mask_password(url, secret='*****'):
     parsed = urlparse(url)
 
@@ -119,6 +120,7 @@ def mask_password(url, secret='*****'):
         return url.replace(parsed.username, secret)
 
     return url.replace(parsed.password, secret)
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Backup a github account')
@@ -268,7 +270,7 @@ def get_auth(args, encode=True):
     if not auth:
         return None
 
-    if encode == False:
+    if not encode:
         return auth
 
     return base64.b64encode(auth.encode('ascii'))
@@ -291,6 +293,7 @@ def get_github_host(args):
 
     return host
 
+
 def get_github_repo_url(args, repository):
     if args.prefer_ssh:
         return repository['ssh_url']
@@ -306,6 +309,7 @@ def get_github_repo_url(args, repository):
         repo_url = repository['clone_url']
 
     return repo_url
+
 
 def retrieve_data(args, template, query_args=None, single_request=False):
     auth = get_auth(args)
@@ -527,6 +531,7 @@ def backup_repositories(args, output_directory, repositories):
     if args.incremental:
         open(last_update_path, 'w').write(last_update)
 
+
 def backup_issues(args, repo_cwd, repository, repos_template):
     has_issues_dir = os.path.isdir('{0}/issues/.git'.format(repo_cwd))
     if args.skip_existing and has_issues_dir:
@@ -675,7 +680,7 @@ def backup_hooks(args, repo_cwd, repository, repos_template):
     hook_cwd = os.path.join(repo_cwd, 'hooks')
     output_file = '{0}/hooks.json'.format(hook_cwd)
     template = '{0}/{1}/hooks'.format(repos_template,
-                                       repository['full_name'])
+                                      repository['full_name'])
     try:
         _backup_data(args,
                      'hooks',
