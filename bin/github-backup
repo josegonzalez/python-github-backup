@@ -141,7 +141,7 @@ def parse_args():
     parser.add_argument('-t',
                         '--token',
                         dest='token',
-                        help='personal access or OAuth token')
+                        help='personal access or OAuth token, or path to token (file://...)')
     parser.add_argument('-o',
                         '--output-directory',
                         default='.',
@@ -255,6 +255,10 @@ def get_auth(args, encode=True):
     auth = None
 
     if args.token:
+        _path_specifier = 'file://'
+        if args.token.startswith(_path_specifier):
+            args.token = open(args.token[len(_path_specifier):],
+                              'rt').readline().strip()
         auth = args.token + ':' + 'x-oauth-basic'
     elif args.username:
         if not args.password:
