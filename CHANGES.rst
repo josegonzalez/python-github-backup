@@ -1,7 +1,27 @@
 Changelog
 =========
 
-0.10.3 (2016-08-20)
+0.11.0 (2016-10-26)
+-------------------
+
+- Support --token file:///home/user/token.txt (fixes gh-51) [Björn
+  Dahlgren]
+
+- Fix some linting. [Albert Wang]
+
+- Fix byte/string conversion for python 3. [Albert Wang]
+
+- Support python 3. [Albert Wang]
+
+- Encode special characters in password. [Remi Rampin]
+
+- Don't pretend program name is "Github Backup" [Remi Rampin]
+
+- Don't install over insecure connection. [Remi Rampin]
+
+  The git:// protocol is unauthenticated and unencrypted, and no longer advertised by GitHub. Using HTTPS shouldn't impact performance.
+
+0.10.3 (2016-08-21)
 -------------------
 
 - Fixes #29. [Jonas Michel]
