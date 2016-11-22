@@ -714,7 +714,16 @@ def fetch_repository(name,
                      local_dir,
                      skip_existing=False,
                      bare_clone=False):
-    clone_exists = os.path.exists(os.path.join(local_dir, '.git'))
+    if bare_clone:
+        if os.path.exists(local_dir):
+            clone_exists = subprocess.check_output(['git',
+                                                    'rev-parse',
+                                                    '--is-bare-repository'],
+                                                   cwd=local_dir) == "true\n"
+        else:
+            clone_exists = False
+    else:
+        clone_exists = os.path.exists(os.path.join(local_dir, '.git'))
 
     if clone_exists and skip_existing:
         return
@@ -744,7 +753,7 @@ def fetch_repository(name,
             masked_remote_url,
             local_dir))
         if bare_clone:
-            git_command = ['git', 'clone', '--bare', remote_url, local_dir]
+            git_command = ['git', 'clone', '--mirror', remote_url, local_dir]
         else:
             git_command = ['git', 'clone', remote_url, local_dir]
         logging_subprocess(git_command, None)
