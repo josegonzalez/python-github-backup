@@ -1,6 +1,29 @@
 Changelog
 =========
 
+0.12.0 (2016-11-22)
+-------------------
+
+Fix
+~~~
+
+- Properly import version from github_backup package. [Jose Diaz-
+  Gonzalez]
+
+- Support alternate git status output. [Jose Diaz-Gonzalez]
+
+Other
+~~~~~
+
+- Pep8: E501 line too long (83 > 79 characters) [Jose Diaz-Gonzalez]
+
+- Pep8: E128 continuation line under-indented for visual indent. [Jose
+  Diaz-Gonzalez]
+
+- Support archivization using bare git clones. [Andrzej Maczuga]
+
+- Fix typo, 3x. [Terrell Russell]
+
 0.11.0 (2016-10-26)
 -------------------
 
