@@ -140,7 +140,7 @@ def parse_args():
     parser.add_argument('-t',
                         '--token',
                         dest='token',
-                        help='personal access or OAuth token, or path to token (file://...)')
+                        help='personal access or OAuth token, or path to token (file://...)')  # noqa
     parser.add_argument('-o',
                         '--output-directory',
                         default='.',
@@ -194,7 +194,7 @@ def parse_args():
     parser.add_argument('--hooks',
                         action='store_true',
                         dest='include_hooks',
-                        help='include hooks in backup (works only when authenticated)')
+                        help='include hooks in backup (works only when authenticated)')  # noqa
     parser.add_argument('--milestones',
                         action='store_true',
                         dest='include_milestones',
@@ -462,10 +462,13 @@ def retrieve_repositories(args):
     return retrieve_data(args, template, single_request=single_request)
 
 
-def filter_repositories(args, repositories):
+def filter_repositories(args, unfiltered_repositories):
     log_info('Filtering repositories')
 
-    repositories = [r for r in repositories if r['owner']['login'] == args.user]
+    repositories = []
+    for r in unfiltered_repositories:
+        if r['owner']['login'] == args.user:
+            repositories.append(r)
 
     name_regex = None
     if args.name_regex:
@@ -492,7 +495,7 @@ def backup_repositories(args, output_directory, repositories):
     repos_template = 'https://{0}/repos'.format(get_github_api_host(args))
 
     if args.incremental:
-        last_update = max(repository['updated_at'] for repository in repositories)
+        last_update = max(repository['updated_at'] for repository in repositories)  # noqa
         last_update_path = os.path.join(output_directory, 'last_update')
         if os.path.exists(last_update_path):
             args.since = open(last_update_path).read().strip()
@@ -556,6 +559,7 @@ def backup_issues(args, repo_cwd, repository, repos_template):
     _issue_template = '{0}/{1}/issues'.format(repos_template,
                                               repository['full_name'])
 
+    should_include_pulls = args.include_pulls or args.include_everything
     issue_states = ['open', 'closed']
     for issue_state in issue_states:
         query_args = {
@@ -571,15 +575,18 @@ def backup_issues(args, repo_cwd, repository, repos_template):
         for issue in _issues:
             # skip pull requests which are also returned as issues
             # if retrieving pull requests is requested as well
-            if 'pull_request' in issue and (args.include_pulls or args.include_everything):
+            if 'pull_request' in issue and should_include_pulls:
                 issues_skipped += 1
                 continue
 
             issues[issue['number']] = issue
 
     if issues_skipped:
-        issues_skipped_message = ' (skipped {0} pull requests)'.format(issues_skipped)
-    log_info('Saving {0} issues to disk{1}'.format(len(list(issues.keys())), issues_skipped_message))
+        issues_skipped_message = ' (skipped {0} pull requests)'.format(
+            issues_skipped)
+
+    log_info('Saving {0} issues to disk{1}'.format(
+        len(list(issues.keys())), issues_skipped_message))
     comments_template = _issue_template + '/{0}/comments'
     events_template = _issue_template + '/{0}/events'
     for number, issue in list(issues.items()):
@@ -625,7 +632,8 @@ def backup_pulls(args, repo_cwd, repository, repos_template):
             if not args.since or pull['updated_at'] >= args.since:
                 pulls[pull['number']] = pull
 
-    log_info('Saving {0} pull requests to disk'.format(len(list(pulls.keys()))))
+    log_info('Saving {0} pull requests to disk'.format(
+        len(list(pulls.keys()))))
     comments_template = _pulls_template + '/{0}/comments'
     commits_template = _pulls_template + '/{0}/commits'
     for number, pull in list(pulls.items()):
@@ -662,7 +670,8 @@ def backup_milestones(args, repo_cwd, repository, repos_template):
     for milestone in _milestones:
         milestones[milestone['number']] = milestone
 
-    log_info('Saving {0} milestones to disk'.format(len(list(milestones.keys()))))
+    log_info('Saving {0} milestones to disk'.format(
+        len(list(milestones.keys()))))
     for number, milestone in list(milestones.items()):
         milestone_file = '{0}/{1}.json'.format(milestone_cwd, number)
         with codecs.open(milestone_file, 'w', encoding='utf-8') as f:
@@ -700,7 +709,11 @@ def backup_hooks(args, repo_cwd, repository, repos_template):
         log_info("Unable to read hooks, skipping")
 
 
-def fetch_repository(name, remote_url, local_dir, skip_existing=False, bare_clone=False):
+def fetch_repository(name,
+                     remote_url,
+                     local_dir,
+                     skip_existing=False,
+                     bare_clone=False):
     clone_exists = os.path.exists(os.path.join(local_dir, '.git'))
 
     if clone_exists and skip_existing:
@@ -713,7 +726,8 @@ def fetch_repository(name, remote_url, local_dir, skip_existing=False, bare_clon
                                   stderr=FNULL,
                                   shell=True)
     if initialized == 128:
-        log_info("Skipping {0} ({1}) since it's not initialized".format(name, masked_remote_url))
+        log_info("Skipping {0} ({1}) since it's not initialized".format(
+            name, masked_remote_url))
         return
 
     if clone_exists:
@@ -725,9 +739,10 @@ def fetch_repository(name, remote_url, local_dir, skip_existing=False, bare_clon
         git_command = ['git', 'fetch', '--all', '--tags', '--prune']
         logging_subprocess(git_command, None, cwd=local_dir)
     else:
-        log_info('Cloning {0} repository from {1} to {2}'.format(name,
-                                                                 masked_remote_url,
-                                                                 local_dir))
+        log_info('Cloning {0} repository from {1} to {2}'.format(
+            name,
+            masked_remote_url,
+            local_dir))
         if bare_clone:
             git_command = ['git', 'clone', '--bare', remote_url, local_dir]
         else:
