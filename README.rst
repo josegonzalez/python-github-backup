@@ -29,10 +29,11 @@ CLI Usage is as follows::
                   [-o OUTPUT_DIRECTORY] [-i] [--starred] [--watched]
                   [--all] [--issues] [--issue-comments] [--issue-events]
                   [--pulls] [--pull-comments] [--pull-commits] [--labels]
-                  [--hooks] [--milestones] [--repositories] [--wikis]
-                  [--skip-existing] [-L [LANGUAGES [LANGUAGES ...]]]
-                  [-N NAME_REGEX] [-H GITHUB_HOST] [-O] [-R REPOSITORY]
-                  [-P] [-F] [--prefer-ssh] [-v]
+                  [--hooks] [--milestones] [--repositories] [--bare]
+                  [--wikis] [--skip-existing]
+                  [-L [LANGUAGES [LANGUAGES ...]]] [-N NAME_REGEX]
+                  [-H GITHUB_HOST] [-O] [-R REPOSITORY] [-P] [-F]
+                  [--prefer-ssh] [-v]
                   USER
 
     Backup a github account
@@ -66,6 +67,7 @@ CLI Usage is as follows::
                             authenticated)
       --milestones          include milestones in backup
       --repositories        include repository clone in backup
+      --bare                clone bare repositories
       --wikis               include wiki clone in backup
       --skip-existing       skip project if a backup directory exists
       -L [LANGUAGES [LANGUAGES ...]], --languages [LANGUAGES [LANGUAGES ...]]

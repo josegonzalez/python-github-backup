@@ -204,6 +204,10 @@ def parse_args():
                         action='store_true',
                         dest='include_repository',
                         help='include repository clone in backup')
+    parser.add_argument('--bare',
+                        action='store_true',
+                        dest='bare_clone',
+                        help='clone bare repositories')
     parser.add_argument('--wikis',
                         action='store_true',
                         dest='include_wiki',
@@ -508,14 +512,16 @@ def backup_repositories(args, output_directory, repositories):
             fetch_repository(repository['name'],
                              repo_url,
                              repo_dir,
-                             skip_existing=args.skip_existing)
+                             skip_existing=args.skip_existing,
+                             bare_clone=args.bare_clone)
 
         download_wiki = (args.include_wiki or args.include_everything)
         if repository['has_wiki'] and download_wiki:
             fetch_repository(repository['name'],
                              repo_url.replace('.git', '.wiki.git'),
                              os.path.join(repo_cwd, 'wiki'),
-                             skip_existing=args.skip_existing)
+                             skip_existing=args.skip_existing,
+                             bare_clone=args.bare_clone)
 
         if args.include_issues or args.include_everything:
             backup_issues(args, repo_cwd, repository, repos_template)
@@ -695,7 +701,7 @@ def backup_hooks(args, repo_cwd, repository, repos_template):
         log_info("Unable to read hooks, skipping")
 
 
-def fetch_repository(name, remote_url, local_dir, skip_existing=False):
+def fetch_repository(name, remote_url, local_dir, skip_existing=False, bare_clone=False):
     clone_exists = os.path.exists(os.path.join(local_dir, '.git'))
 
     if clone_exists and skip_existing:
@@ -723,7 +729,10 @@ def fetch_repository(name, remote_url, local_dir, skip_existing=False):
         log_info('Cloning {0} repository from {1} to {2}'.format(name,
                                                                  masked_remote_url,
                                                                  local_dir))
-        git_command = ['git', 'clone', remote_url, local_dir]
+        if bare_clone:
+            git_command = ['git', 'clone', '--bare', remote_url, local_dir]
+        else:
+            git_command = ['git', 'clone', remote_url, local_dir]
         logging_subprocess(git_command, None)
 
 
