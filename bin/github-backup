@@ -33,8 +33,7 @@ except ImportError:
     from urllib2 import urlopen
     from urllib2 import Request
 
-__version__='asdf'
-# from github_backup import __version__
+from github_backup import __version__
 
 FNULL = open(os.devnull, 'w')
 
