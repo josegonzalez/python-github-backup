@@ -1,6 +1,18 @@
 Changelog
 =========
 
+0.12.1 (2017-03-27)
+-------------------
+
+- Avoid remote branch name churn. [Chris Adams]
+
+  This avoids the backup output having lots of "[new branch]" messages
+  because removing the old remote name removed all of the existing branch
+  references.
+
+
+- Fix detection of bare git directories. [Andrzej Maczuga]
+
 0.12.0 (2016-11-22)
 -------------------
 
