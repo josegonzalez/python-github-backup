@@ -741,11 +741,21 @@ def fetch_repository(name,
 
     if clone_exists:
         log_info('Updating {0} in {1}'.format(name, local_dir))
-        git_command = ['git', 'remote', 'rm', 'origin']
-        logging_subprocess(git_command, None, cwd=local_dir)
-        git_command = ['git', 'remote', 'add', 'origin', remote_url]
-        logging_subprocess(git_command, None, cwd=local_dir)
-        git_command = ['git', 'fetch', '--all', '--tags', '--prune']
+
+        remotes = subprocess.check_output(['git', 'remote', 'show'],
+                                          cwd=local_dir)
+        remotes = [i.strip() for i in remotes.decode('utf-8')]
+
+        if 'origin' not in remotes:
+            git_command = ['git', 'remote', 'rm', 'origin']
+            logging_subprocess(git_command, None, cwd=local_dir)
+            git_command = ['git', 'remote', 'add', 'origin', remote_url]
+            logging_subprocess(git_command, None, cwd=local_dir)
+        else:
+            git_command = ['git', 'remote', 'set-url', 'origin', remote_url]
+            logging_subprocess(git_command, None, cwd=local_dir)
+
+        git_command = ['git', 'fetch', '--all', '--force', '--tags', '--prune']
         logging_subprocess(git_command, None, cwd=local_dir)
     else:
         log_info('Cloning {0} repository from {1} to {2}'.format(
