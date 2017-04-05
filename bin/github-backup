@@ -16,6 +16,7 @@ import select
 import subprocess
 import sys
 import time
+import platform
 try:
     # python 3
     from urllib.parse import urlparse
@@ -267,6 +268,8 @@ def get_auth(args, encode=True):
         if not args.osx_keychain_item_account:
             log_error('You must specify both name and account fields for osx keychain password items')
         else:
+            if platform.system() != 'Darwin':
+                log_error("Keychain arguments are only supported on Mac OSX")
             try:
                 with open(os.devnull,'w') as devnull:
                     token = (subprocess.check_output([
