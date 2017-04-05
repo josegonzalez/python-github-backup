@@ -16,6 +16,7 @@ import select
 import subprocess
 import sys
 import time
+import platform
 try:
     # python 3
     from urllib.parse import urlparse
@@ -251,13 +252,37 @@ def parse_args():
     parser.add_argument('-v', '--version',
                         action='version',
                         version='%(prog)s ' + __version__)
+    parser.add_argument('--keychain-name',
+                        dest='osx_keychain_item_name',
+                        help='OSX ONLY: name field of password item in OSX keychain that holds the personal access or OAuth token')
+    parser.add_argument('--keychain-account',
+                        dest='osx_keychain_item_account',
+                        help='OSX ONLY: account field of password item in OSX keychain that holds the personal access or OAuth token')
     return parser.parse_args()
 
 
 def get_auth(args, encode=True):
     auth = None
 
-    if args.token:
+    if args.osx_keychain_item_name:
+        if not args.osx_keychain_item_account:
+            log_error('You must specify both name and account fields for osx keychain password items')
+        else:
+            if platform.system() != 'Darwin':
+                log_error("Keychain arguments are only supported on Mac OSX")
+            try:
+                with open(os.devnull,'w') as devnull:
+                    token = (subprocess.check_output([
+                        'security','find-generic-password',
+                        '-s',args.osx_keychain_item_name,
+                        '-a',args.osx_keychain_item_account,
+                        '-w' ], stderr=devnull).strip())
+                auth = token + ':' + 'x-oauth-basic'
+            except:
+                log_error('No password item matching the provided name and account could be found in the osx keychain.')
+    elif args.osx_keychain_item_account:
+        log_error('You must specify both name and account fields for osx keychain password items')
+    elif args.token:
         _path_specifier = 'file://'
         if args.token.startswith(_path_specifier):
             args.token = open(args.token[len(_path_specifier):],

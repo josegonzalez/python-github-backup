@@ -34,6 +34,8 @@ CLI Usage is as follows::
                   [-L [LANGUAGES [LANGUAGES ...]]] [-N NAME_REGEX]
                   [-H GITHUB_HOST] [-O] [-R REPOSITORY] [-P] [-F]
                   [--prefer-ssh] [-v]
+                  [--keychain-name OSX_KEYCHAIN_ITEM_NAME]
+                  [--keychain-account OSX_KEYCHAIN_ITEM_ACCOUNT]
                   USER
 
     Backup a github account
@@ -83,6 +85,12 @@ CLI Usage is as follows::
       -F, --fork            include forked repositories
       --prefer-ssh          Clone repositories using SSH instead of HTTPS
       -v, --version         show program's version number and exit
+      --keychain-name OSX_KEYCHAIN_ITEM_NAME
+                            OSX ONLY: name field of password item in OSX keychain
+                            that holds the personal access or OAuth token
+      --keychain-account OSX_KEYCHAIN_ITEM_ACCOUNT
+                            OSX ONLY: account field of password item in OSX
+                            keychain that holds the personal access or OAuth token
 
 
 The package can be used to backup an *entire* organization or repository, including issues and wikis in the most appropriate format (clones for wikis, json files for issues).
@@ -91,3 +99,18 @@ Authentication
 ==============
 
 Note: Password-based authentication will fail if you have two-factor authentication enabled.
+
+Using the Keychain on Mac OSX
+=============================
+Note: On Mac OSX the token can be stored securely in the user's keychain. To do this:
+
+1. Open Keychain from "Applications -> Utilities -> Keychain Access"
+2. Add a new password item using "File -> New Password Item"
+3. Enter a name in the "Keychain Item Name" box. You must provide this name to github-backup using the --keychain-name argument.
+4. Enter an account name in the "Account Name" box, enter your Github username as set above. You must provide this name to github-backup using the --keychain-account argument.
+5. Enter your Github personal access token in the "Password" box
+
+Note:  When you run github-backup, you will be asked whether you want to allow "security" to use your confidential information stored in your keychain. You have two options:
+
+1. **Allow:** In this case you will need to click "Allow" each time you run `github-backup`
+2. **Always Allow:** In this case, you will not be asked for permission when you run `github-backup` in future. This is less secure, but is required if you want to schedule `github-backup` to run automatically
