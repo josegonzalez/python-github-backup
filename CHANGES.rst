@@ -1,6 +1,26 @@
 Changelog
 =========
 
+0.13.0 (2017-04-05)
+-------------------
+
+- Add OS check for OSX specific keychain args. [Martin O'Reilly]
+
+  Keychain arguments are only supported on Mac OSX.
+  Added check for operating system so we give a
+  "Keychain arguments are only supported on Mac OSX"
+  error message rather than a "No password item matching the
+  provided name and account could be found in the osx keychain"
+  error message
+
+
+- Add support for storing PAT in OSX keychain. [Martin O'Reilly]
+
+  Added additional optional arguments and README guidance for storing
+  and accessing a Github personal access token (PAT) in the OSX
+  keychain
+
+
 0.12.1 (2017-03-27)
 -------------------
 
