@@ -520,7 +520,7 @@ def backup_repositories(args, output_directory, repositories):
     repos_template = 'https://{0}/repos'.format(get_github_api_host(args))
 
     if args.incremental:
-        last_update = max(repository['updated_at'] for repository in repositories)  # noqa
+        last_update = max(list(repository['updated_at'] for repository in repositories) or [time.strftime('%Y-%m-%dT%H:%M:%SZ', time.localtime())])  # noqa
         last_update_path = os.path.join(output_directory, 'last_update')
         if os.path.exists(last_update_path):
             args.since = open(last_update_path).read().strip()
