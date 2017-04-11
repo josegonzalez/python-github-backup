@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.13.1 (2017-04-11)
+-------------------
+
+- Fix error when repository has no updated_at value. [Nicolai Ehemann]
+
 0.13.0 (2017-04-05)
 -------------------
 
