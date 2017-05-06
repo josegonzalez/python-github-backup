@@ -769,7 +769,7 @@ def fetch_repository(name,
 
         remotes = subprocess.check_output(['git', 'remote', 'show'],
                                           cwd=local_dir)
-        remotes = [i.strip() for i in remotes.decode('utf-8')]
+        remotes = [i.strip() for i in remotes.decode('utf-8').splitlines()]
 
         if 'origin' not in remotes:
             git_command = ['git', 'remote', 'rm', 'origin']
