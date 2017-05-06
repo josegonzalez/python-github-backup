@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.13.2 (2017-05-06)
+-------------------
+
+- Fix remotes while updating repository. [Dima Gerasimov]
+
 0.13.1 (2017-04-11)
 -------------------
 
