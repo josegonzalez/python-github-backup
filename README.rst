@@ -114,3 +114,20 @@ Note:  When you run github-backup, you will be asked whether you want to allow "
 
 1. **Allow:** In this case you will need to click "Allow" each time you run `github-backup`
 2. **Always Allow:** In this case, you will not be asked for permission when you run `github-backup` in future. This is less secure, but is required if you want to schedule `github-backup` to run automatically
+
+Examples
+========
+
+Backup all repositories::
+
+    export ACCESS_TOKEN=SOME-GITHUB-TOKEN
+    github-backup WhiteHouse --token $ACCESS_TOKEN --organization --output-directory /tmp/white-house --repositories
+
+Backup a single organization repository with everything else (wiki, pull requests, comments, issues etc)::
+
+    export ACCESS_TOKEN=SOME-GITHUB-TOKEN
+    ORGANIZATION=docker
+    REPO=cli
+    # e.g. git@github.com:docker/cli.git
+    github-backup $ORGANIZATION -P -t $ACCESS_TOKEN -o . --all -O -R $REPO
+
