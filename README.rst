@@ -2,6 +2,8 @@
 github-backup
 =============
 
+|PyPI| |Python Versions|
+
 backup a github user or organization
 
 Requirements
@@ -131,3 +133,7 @@ Backup a single organization repository with everything else (wiki, pull request
     # e.g. git@github.com:docker/cli.git
     github-backup $ORGANIZATION -P -t $ACCESS_TOKEN -o . --all -O -R $REPO
 
+.. |PyPI| image:: https://img.shields.io/pypi/v/github-backup.svg
+   :target: https://pypi.python.org/pypi/github-backup/
+.. |Python Versions| image:: https://img.shields.io/pypi/pyversions/github-backup.svg
+   :target: https://github.com/albertyw/github-backup
