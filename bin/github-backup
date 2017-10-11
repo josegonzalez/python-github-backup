@@ -211,7 +211,7 @@ def parse_args():
     parser.add_argument('--lfs',
                         action='store_true',
                         dest='lfs_clone',
-                        help='clone lfs repositories')
+                        help='clone LFS repositories (requires Git LFS to be installed, https://git-lfs.github.com)')
     parser.add_argument('--wikis',
                         action='store_true',
                         dest='include_wiki',

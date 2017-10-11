@@ -72,7 +72,7 @@ CLI Usage is as follows::
       --milestones          include milestones in backup
       --repositories        include repository clone in backup
       --bare                clone bare repositories
-      --lfs                 clone LFS repositories
+      --lfs                 clone LFS repositories (requires Git LFS to be installed, https://git-lfs.github.com)
       --wikis               include wiki clone in backup
       --skip-existing       skip project if a backup directory exists
       -L [LANGUAGES [LANGUAGES ...]], --languages [LANGUAGES [LANGUAGES ...]]
@@ -117,6 +117,13 @@ Note:  When you run github-backup, you will be asked whether you want to allow "
 
 1. **Allow:** In this case you will need to click "Allow" each time you run `github-backup`
 2. **Always Allow:** In this case, you will not be asked for permission when you run `github-backup` in future. This is less secure, but is required if you want to schedule `github-backup` to run automatically
+
+About Git LFS
+=============
+
+When you use the "--lfs" option, you will need to make sure you have Git LFS installed.
+
+Instructions on how to do this can be found on https://git-lfs.github.com.
 
 Examples
 ========
