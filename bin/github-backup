@@ -552,7 +552,7 @@ def backup_repositories(args, output_directory, repositories):
                              repo_dir,
                              skip_existing=args.skip_existing,
                              bare_clone=args.bare_clone,
-                             lfs_clone=arg.lfs_clone)
+                             lfs_clone=args.lfs_clone)
 
         download_wiki = (args.include_wiki or args.include_everything)
         if repository['has_wiki'] and download_wiki:
@@ -561,7 +561,7 @@ def backup_repositories(args, output_directory, repositories):
                              os.path.join(repo_cwd, 'wiki'),
                              skip_existing=args.skip_existing,
                              bare_clone=args.bare_clone,
-                             lfs_clone=arg.lfs_clone)
+                             lfs_clone=args.lfs_clone)
 
         if args.include_issues or args.include_everything:
             backup_issues(args, repo_cwd, repository, repos_template)
