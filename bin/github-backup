@@ -208,6 +208,10 @@ def parse_args():
                         action='store_true',
                         dest='bare_clone',
                         help='clone bare repositories')
+    parser.add_argument('--lfs',
+                        action='store_true',
+                        dest='lfs_clone',
+                        help='clone LFS repositories (requires Git LFS to be installed, https://git-lfs.github.com)')
     parser.add_argument('--wikis',
                         action='store_true',
                         dest='include_wiki',
@@ -467,6 +471,13 @@ def _request_url_error(template, retry_timeout):
     return False
 
 
+def check_git_lfs_install():
+    exit_code = subprocess.call(['git', 'lfs', 'version'])
+    if exit_code != 0:
+        log_error('The argument --lfs requires you to have Git LFS installed.\nYou can get it from https://git-lfs.github.com.')
+        sys.exit(1)
+
+
 def retrieve_repositories(args):
     log_info('Retrieving repositories')
     single_request = False
@@ -540,7 +551,8 @@ def backup_repositories(args, output_directory, repositories):
                              repo_url,
                              repo_dir,
                              skip_existing=args.skip_existing,
-                             bare_clone=args.bare_clone)
+                             bare_clone=args.bare_clone,
+                             lfs_clone=arg.lfs_clone)
 
         download_wiki = (args.include_wiki or args.include_everything)
         if repository['has_wiki'] and download_wiki:
@@ -548,7 +560,8 @@ def backup_repositories(args, output_directory, repositories):
                              repo_url.replace('.git', '.wiki.git'),
                              os.path.join(repo_cwd, 'wiki'),
                              skip_existing=args.skip_existing,
-                             bare_clone=args.bare_clone)
+                             bare_clone=args.bare_clone,
+                             lfs_clone=arg.lfs_clone)
 
         if args.include_issues or args.include_everything:
             backup_issues(args, repo_cwd, repository, repos_template)
@@ -738,7 +751,8 @@ def fetch_repository(name,
                      remote_url,
                      local_dir,
                      skip_existing=False,
-                     bare_clone=False):
+                     bare_clone=False,
+                     lfs_clone=False):
     if bare_clone:
         if os.path.exists(local_dir):
             clone_exists = subprocess.check_output(['git',
@@ -780,7 +794,10 @@ def fetch_repository(name,
             git_command = ['git', 'remote', 'set-url', 'origin', remote_url]
             logging_subprocess(git_command, None, cwd=local_dir)
 
-        git_command = ['git', 'fetch', '--all', '--force', '--tags', '--prune']
+        if lfs_clone:
+            git_command = ['git', 'lfs', 'fetch', '--all', '--force', '--tags', '--prune']
+        else:
+            git_command = ['git', 'fetch', '--all', '--force', '--tags', '--prune']
         logging_subprocess(git_command, None, cwd=local_dir)
     else:
         log_info('Cloning {0} repository from {1} to {2}'.format(
@@ -788,9 +805,15 @@ def fetch_repository(name,
             masked_remote_url,
             local_dir))
         if bare_clone:
-            git_command = ['git', 'clone', '--mirror', remote_url, local_dir]
+            if lfs_clone:
+                git_command = ['git', 'lfs', 'clone', '--mirror', remote_url, local_dir]
+            else:
+                git_command = ['git', 'clone', '--mirror', remote_url, local_dir]
         else:
-            git_command = ['git', 'clone', remote_url, local_dir]
+            if lfs_clone:
+                git_command = ['git', 'lfs', 'clone', remote_url, local_dir]
+            else:
+                git_command = ['git', 'clone', remote_url, local_dir]
         logging_subprocess(git_command, None)
 
 
@@ -846,6 +869,9 @@ def main():
     if not os.path.isdir(output_directory):
         log_info('Create output directory {0}'.format(output_directory))
         mkdir_p(output_directory)
+
+    if args.lfs_clone:
+        check_git_lfs_install()
 
     log_info('Backing up user {0} to {1}'.format(args.user, output_directory))
 
