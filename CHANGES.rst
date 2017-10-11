@@ -1,6 +1,20 @@
 Changelog
 =========
 
+0.14.0 (2017-10-11)
+-------------------
+
+- Added a check to see if git-lfs is installed when doing an LFS clone.
+  [pieterclaerhout]
+
+- Added support for LFS clones. [pieterclaerhout]
+
+- Add pypi info to readme. [Albert Wang]
+
+- Explicitly support python 3 in package description. [Albert Wang]
+
+- Add couple examples to help new users. [Yusuf Tran]
+
 0.13.2 (2017-05-06)
 -------------------
 
