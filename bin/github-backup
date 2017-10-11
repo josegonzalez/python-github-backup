@@ -471,6 +471,13 @@ def _request_url_error(template, retry_timeout):
     return False
 
 
+def check_git_lfs_install():
+    exit_code = subprocess.call(['git', 'lfs', 'version'])
+    if exit_code != 0:
+        log_error('The argument --lfs requires you to have Git LFS installed.\nYou can get it from https://git-lfs.github.com.')
+        sys.exit(1)
+
+
 def retrieve_repositories(args):
     log_info('Retrieving repositories')
     single_request = False
@@ -862,6 +869,9 @@ def main():
     if not os.path.isdir(output_directory):
         log_info('Create output directory {0}'.format(output_directory))
         mkdir_p(output_directory)
+
+    if args.lfs_clone:
+        check_git_lfs_install()
 
     log_info('Backing up user {0} to {1}'.format(args.user, output_directory))
 
