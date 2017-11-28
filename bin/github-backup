@@ -349,6 +349,8 @@ def get_github_repo_url(args, repository):
 
 def retrieve_data(args, template, query_args=None, single_request=False):
     auth = get_auth(args)
+    if not auth and args.private:
+        sys.exit("Authentication is required for private repositories (token or password)")
     query_args = get_query_args(query_args)
     per_page = 100
     page = 0
@@ -517,7 +519,7 @@ def filter_repositories(args, unfiltered_repositories):
     if not args.fork:
         repositories = [r for r in repositories if not r['fork']]
     if not args.private:
-        repositories = [r for r in repositories if not r['private']]
+		repositories = [r for r in repositories if not r['private']]
     if languages:
         repositories = [r for r in repositories if r['language'] and r['language'].lower() in languages]  # noqa
     if name_regex:
