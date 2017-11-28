@@ -15,6 +15,7 @@ dist
 pkg
 *.egg
 *.egg-info
+Pipfile*
 
 # Debian Files
 debian/files
