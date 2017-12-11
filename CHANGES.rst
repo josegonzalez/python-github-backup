@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.14.1 (2017-10-11)
+0.15.0 (2017-12-11)
 -------------------
 
 - Fix arg not defined error. [Edward Pfremmer]
