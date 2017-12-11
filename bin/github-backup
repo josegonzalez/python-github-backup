@@ -74,6 +74,7 @@ def logging_subprocess(popenargs,
                  child.stderr: stderr_log_level}
 
     def check_io():
+        if sys.platform == 'win32': return
         ready_to_read = select.select([child.stdout, child.stderr],
                                       [],
                                       [],
