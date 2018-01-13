@@ -343,7 +343,7 @@ def get_github_repo_url(args, repository):
         repo_url = 'https://{0}@{1}/{2}/{3}.git'.format(
             auth,
             get_github_host(args),
-            args.user,
+            repository['owner']['login'],
             repository['name'])
     else:
         repo_url = repository['clone_url']
@@ -499,7 +499,17 @@ def retrieve_repositories(args):
             args.user,
             args.repository)
 
-    return retrieve_data(args, template, single_request=single_request)
+    repos = retrieve_data(args, template, single_request=single_request)
+
+    if args.include_starred or args.include_everything:
+        starred_template = 'https://{0}/user/starred'.format(
+            get_github_api_host(args))
+        starred_repos = retrieve_data(args, starred_template, single_request=False)
+        for item in starred_repos:
+            item.update({'is_starred': True})
+        repos.extend(starred_repos)
+
+    return repos
 
 
 def filter_repositories(args, unfiltered_repositories):
@@ -507,7 +517,7 @@ def filter_repositories(args, unfiltered_repositories):
 
     repositories = []
     for r in unfiltered_repositories:
-        if r['owner']['login'] == args.user:
+        if r['owner']['login'] == args.user or is_starred_repo(args, r):
             repositories.append(r)
 
     name_regex = None
@@ -547,6 +557,14 @@ def backup_repositories(args, output_directory, repositories):
     for repository in repositories:
         backup_cwd = os.path.join(output_directory, 'repositories')
         repo_cwd = os.path.join(backup_cwd, repository['name'])
+
+        # put starred repos in -o/starred/${owner}/${repo} to prevent collision of
+        # any repositories with the same name
+        if is_starred_repo(args, repository):
+            backup_cwd = os.path.join(output_directory, 'starred')
+            repo_cwd = os.path.join(backup_cwd, repository['owner']['login'],
+                                    repository['name'])
+
         repo_dir = os.path.join(repo_cwd, 'repository')
         repo_url = get_github_repo_url(args, repository)
 
@@ -864,6 +882,10 @@ def json_dump(data, output_file):
               sort_keys=True,
               indent=4,
               separators=(',', ': '))
+
+
+def is_starred_repo(args, repo):
+    return (args.include_starred or args.include_everything) and repo.get('is_starred')
 
 
 def main():
