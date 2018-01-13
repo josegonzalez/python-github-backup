@@ -505,6 +505,8 @@ def retrieve_repositories(args):
         starred_template = 'https://{0}/user/starred'.format(
             get_github_api_host(args))
         starred_repos = retrieve_data(args, starred_template, single_request=False)
+        # we need to be able to determine this repo was retrieved as a starred repo
+        # later, so add a flag to each item
         for item in starred_repos:
             item.update({'is_starred': True})
         repos.extend(starred_repos)
