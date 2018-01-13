@@ -32,7 +32,7 @@ CLI Usage is as follows::
                   [--all] [--issues] [--issue-comments] [--issue-events]
                   [--pulls] [--pull-comments] [--pull-commits] [--labels]
                   [--hooks] [--milestones] [--repositories] [--bare] [--lfs]
-                  [--wikis] [--skip-existing]
+                  [--wikis] [--skip-existing] [--clone-starred]
                   [-L [LANGUAGES [LANGUAGES ...]]] [-N NAME_REGEX]
                   [-H GITHUB_HOST] [-O] [-R REPOSITORY] [-P] [-F]
                   [--prefer-ssh] [-v]
@@ -75,6 +75,7 @@ CLI Usage is as follows::
       --lfs                 clone LFS repositories (requires Git LFS to be installed, https://git-lfs.github.com)
       --wikis               include wiki clone in backup
       --skip-existing       skip project if a backup directory exists
+      --clone-starred       clone starred repositories
       -L [LANGUAGES [LANGUAGES ...]], --languages [LANGUAGES [LANGUAGES ...]]
                             only allow these languages
       -N NAME_REGEX, --name-regex NAME_REGEX
