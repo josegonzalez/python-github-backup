@@ -160,6 +160,10 @@ def parse_args():
                         action='store_true',
                         dest='include_starred',
                         help='include starred repositories in backup')
+    parser.add_argument('--clone-starred',
+                        action='store_true',
+                        dest='clone_starred',
+                        help='clone starred repositories in backup')
     parser.add_argument('--watched',
                         action='store_true',
                         dest='include_watched',
@@ -501,7 +505,7 @@ def retrieve_repositories(args):
 
     repos = retrieve_data(args, template, single_request=single_request)
 
-    if args.include_starred or args.include_everything:
+    if args.clone_starred:
         starred_template = 'https://{0}/user/starred'.format(
             get_github_api_host(args))
         starred_repos = retrieve_data(args, starred_template, single_request=False)
@@ -519,7 +523,7 @@ def filter_repositories(args, unfiltered_repositories):
 
     repositories = []
     for r in unfiltered_repositories:
-        if r['owner']['login'] == args.user or is_starred_repo(args, r):
+        if r['owner']['login'] == args.user or r.get('is_starred'):
             repositories.append(r)
 
     name_regex = None
@@ -562,7 +566,7 @@ def backup_repositories(args, output_directory, repositories):
 
         # put starred repos in -o/starred/${owner}/${repo} to prevent collision of
         # any repositories with the same name
-        if is_starred_repo(args, repository):
+        if repository.get('is_starred'):
             backup_cwd = os.path.join(output_directory, 'starred')
             repo_cwd = os.path.join(backup_cwd, repository['owner']['login'],
                                     repository['name'])
@@ -884,10 +888,6 @@ def json_dump(data, output_file):
               sort_keys=True,
               indent=4,
               separators=(',', ': '))
-
-
-def is_starred_repo(args, repo):
-    return (args.include_starred or args.include_everything) and repo.get('is_starred')
 
 
 def main():
