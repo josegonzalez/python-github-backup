@@ -159,11 +159,11 @@ def parse_args():
     parser.add_argument('--starred',
                         action='store_true',
                         dest='include_starred',
-                        help='include starred repositories in backup')
-    parser.add_argument('--clone-starred',
+                        help='include JSON output of starred repositories in backup')
+    parser.add_argument('--all-starred',
                         action='store_true',
-                        dest='clone_starred',
-                        help='clone starred repositories in backup')
+                        dest='all_starred',
+                        help='include starred repositories in backup')
     parser.add_argument('--watched',
                         action='store_true',
                         dest='include_watched',
@@ -505,7 +505,7 @@ def retrieve_repositories(args):
 
     repos = retrieve_data(args, template, single_request=single_request)
 
-    if args.clone_starred:
+    if args.all_starred:
         starred_template = 'https://{0}/user/starred'.format(
             get_github_api_host(args))
         starred_repos = retrieve_data(args, starred_template, single_request=False)

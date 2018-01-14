@@ -32,7 +32,7 @@ CLI Usage is as follows::
                   [--all] [--issues] [--issue-comments] [--issue-events]
                   [--pulls] [--pull-comments] [--pull-commits] [--labels]
                   [--hooks] [--milestones] [--repositories] [--bare] [--lfs]
-                  [--wikis] [--skip-existing] [--clone-starred]
+                  [--wikis] [--skip-existing]
                   [-L [LANGUAGES [LANGUAGES ...]]] [-N NAME_REGEX]
                   [-H GITHUB_HOST] [-O] [-R REPOSITORY] [-P] [-F]
                   [--prefer-ssh] [-v]
