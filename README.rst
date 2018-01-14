@@ -75,7 +75,6 @@ CLI Usage is as follows::
       --lfs                 clone LFS repositories (requires Git LFS to be installed, https://git-lfs.github.com)
       --wikis               include wiki clone in backup
       --skip-existing       skip project if a backup directory exists
-      --clone-starred       clone starred repositories
       -L [LANGUAGES [LANGUAGES ...]], --languages [LANGUAGES [LANGUAGES ...]]
                             only allow these languages
       -N NAME_REGEX, --name-regex NAME_REGEX
