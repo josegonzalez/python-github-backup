@@ -32,7 +32,7 @@ CLI Usage is as follows::
                   [--all] [--issues] [--issue-comments] [--issue-events]
                   [--pulls] [--pull-comments] [--pull-commits] [--labels]
                   [--hooks] [--milestones] [--repositories] [--bare] [--lfs]
-                  [--wikis] [--skip-existing]
+                  [--wikis] [--skip-existing] [--all-starred]
                   [-L [LANGUAGES [LANGUAGES ...]]] [-N NAME_REGEX]
                   [-H GITHUB_HOST] [-O] [-R REPOSITORY] [-P] [-F]
                   [--prefer-ssh] [-v]
@@ -57,7 +57,7 @@ CLI Usage is as follows::
       -o OUTPUT_DIRECTORY, --output-directory OUTPUT_DIRECTORY
                             directory at which to backup the repositories
       -i, --incremental     incremental backup
-      --starred             include starred repositories in backup
+      --starred             include list of starred repositories in backup
       --watched             include watched repositories in backup
       --all                 include everything in backup
       --issues              include issues in backup
@@ -75,6 +75,7 @@ CLI Usage is as follows::
       --lfs                 clone LFS repositories (requires Git LFS to be installed, https://git-lfs.github.com)
       --wikis               include wiki clone in backup
       --skip-existing       skip project if a backup directory exists
+      --all-starred         include everything from starred repositories in backup
       -L [LANGUAGES [LANGUAGES ...]], --languages [LANGUAGES [LANGUAGES ...]]
                             only allow these languages
       -N NAME_REGEX, --name-regex NAME_REGEX
