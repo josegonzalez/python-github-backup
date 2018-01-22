@@ -1,7 +1,21 @@
 Changelog
 =========
 
-0.15.0 (2017-12-11)
+0.16.0 (2018-01-22)
+-------------------
+
+- Change option to --all-starred. [W. Harrison Wright]
+
+- JK don't update documentation. [W. Harrison Wright]
+
+- Put starred clone repoistories under a new option. [W. Harrison
+  Wright]
+
+- Add comment. [W. Harrison Wright]
+
+- Add ability to clone starred repos. [W. Harrison Wright]
+
+0.14.1 (2017-10-11)
 -------------------
 
 - Fix arg not defined error. [Edward Pfremmer]
