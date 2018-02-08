@@ -517,8 +517,7 @@ def retrieve_repositories(args):
     repos = retrieve_data(args, template, single_request=single_request)
 
     if args.all_starred:
-        starred_template = 'https://{0}/user/starred'.format(
-            get_github_api_host(args))
+        starred_template = 'https://{0}/user/starred'.format(get_github_api_host(args))
         starred_repos = retrieve_data(args, starred_template, single_request=False)
         # flag each repo as starred for downstream processing
         for item in starred_repos:
@@ -526,8 +525,7 @@ def retrieve_repositories(args):
         repos.extend(starred_repos)
 
     if args.include_gists:
-        gists_template = 'https://{0}/gists'.format(
-            get_github_api_host(args))
+        gists_template = 'https://{0}/gists'.format(get_github_api_host(args))
         gists = retrieve_data(args, gists_template, single_request=False)
         # flag each repo as a gist for downstream processing
         for item in gists:
@@ -535,8 +533,7 @@ def retrieve_repositories(args):
         repos.extend(gists)
 
     if args.include_starred_gists:
-        starred_gists_template = 'https://{0}/gists/starred'.format(
-            get_github_api_host(args))
+        starred_gists_template = 'https://{0}/gists/starred'.format(get_github_api_host(args))
         starred_gists = retrieve_data(args, starred_gists_template, single_request=False)
         # flag each repo as a starred gist for downstream processing
         for item in starred_gists:
