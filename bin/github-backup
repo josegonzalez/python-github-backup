@@ -611,14 +611,16 @@ def backup_repositories(args, output_directory, repositories):
                              bare_clone=args.bare_clone,
                              lfs_clone=args.lfs_clone)
 
-            # dump gist information to a file as well
             if repository.get('is_gist'):
+                # dump gist information to a file as well
                 output_file = '{0}/gist.json'.format(repo_cwd)
                 with codecs.open(output_file, 'w', encoding='utf-8') as f:
                     json_dump(repository, f)
 
+                continue  # don't try to back anything else for a gist; it doesn't exist
+
         download_wiki = (args.include_wiki or args.include_everything)
-        if repository.get('has_wiki') and download_wiki:
+        if repository['has_wiki'] and download_wiki:
             fetch_repository(repository['name'],
                              repo_url.replace('.git', '.wiki.git'),
                              os.path.join(repo_cwd, 'wiki'),
