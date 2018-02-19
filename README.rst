@@ -33,6 +33,7 @@ CLI Usage is as follows::
                   [--pulls] [--pull-comments] [--pull-commits] [--labels]
                   [--hooks] [--milestones] [--repositories] [--bare] [--lfs]
                   [--wikis] [--skip-existing] [--all-starred]
+                  [--gists] [--starred-gists]
                   [-L [LANGUAGES [LANGUAGES ...]]] [-N NAME_REGEX]
                   [-H GITHUB_HOST] [-O] [-R REPOSITORY] [-P] [-F]
                   [--prefer-ssh] [-v]
@@ -76,6 +77,8 @@ CLI Usage is as follows::
       --wikis               include wiki clone in backup
       --skip-existing       skip project if a backup directory exists
       --all-starred         include starred repositories in backup
+      --gists               include gists in backup
+      --starred-gists       include starred gists in backup
       -L [LANGUAGES [LANGUAGES ...]], --languages [LANGUAGES [LANGUAGES ...]]
                             only allow these languages
       -N NAME_REGEX, --name-regex NAME_REGEX

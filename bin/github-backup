@@ -224,6 +224,14 @@ def parse_args():
                         action='store_true',
                         dest='include_wiki',
                         help='include wiki clone in backup')
+    parser.add_argument('--gists',
+                        action='store_true',
+                        dest='include_gists',
+                        help='include gists in backup')
+    parser.add_argument('--starred-gists',
+                        action='store_true',
+                        dest='include_starred_gists',
+                        help='include starred gists in backup')
     parser.add_argument('--skip-existing',
                         action='store_true',
                         dest='skip_existing',
@@ -341,6 +349,9 @@ def get_github_host(args):
 def get_github_repo_url(args, repository):
     if args.prefer_ssh:
         return repository['ssh_url']
+
+    if repository.get('is_gist'):
+        return repository['git_pull_url']
 
     auth = get_auth(args, False)
     if auth:
@@ -506,14 +517,29 @@ def retrieve_repositories(args):
     repos = retrieve_data(args, template, single_request=single_request)
 
     if args.all_starred:
-        starred_template = 'https://{0}/user/starred'.format(
-            get_github_api_host(args))
+        starred_template = 'https://{0}/user/starred'.format(get_github_api_host(args))
         starred_repos = retrieve_data(args, starred_template, single_request=False)
-        # we need to be able to determine this repo was retrieved as a starred repo
-        # later, so add a flag to each item
+        # flag each repo as starred for downstream processing
         for item in starred_repos:
             item.update({'is_starred': True})
         repos.extend(starred_repos)
+
+    if args.include_gists:
+        gists_template = 'https://{0}/gists'.format(get_github_api_host(args))
+        gists = retrieve_data(args, gists_template, single_request=False)
+        # flag each repo as a gist for downstream processing
+        for item in gists:
+            item.update({'is_gist': True})
+        repos.extend(gists)
+
+    if args.include_starred_gists:
+        starred_gists_template = 'https://{0}/gists/starred'.format(get_github_api_host(args))
+        starred_gists = retrieve_data(args, starred_gists_template, single_request=False)
+        # flag each repo as a starred gist for downstream processing
+        for item in starred_gists:
+            item.update({'is_gist': True,
+                         'is_starred': True})
+        repos.extend(starred_gists)
 
     return repos
 
@@ -523,7 +549,8 @@ def filter_repositories(args, unfiltered_repositories):
 
     repositories = []
     for r in unfiltered_repositories:
-        if r['owner']['login'] == args.user or r.get('is_starred'):
+        # gists can be anonymous, so need to safely check owner
+        if r.get('owner', {}).get('login') == args.user or r.get('is_starred'):
             repositories.append(r)
 
     name_regex = None
@@ -535,11 +562,11 @@ def filter_repositories(args, unfiltered_repositories):
         languages = [x.lower() for x in args.languages]
 
     if not args.fork:
-        repositories = [r for r in repositories if not r['fork']]
+        repositories = [r for r in repositories if not r.get('fork')]
     if not args.private:
-        repositories = [r for r in repositories if not r['private']]
+        repositories = [r for r in repositories if not r.get('private') or r.get('public')]
     if languages:
-        repositories = [r for r in repositories if r['language'] and r['language'].lower() in languages]  # noqa
+        repositories = [r for r in repositories if r.get('language') and r.get('language').lower() in languages]  # noqa
     if name_regex:
         repositories = [r for r in repositories if name_regex.match(r['name'])]
 
@@ -561,26 +588,36 @@ def backup_repositories(args, output_directory, repositories):
         args.since = None
 
     for repository in repositories:
-        backup_cwd = os.path.join(output_directory, 'repositories')
-        repo_cwd = os.path.join(backup_cwd, repository['name'])
-
-        # put starred repos in -o/starred/${owner}/${repo} to prevent collision of
-        # any repositories with the same name
-        if repository.get('is_starred'):
-            backup_cwd = os.path.join(output_directory, 'starred')
-            repo_cwd = os.path.join(backup_cwd, repository['owner']['login'],
-                                    repository['name'])
+        if repository.get('is_gist'):
+            repo_cwd = os.path.join(output_directory, 'gists', repository['id'])
+        elif repository.get('is_starred'):
+            # put starred repos in -o/starred/${owner}/${repo} to prevent collision of
+            # any repositories with the same name
+            repo_cwd = os.path.join(output_directory, 'starred', repository['owner']['login'], repository['name'])
+        else:
+            repo_cwd = os.path.join(output_directory, 'repositories', repository['name'])
 
         repo_dir = os.path.join(repo_cwd, 'repository')
         repo_url = get_github_repo_url(args, repository)
 
-        if args.include_repository or args.include_everything:
-            fetch_repository(repository['name'],
+        include_gists = (args.include_gists or args.include_starred_gists)
+        if (args.include_repository or args.include_everything) \
+                or (include_gists and repository.get('is_gist')):
+            repo_name = repository.get('name') if not repository.get('is_gist') else repository.get('id')
+            fetch_repository(repo_name,
                              repo_url,
                              repo_dir,
                              skip_existing=args.skip_existing,
                              bare_clone=args.bare_clone,
                              lfs_clone=args.lfs_clone)
+
+            if repository.get('is_gist'):
+                # dump gist information to a file as well
+                output_file = '{0}/gist.json'.format(repo_cwd)
+                with codecs.open(output_file, 'w', encoding='utf-8') as f:
+                    json_dump(repository, f)
+
+                continue  # don't try to back anything else for a gist; it doesn't exist
 
         download_wiki = (args.include_wiki or args.include_everything)
         if repository['has_wiki'] and download_wiki:
