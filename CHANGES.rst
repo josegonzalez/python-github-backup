@@ -1,6 +1,15 @@
 Changelog
 =========
 
+0.17.0 (2018-02-20)
+-------------------
+
+- Short circuit gists backup process. [W. Harrison Wright]
+
+- Formatting. [W. Harrison Wright]
+
+- Add ability to backup gists. [W. Harrison Wright]
+
 0.16.0 (2018-01-22)
 -------------------
 
