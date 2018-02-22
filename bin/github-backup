@@ -168,6 +168,14 @@ def parse_args():
                         action='store_true',
                         dest='include_watched',
                         help='include watched repositories in backup')
+    parser.add_argument('--followers',
+                        action='store_true',
+                        dest='include_followers',
+                        help='include JSON output of followers in backup')
+    parser.add_argument('--following',
+                        action='store_true',
+                        dest='include_following',
+                        help='include JSON output of following users in backup')
     parser.add_argument('--all',
                         action='store_true',
                         dest='include_everything',
@@ -886,24 +894,40 @@ def backup_account(args, output_directory):
     account_cwd = os.path.join(output_directory, 'account')
 
     if args.include_starred or args.include_everything:
-        output_file = '{0}/starred.json'.format(account_cwd)
-        template = "https://{0}/users/{1}/starred"
-        template = template.format(get_github_api_host(args), args.user)
+        output_file = "{0}/starred.json".format(account_cwd)
+        template = "https://{0}/users/{1}/starred".format(get_github_api_host(args), args.user)
         _backup_data(args,
-                     'starred repositories',
+                     "starred repositories",
                      template,
                      output_file,
                      account_cwd)
 
     if args.include_watched or args.include_everything:
-        output_file = '{0}/watched.json'.format(account_cwd)
-        template = "https://{0}/users/{1}/subscriptions"
-        template = template.format(get_github_api_host(args), args.user)
+        output_file = "{0}/watched.json".format(account_cwd)
+        template = "https://{0}/users/{1}/subscriptions".format(get_github_api_host(args), args.user)
         _backup_data(args,
-                     'watched repositories',
+                     "watched repositories",
                      template,
                      output_file,
                      account_cwd)
+
+    if args.include_followers or args.include_everything:
+        output_file = "{0}/followers.json".format(account_cwd)
+        template = "https://{0}/users/{1}/followers".format(get_github_api_host(args), args.user)
+        _backup_data(args,
+                    "followers",
+                    template,
+                    output_file,
+                    account_cwd)
+
+    if args.include_following or args.include_everything:
+        output_file = "{0}/following.json".format(account_cwd)
+        template = "https://{0}/users/{1}/following".format(get_github_api_host(args), args.user)
+        _backup_data(args,
+                    "following",
+                    template,
+                    output_file,
+                    account_cwd)
 
 
 def _backup_data(args, name, template, output_file, output_directory):

@@ -28,12 +28,12 @@ Usage
 CLI Usage is as follows::
 
     github-backup [-h] [-u USERNAME] [-p PASSWORD] [-t TOKEN]
-                  [-o OUTPUT_DIRECTORY] [-i] [--starred] [--watched]
-                  [--all] [--issues] [--issue-comments] [--issue-events]
-                  [--pulls] [--pull-comments] [--pull-commits] [--labels]
-                  [--hooks] [--milestones] [--repositories] [--bare] [--lfs]
-                  [--wikis] [--skip-existing] [--all-starred]
-                  [--gists] [--starred-gists]
+                  [-o OUTPUT_DIRECTORY] [-i] [--starred] [--all-starred]
+                  [--watched] [--followers] [--following] [--all]
+                  [--issues] [--issue-comments] [--issue-events] [--pulls]
+                  [--pull-comments] [--pull-commits] [--labels] [--hooks]
+                  [--milestones] [--repositories] [--bare] [--lfs]
+                  [--wikis] [--gists] [--starred-gists] [--skip-existing]
                   [-L [LANGUAGES [LANGUAGES ...]]] [-N NAME_REGEX]
                   [-H GITHUB_HOST] [-O] [-R REPOSITORY] [-P] [-F]
                   [--prefer-ssh] [-v]
@@ -54,12 +54,16 @@ CLI Usage is as follows::
                             password for basic auth. If a username is given but
                             not a password, the password will be prompted for.
       -t TOKEN, --token TOKEN
-                            personal access or OAuth token
+                            personal access or OAuth token, or path to token
+                            (file://...)
       -o OUTPUT_DIRECTORY, --output-directory OUTPUT_DIRECTORY
                             directory at which to backup the repositories
       -i, --incremental     incremental backup
       --starred             include JSON output of starred repositories in backup
+      --all-starred         include starred repositories in backup
       --watched             include watched repositories in backup
+      --followers           include JSON output of followers in backup
+      --following           include JSON output of following users in backup
       --all                 include everything in backup
       --issues              include issues in backup
       --issue-comments      include issue comments in backup
@@ -73,12 +77,12 @@ CLI Usage is as follows::
       --milestones          include milestones in backup
       --repositories        include repository clone in backup
       --bare                clone bare repositories
-      --lfs                 clone LFS repositories (requires Git LFS to be installed, https://git-lfs.github.com)
+      --lfs                 clone LFS repositories (requires Git LFS to be
+                            installed, https://git-lfs.github.com)
       --wikis               include wiki clone in backup
-      --skip-existing       skip project if a backup directory exists
-      --all-starred         include starred repositories in backup
       --gists               include gists in backup
       --starred-gists       include starred gists in backup
+      --skip-existing       skip project if a backup directory exists
       -L [LANGUAGES [LANGUAGES ...]], --languages [LANGUAGES [LANGUAGES ...]]
                             only allow these languages
       -N NAME_REGEX, --name-regex NAME_REGEX
