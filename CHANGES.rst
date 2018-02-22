@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.18.0 (2018-02-22)
+-------------------
+
+- Add option to fetch followers/following JSON data. [Stephen Greene]
+
 0.17.0 (2018-02-20)
 -------------------
 
