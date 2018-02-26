@@ -831,7 +831,7 @@ def fetch_repository(name,
             clone_exists = subprocess.check_output(['git',
                                                     'rev-parse',
                                                     '--is-bare-repository'],
-                                                   cwd=local_dir) == "true\n"
+                                                   cwd=local_dir) == b"true\n"
         else:
             clone_exists = False
     else:
