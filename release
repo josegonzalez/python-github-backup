@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 set -eo pipefail; [[ $RELEASE_TRACE ]] && set -x
 
-PACKAGE_NAME='github-backup'
-INIT_PACKAGE_NAME='github_backup'
+if [[ ! -f setup.py ]]; then
+  echo -e "${RED}WARNING: Missing setup.py${COLOR_OFF}\n"
+  exit 1
+fi
+
+PACKAGE_NAME="$(cat setup.py | grep "name='" | head | cut -d "'" -f2)"
+INIT_PACKAGE_NAME="$(echo "${PACKAGE_NAME//-/_}")"
 PUBLIC="true"
 
 # Colors
