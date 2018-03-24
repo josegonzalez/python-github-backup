@@ -1,6 +1,27 @@
 Changelog
 =========
 
+0.19.0 (2018-03-24)
+-------------------
+
+- Add additional output for the current request. [Robin Gloster]
+
+  This is useful to have some progress indication for huge repositories.
+
+
+- Add option to backup additional PR details. [Robin Gloster]
+
+  Some payload is only included when requesting a single pull request
+
+
+- Mark string as binary in comparison for skip_existing. [Johannes
+  Bornhold]
+
+  Found out that the flag "--skip-existing" did not work out as expected on Python
+  3.6. Tracked it down to the comparison which has to be against a string of bytes
+  in Python3.
+
+
 0.18.0 (2018-02-22)
 -------------------
 
