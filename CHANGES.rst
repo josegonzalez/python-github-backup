@@ -1,6 +1,13 @@
 Changelog
 =========
 
+0.20.0 (2018-03-24)
+-------------------
+
+- Chore: drop Python 2.6. [Jose Diaz-Gonzalez]
+
+- Feat: simplify release script. [Jose Diaz-Gonzalez]
+
 0.19.2 (2018-03-24)
 -------------------
 
