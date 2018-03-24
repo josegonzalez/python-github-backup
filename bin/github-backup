@@ -204,6 +204,10 @@ def parse_args():
                         action='store_true',
                         dest='include_pull_commits',
                         help='include pull request commits in backup')
+    parser.add_argument('--pull-details',
+                        action='store_true',
+                        dest='include_pull_details',
+                        help='include more pull request details in backup')
     parser.add_argument('--labels',
                         action='store_true',
                         dest='include_labels',
@@ -450,6 +454,7 @@ def _construct_request(per_page, page, query_args, template, auth):
     request = Request(template + '?' + querystring)
     if auth is not None:
         request.add_header('Authorization', 'Basic '.encode('ascii') + auth)
+    log_info('Requesting {}?{}'.format(template, querystring))
     return request
 
 
@@ -725,23 +730,35 @@ def backup_pulls(args, repo_cwd, repository, repos_template):
     pulls = {}
     _pulls_template = '{0}/{1}/pulls'.format(repos_template,
                                              repository['full_name'])
+    query_args = {
+        'filter': 'all',
+        'state': 'all',
+        'sort': 'updated',
+        'direction': 'desc',
+    }
 
-    pull_states = ['open', 'closed']
-    for pull_state in pull_states:
-        query_args = {
-            'filter': 'all',
-            'state': pull_state,
-            'sort': 'updated',
-            'direction': 'desc',
-        }
-
-        # It'd be nice to be able to apply the args.since filter here...
+    if not args.include_pull_details:
+        pull_states = ['open', 'closed']
+        for pull_state in pull_states:
+            query_args['state'] = pull_state
+            # It'd be nice to be able to apply the args.since filter here...
+            _pulls = retrieve_data(args,
+                                   _pulls_template,
+                                   query_args=query_args)
+            for pull in _pulls:
+                if not args.since or pull['updated_at'] >= args.since:
+                    pulls[pull['number']] = pull
+    else:
         _pulls = retrieve_data(args,
                                _pulls_template,
                                query_args=query_args)
         for pull in _pulls:
             if not args.since or pull['updated_at'] >= args.since:
-                pulls[pull['number']] = pull
+                pulls[pull['number']] = retrieve_data(
+                    args,
+                    _pulls_template + '/{}'.format(pull['number']),
+                    single_request=True
+                )
 
     log_info('Saving {0} pull requests to disk'.format(
         len(list(pulls.keys()))))
