@@ -303,12 +303,12 @@ def get_auth(args, encode=True):
             if platform.system() != 'Darwin':
                 log_error("Keychain arguments are only supported on Mac OSX")
             try:
-                with open(os.devnull,'w') as devnull:
+                with open(os.devnull, 'w') as devnull:
                     token = (subprocess.check_output([
-                        'security','find-generic-password',
-                        '-s',args.osx_keychain_item_name,
-                        '-a',args.osx_keychain_item_account,
-                        '-w' ], stderr=devnull).strip())
+                        'security', 'find-generic-password',
+                        '-s', args.osx_keychain_item_name,
+                        '-a', args.osx_keychain_item_account,
+                        '-w'], stderr=devnull).strip())
                 auth = token + ':' + 'x-oauth-basic'
             except:
                 log_error('No password item matching the provided name and account could be found in the osx keychain.')
@@ -932,19 +932,19 @@ def backup_account(args, output_directory):
         output_file = "{0}/followers.json".format(account_cwd)
         template = "https://{0}/users/{1}/followers".format(get_github_api_host(args), args.user)
         _backup_data(args,
-                    "followers",
-                    template,
-                    output_file,
-                    account_cwd)
+                     "followers",
+                     template,
+                     output_file,
+                     account_cwd)
 
     if args.include_following or args.include_everything:
         output_file = "{0}/following.json".format(account_cwd)
         template = "https://{0}/users/{1}/following".format(get_github_api_host(args), args.user)
         _backup_data(args,
-                    "following",
-                    template,
-                    output_file,
-                    account_cwd)
+                     "following",
+                     template,
+                     output_file,
+                     account_cwd)
 
 
 def _backup_data(args, name, template, output_file, output_directory):
