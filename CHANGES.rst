@@ -1,7 +1,15 @@
 Changelog
 =========
 
-0.19.1 (2018-03-24)
+0.19.2 (2018-03-24)
+-------------------
+
+Fix
+~~~
+
+- Cleanup pep8 violations. [Jose Diaz-Gonzalez]
+
+0.19.0 (2018-03-24)
 -------------------
 
 - Add additional output for the current request. [Robin Gloster]
