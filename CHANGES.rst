@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.19.0 (2018-03-24)
+0.19.1 (2018-03-24)
 -------------------
 
 - Add additional output for the current request. [Robin Gloster]
