@@ -767,10 +767,18 @@ def backup_pulls(args, repo_cwd, repository, repos_template):
     for number, pull in list(pulls.items()):
         if args.include_pull_comments or args.include_everything:
             template = comments_template.format(number)
-            pulls[number]['comment_data'] = retrieve_data(args, template)
+            try:
+              pulls[number]['comment_data'] = retrieve_data(args, template)
+            except TypeError as e:
+              log_info("Warning: comment_data doesn't exist for this pull request: " + str(e))
+              pass
         if args.include_pull_commits or args.include_everything:
             template = commits_template.format(number)
-            pulls[number]['commit_data'] = retrieve_data(args, template)
+            try:
+              pulls[number]['commit_data'] = retrieve_data(args, template)
+            except TypeError as e:
+              log_info("Warning: commit_data doesn't exist for this pull request: " + str(e))
+              pass
 
         pull_file = '{0}/{1}.json'.format(pulls_cwd, number)
         with codecs.open(pull_file, 'w', encoding='utf-8') as f:
