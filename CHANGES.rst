@@ -1,6 +1,14 @@
 Changelog
 =========
 
+0.20.1 (2018-08-28)
+-------------------
+
+Fix
+~~~
+
+- Don't crash on missing fields in pull requests. [Igor Cherkaev]
+
 0.20.0 (2018-03-24)
 -------------------
 
