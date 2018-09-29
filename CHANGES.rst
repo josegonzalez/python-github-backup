@@ -1,6 +1,15 @@
 Changelog
 =========
 
+0.20.1 (2018-09-29)
+-------------------
+
+- Clone the specified user's gists, not the authenticated user. [W.
+  Harrison Wright]
+
+- Clone the specified user's starred repos, not the authenticated user.
+  [W. Harrison Wright]
+
 0.20.0 (2018-03-24)
 -------------------
 
