@@ -538,7 +538,7 @@ def retrieve_repositories(args):
         repos.extend(starred_repos)
 
     if args.include_gists:
-        gists_template = 'https://{0}/gists'.format(get_github_api_host(args))
+        gists_template = 'https://{0}/users/{1}/gists'.format(get_github_api_host(args), args.user)
         gists = retrieve_data(args, gists_template, single_request=False)
         # flag each repo as a gist for downstream processing
         for item in gists:
