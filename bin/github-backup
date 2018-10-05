@@ -513,8 +513,9 @@ def check_git_lfs_install():
 def retrieve_repositories(args):
     log_info('Retrieving repositories')
     single_request = False
-    template = 'https://{0}/user/repos'.format(
-        get_github_api_host(args))
+    template = 'https://{0}/users/{1}/repos'.format(
+        get_github_api_host(args),
+            args.user)
     if args.organization:
         template = 'https://{0}/orgs/{1}/repos'.format(
             get_github_api_host(args),
