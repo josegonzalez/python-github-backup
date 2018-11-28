@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.21.0 (2018-11-28)
+-------------------
+
+- Correctly download repos when user arg != authenticated user. [W.
+  Harrison Wright]
+
 0.20.1 (2018-09-29)
 -------------------
 
