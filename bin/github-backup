@@ -167,7 +167,7 @@ def parse_args():
     parser.add_argument('--watched',
                         action='store_true',
                         dest='include_watched',
-                        help='include watched repositories in backup [*]')
+                        help='include JSON output of watched repositories in backup')
     parser.add_argument('--followers',
                         action='store_true',
                         dest='include_followers',
@@ -207,7 +207,7 @@ def parse_args():
     parser.add_argument('--pull-details',
                         action='store_true',
                         dest='include_pull_details',
-                        help='include more pull request details in backup')
+                        help='include more pull request details in backup [*]')
     parser.add_argument('--labels',
                         action='store_true',
                         dest='include_labels',
@@ -239,7 +239,7 @@ def parse_args():
     parser.add_argument('--gists',
                         action='store_true',
                         dest='include_gists',
-                        help='include gists in backup')
+                        help='include gists in backup [*]')
     parser.add_argument('--starred-gists',
                         action='store_true',
                         dest='include_starred_gists',
