@@ -1,6 +1,13 @@
 Changelog
 =========
 
+0.21.1 (2018-12-25)
+-------------------
+
+- Mark options which are not included in --all. [Bernd]
+
+  As discussed in Issue #100
+
 0.21.0 (2018-11-28)
 -------------------
 
