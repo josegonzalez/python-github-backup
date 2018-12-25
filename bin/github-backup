@@ -163,11 +163,11 @@ def parse_args():
     parser.add_argument('--all-starred',
                         action='store_true',
                         dest='all_starred',
-                        help='include starred repositories in backup')
+                        help='include starred repositories in backup [*]')
     parser.add_argument('--watched',
                         action='store_true',
                         dest='include_watched',
-                        help='include watched repositories in backup')
+                        help='include JSON output of watched repositories in backup')
     parser.add_argument('--followers',
                         action='store_true',
                         dest='include_followers',
@@ -179,7 +179,7 @@ def parse_args():
     parser.add_argument('--all',
                         action='store_true',
                         dest='include_everything',
-                        help='include everything in backup')
+                        help='include everything in backup (not including [*])')
     parser.add_argument('--issues',
                         action='store_true',
                         dest='include_issues',
@@ -207,7 +207,7 @@ def parse_args():
     parser.add_argument('--pull-details',
                         action='store_true',
                         dest='include_pull_details',
-                        help='include more pull request details in backup')
+                        help='include more pull request details in backup [*]')
     parser.add_argument('--labels',
                         action='store_true',
                         dest='include_labels',
@@ -231,7 +231,7 @@ def parse_args():
     parser.add_argument('--lfs',
                         action='store_true',
                         dest='lfs_clone',
-                        help='clone LFS repositories (requires Git LFS to be installed, https://git-lfs.github.com)')
+                        help='clone LFS repositories (requires Git LFS to be installed, https://git-lfs.github.com) [*]')
     parser.add_argument('--wikis',
                         action='store_true',
                         dest='include_wiki',
@@ -239,11 +239,11 @@ def parse_args():
     parser.add_argument('--gists',
                         action='store_true',
                         dest='include_gists',
-                        help='include gists in backup')
+                        help='include gists in backup [*]')
     parser.add_argument('--starred-gists',
                         action='store_true',
                         dest='include_starred_gists',
-                        help='include starred gists in backup')
+                        help='include starred gists in backup [*]')
     parser.add_argument('--skip-existing',
                         action='store_true',
                         dest='skip_existing',
@@ -273,11 +273,11 @@ def parse_args():
     parser.add_argument('-P', '--private',
                         action='store_true',
                         dest='private',
-                        help='include private repositories')
+                        help='include private repositories [*]')
     parser.add_argument('-F', '--fork',
                         action='store_true',
                         dest='fork',
-                        help='include forked repositories')
+                        help='include forked repositories [*]')
     parser.add_argument('--prefer-ssh',
                         action='store_true',
                         help='Clone repositories using SSH instead of HTTPS')
