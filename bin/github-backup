@@ -40,21 +40,33 @@ FNULL = open(os.devnull, 'w')
 
 
 def log_error(message):
-    if type(message) == str:
-        message = [message]
-
-    for msg in message:
-        sys.stderr.write("{0}\n".format(msg))
-
+    """
+    Log message (str) or messages (List[str]) to stderr and exit with status 1
+    """
+    log_warning(message)
     sys.exit(1)
 
 
 def log_info(message):
+    """
+    Log message (str) or messages (List[str]) to stdout
+    """
     if type(message) == str:
         message = [message]
 
     for msg in message:
         sys.stdout.write("{0}\n".format(msg))
+
+
+def log_warning(message):
+    """
+    Log message (str) or messages (List[str]) to stderr
+    """
+    if type(message) == str:
+        message = [message]
+
+    for msg in message:
+        sys.stderr.write("{0}\n".format(msg))
 
 
 def logging_subprocess(popenargs,
@@ -525,7 +537,7 @@ def retrieve_repositories(args, authenticated_user):
             get_github_api_host(args))
     else:
         if args.private:
-            log_error('Authenticated user is different from user being backed up, thus private repositories cannot be accessed')
+            log_warning('Authenticated user is different from user being backed up, thus private repositories cannot be accessed')
         template = 'https://{0}/users/{1}/repos'.format(
             get_github_api_host(args),
             args.user)
