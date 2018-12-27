@@ -525,7 +525,6 @@ def check_git_lfs_install():
     exit_code = subprocess.call(['git', 'lfs', 'version'])
     if exit_code != 0:
         log_error('The argument --lfs requires you to have Git LFS installed.\nYou can get it from https://git-lfs.github.com.')
-        sys.exit(1)
 
 
 def retrieve_repositories(args, authenticated_user):
