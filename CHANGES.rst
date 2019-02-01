@@ -1,6 +1,16 @@
 Changelog
 =========
 
+0.22.0 (2019-02-01)
+-------------------
+
+- Remove unnecessary sys.exit call. [W. Harrison Wright]
+
+- Add org check to avoid incorrect log output. [W. Harrison Wright]
+
+- Fix accidental system exit with better logging strategy. [W. Harrison
+  Wright]
+
 0.21.1 (2018-12-25)
 -------------------
 
