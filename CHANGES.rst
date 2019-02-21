@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.22.1 (2019-02-21)
+-------------------
+
+- Log URL error https://github.com/josegonzalez/python-github-
+  backup/issues/105. [JOHN STETIC]
+
 0.22.0 (2019-02-01)
 -------------------
 
