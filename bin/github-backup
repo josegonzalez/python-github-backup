@@ -445,7 +445,8 @@ def _get_response(request, auth, template):
         except HTTPError as exc:
             errors, should_continue = _request_http_error(exc, auth, errors)  # noqa
             r = exc
-        except URLError:
+        except URLError as e:
+            log_error(e.reason)
             should_continue = _request_url_error(template, retry_timeout)
             if not should_continue:
                 raise
