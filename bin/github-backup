@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
+import socket
 
 import argparse
 import base64
@@ -404,6 +405,16 @@ def retrieve_data(args, template, query_args=None, single_request=False):
 
         status_code = int(r.getcode())
 
+        retries = 0
+        while retries < 3 and status_code == 502:
+            print('API request returned HTTP 502: Bad Gateway. Retrying in 5 seconds')
+            retries += 1
+            time.sleep(5)
+            request = _construct_request(per_page, page, query_args, template, auth)  # noqa
+            r, errors = _get_response(request, auth, template)
+
+            status_code = int(r.getcode())
+
         if status_code != 200:
             template = 'API request returned HTTP {0}: {1}'
             errors.append(template.format(status_code, r.reason))
@@ -447,6 +458,11 @@ def _get_response(request, auth, template):
             r = exc
         except URLError as e:
             log_warning(e.reason)
+            should_continue = _request_url_error(template, retry_timeout)
+            if not should_continue:
+                raise
+        except socket.error as e:
+            log_warning(e.strerror)
             should_continue = _request_url_error(template, retry_timeout)
             if not should_continue:
                 raise
