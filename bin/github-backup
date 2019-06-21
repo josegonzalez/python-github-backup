@@ -303,7 +303,7 @@ def parse_args():
     parser.add_argument('--keychain-account',
                         dest='osx_keychain_item_account',
                         help='OSX ONLY: account field of password item in OSX keychain that holds the personal access or OAuth token')
-    parser.add_argument('--include-releases',
+    parser.add_argument('--releases',
                         action='store_true',
                         dest='include_releases',
                         help='include release information, not including assets or binaries'
