@@ -32,7 +32,7 @@ CLI Usage is as follows::
                   [--watched] [--followers] [--following] [--all]
                   [--issues] [--issue-comments] [--issue-events] [--pulls]
                   [--pull-comments] [--pull-commits] [--labels] [--hooks]
-                  [--milestones] [--repositories] [--bare] [--lfs]
+                  [--milestones] [--repositories] [--releases] [--bare] [--lfs]
                   [--wikis] [--gists] [--starred-gists] [--skip-existing]
                   [-L [LANGUAGES [LANGUAGES ...]]] [-N NAME_REGEX]
                   [-H GITHUB_HOST] [-O] [-R REPOSITORY] [-P] [-F]
@@ -76,6 +76,7 @@ CLI Usage is as follows::
                             authenticated)
       --milestones          include milestones in backup
       --repositories        include repository clone in backup
+      --releases            include repository releases' information without assets or binaries
       --bare                clone bare repositories
       --lfs                 clone LFS repositories (requires Git LFS to be
                             installed, https://git-lfs.github.com)
