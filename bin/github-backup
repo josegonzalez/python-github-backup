@@ -303,6 +303,11 @@ def parse_args():
     parser.add_argument('--keychain-account',
                         dest='osx_keychain_item_account',
                         help='OSX ONLY: account field of password item in OSX keychain that holds the personal access or OAuth token')
+    parser.add_argument('--include-releases',
+                        action='store_true',
+                        dest='include_releases',
+                        help='include release information, not including assets or binaries'
+                        )
     return parser.parse_args()
 
 
@@ -699,6 +704,9 @@ def backup_repositories(args, output_directory, repositories):
         if args.include_hooks or args.include_everything:
             backup_hooks(args, repo_cwd, repository, repos_template)
 
+        if args.include_releases or args.include_everything:
+            backup_releases(args, repo_cwd, repository, repos_template)
+
     if args.incremental:
         open(last_update_path, 'w').write(last_update)
 
@@ -878,6 +886,28 @@ def backup_hooks(args, repo_cwd, repository, repos_template):
                      hook_cwd)
     except SystemExit:
         log_info("Unable to read hooks, skipping")
+
+
+def backup_releases(args, repo_cwd, repository, repos_template):
+    repository_fullname = repository['full_name']
+
+    # give release files somewhere to live & log intent
+    release_cwd = os.path.join(repo_cwd, 'releases')
+    log_info('Retrieving {0} releases'.format(repository_fullname))
+    mkdir_p(repo_cwd, release_cwd)
+
+    query_args = {}
+
+    _release_template = '{0}/{1}/releases'.format(repos_template, repository_fullname)
+    _releases = retrieve_data(args, _release_template, query_args=query_args)
+
+    # for each release, store it
+    log_info('Saving {0} releases to disk'.format(len(_releases)))
+    for release in _releases:
+        release_name = release['tag_name']
+        output_filepath = os.path.join(release_cwd, '{0}.json'.format(release_name))
+        with codecs.open(output_filepath, 'w+', encoding='utf-8') as f:
+            json_dump(release, f)
 
 
 def fetch_repository(name,
