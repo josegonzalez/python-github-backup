@@ -537,6 +537,24 @@ def _request_url_error(template, retry_timeout):
     return False
 
 
+def download_file(url, path, auth):
+    request = Request(url)
+    request.add_header('Accept', 'application/octet-stream')
+    request.add_header('Authorization', 'Basic '.encode('ascii') + auth)
+    data = urlopen(request)
+    with open(path, 'wb') as f:
+        f.write(data.read())
+
+    # import requests
+    # r = requests.get(url, stream=True, headers={
+    #         'Accept': 'application/octet-stream',
+    #         'Authorization': 'Basic '.encode('ascii') + auth
+    #     })
+    # with open(path, 'wb') as f:
+    #     for chunk in r.iter_content(1024):
+    #         f.write(chunk)
+
+
 def get_authenticated_user(args):
     template = 'https://{0}/user'.format(get_github_api_host(args))
     data = retrieve_data(args, template, single_request=True)
@@ -898,16 +916,20 @@ def backup_releases(args, repo_cwd, repository, repos_template):
 
     query_args = {}
 
-    _release_template = '{0}/{1}/releases'.format(repos_template, repository_fullname)
-    _releases = retrieve_data(args, _release_template, query_args=query_args)
+    release_template = '{0}/{1}/releases'.format(repos_template, repository_fullname)
+    releases = retrieve_data(args, release_template, query_args=query_args)
 
     # for each release, store it
-    log_info('Saving {0} releases to disk'.format(len(_releases)))
-    for release in _releases:
+    log_info('Saving {0} releases to disk'.format(len(releases)))
+    for release in releases:
         release_name = release['tag_name']
         output_filepath = os.path.join(release_cwd, '{0}.json'.format(release_name))
         with codecs.open(output_filepath, 'w+', encoding='utf-8') as f:
             json_dump(release, f)
+
+        assets = retrieve_data(args, release['assets_url'])
+        for asset in assets:
+            download_file(asset['url'], os.path.join(release_cwd, asset['name']), get_auth(args))
 
 
 def fetch_repository(name,
