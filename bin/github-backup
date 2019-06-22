@@ -26,6 +26,8 @@ try:
     from urllib.error import HTTPError, URLError
     from urllib.request import urlopen
     from urllib.request import Request
+    from urllib.request import HTTPRedirectHandler
+    from urllib.request import build_opener
 except ImportError:
     # python 2
     from urlparse import urlparse
@@ -34,6 +36,8 @@ except ImportError:
     from urllib2 import HTTPError, URLError
     from urllib2 import urlopen
     from urllib2 import Request
+    from urllib2 import HTTPRedirectHandler
+    from urllib2 import build_opener
 
 from github_backup import __version__
 
@@ -537,22 +541,33 @@ def _request_url_error(template, retry_timeout):
     return False
 
 
+class S3HTTPRedirectHandler(HTTPRedirectHandler):
+    """
+    A subclassed redirect handler for downloading Github assets from S3.
+
+    urllib will add the Authorization header to the redirected request to S3, which will result in a 400,
+    so we should remove said header on redirect.
+    """
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        request = super(S3HTTPRedirectHandler, self).redirect_request(req, fp, code, msg, headers, newurl)
+        del request.headers['Authorization']
+        return request
+
+
 def download_file(url, path, auth):
     request = Request(url)
     request.add_header('Accept', 'application/octet-stream')
     request.add_header('Authorization', 'Basic '.encode('ascii') + auth)
-    data = urlopen(request)
-    with open(path, 'wb') as f:
-        f.write(data.read())
+    opener = build_opener(S3HTTPRedirectHandler)
+    response = opener.open(request)
 
-    # import requests
-    # r = requests.get(url, stream=True, headers={
-    #         'Accept': 'application/octet-stream',
-    #         'Authorization': 'Basic '.encode('ascii') + auth
-    #     })
-    # with open(path, 'wb') as f:
-    #     for chunk in r.iter_content(1024):
-    #         f.write(chunk)
+    chunk_size = 16 * 1024
+    with open(path, 'wb') as f:
+        while True:
+            chunk = response.read(chunk_size)
+            if not chunk:
+                break
+            f.write(chunk)
 
 
 def get_authenticated_user(args):
