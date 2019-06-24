@@ -314,6 +314,10 @@ def parse_args():
                         dest='include_releases',
                         help='include release information, not including assets or binaries'
                         )
+    parser.add_argument('--assets',
+                        action='store_true',
+                        dest='include_assets',
+                        help='include assets alongside release information; only applies if including releases')
     return parser.parse_args()
 
 
@@ -744,7 +748,8 @@ def backup_repositories(args, output_directory, repositories):
             backup_hooks(args, repo_cwd, repository, repos_template)
 
         if args.include_releases or args.include_everything:
-            backup_releases(args, repo_cwd, repository, repos_template)
+            backup_releases(args, repo_cwd, repository, repos_template,
+                            include_assets=args.include_assets or args.include_everything)
 
     if args.incremental:
         open(last_update_path, 'w').write(last_update)
@@ -927,7 +932,7 @@ def backup_hooks(args, repo_cwd, repository, repos_template):
         log_info("Unable to read hooks, skipping")
 
 
-def backup_releases(args, repo_cwd, repository, repos_template):
+def backup_releases(args, repo_cwd, repository, repos_template, include_assets=False):
     repository_fullname = repository['full_name']
 
     # give release files somewhere to live & log intent
@@ -948,9 +953,10 @@ def backup_releases(args, repo_cwd, repository, repos_template):
         with codecs.open(output_filepath, 'w+', encoding='utf-8') as f:
             json_dump(release, f)
 
-        assets = retrieve_data(args, release['assets_url'])
-        for asset in assets:
-            download_file(asset['url'], os.path.join(release_cwd, asset['name']), get_auth(args))
+        if include_assets:
+            assets = retrieve_data(args, release['assets_url'])
+            for asset in assets:
+                download_file(asset['url'], os.path.join(release_cwd, asset['name']), get_auth(args))
 
 
 def fetch_repository(name,
