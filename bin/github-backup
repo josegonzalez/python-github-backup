@@ -801,7 +801,7 @@ def backup_pulls(args, repo_cwd, repository, repos_template):
                     args,
                     _pulls_template + '/{}'.format(pull['number']),
                     single_request=True
-                )
+                )[0]
 
     log_info('Saving {0} pull requests to disk'.format(
         len(list(pulls.keys()))))
