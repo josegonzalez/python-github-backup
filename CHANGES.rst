@@ -1,9 +1,24 @@
 Changelog
 =========
 
-0.23.0 (2019-06-04)
+0.24.0 (2019-06-27)
 -------------------
 ------------------------
+- QKT-45: include assets - update readme. [Ethan Timm]
+
+  update readme with flag information for including assets alongside their respective releases
+- Make assets it's own flag. [Harrison Wright]
+- Fix super call for python2. [Harrison Wright]
+- Fix redirect to s3. [Harrison Wright]
+- WIP: download assets. [Harrison Wright]
+- QKT-42: releases - add readme info. [ethan]
+- QKT-42 update: shorter command flag. [ethan]
+- QKT-42: support saving release information. [ethan]
+- Fix pull details. [Harrison Wright]
+
+
+0.23.0 (2019-06-04)
+-------------------
 - Avoid to crash in case of HTTP 502 error. [Gael de Chalendar]
 
   Survive also on socket.error connections like on HTTPError or URLError.
