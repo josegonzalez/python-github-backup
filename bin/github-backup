@@ -18,6 +18,7 @@ import subprocess
 import sys
 import time
 import platform
+PY2 = False
 try:
     # python 3
     from urllib.parse import urlparse
@@ -26,14 +27,19 @@ try:
     from urllib.error import HTTPError, URLError
     from urllib.request import urlopen
     from urllib.request import Request
+    from urllib.request import HTTPRedirectHandler
+    from urllib.request import build_opener
 except ImportError:
     # python 2
+    PY2 = True
     from urlparse import urlparse
     from urllib import quote as urlquote
     from urllib import urlencode
     from urllib2 import HTTPError, URLError
     from urllib2 import urlopen
     from urllib2 import Request
+    from urllib2 import HTTPRedirectHandler
+    from urllib2 import build_opener
 
 from github_backup import __version__
 
@@ -303,6 +309,15 @@ def parse_args():
     parser.add_argument('--keychain-account',
                         dest='osx_keychain_item_account',
                         help='OSX ONLY: account field of password item in OSX keychain that holds the personal access or OAuth token')
+    parser.add_argument('--releases',
+                        action='store_true',
+                        dest='include_releases',
+                        help='include release information, not including assets or binaries'
+                        )
+    parser.add_argument('--assets',
+                        action='store_true',
+                        dest='include_assets',
+                        help='include assets alongside release information; only applies if including releases')
     return parser.parse_args()
 
 
@@ -532,6 +547,39 @@ def _request_url_error(template, retry_timeout):
     return False
 
 
+class S3HTTPRedirectHandler(HTTPRedirectHandler):
+    """
+    A subclassed redirect handler for downloading Github assets from S3.
+
+    urllib will add the Authorization header to the redirected request to S3, which will result in a 400,
+    so we should remove said header on redirect.
+    """
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        if PY2:
+            # HTTPRedirectHandler is an old style class
+            request = HTTPRedirectHandler.redirect_request(self, req, fp, code, msg, headers, newurl)
+        else:
+            request = super(S3HTTPRedirectHandler, self).redirect_request(req, fp, code, msg, headers, newurl)
+        del request.headers['Authorization']
+        return request
+
+
+def download_file(url, path, auth):
+    request = Request(url)
+    request.add_header('Accept', 'application/octet-stream')
+    request.add_header('Authorization', 'Basic '.encode('ascii') + auth)
+    opener = build_opener(S3HTTPRedirectHandler)
+    response = opener.open(request)
+
+    chunk_size = 16 * 1024
+    with open(path, 'wb') as f:
+        while True:
+            chunk = response.read(chunk_size)
+            if not chunk:
+                break
+            f.write(chunk)
+
+
 def get_authenticated_user(args):
     template = 'https://{0}/user'.format(get_github_api_host(args))
     data = retrieve_data(args, template, single_request=True)
@@ -698,6 +746,10 @@ def backup_repositories(args, output_directory, repositories):
 
         if args.include_hooks or args.include_everything:
             backup_hooks(args, repo_cwd, repository, repos_template)
+
+        if args.include_releases or args.include_everything:
+            backup_releases(args, repo_cwd, repository, repos_template,
+                            include_assets=args.include_assets or args.include_everything)
 
     if args.incremental:
         open(last_update_path, 'w').write(last_update)
@@ -878,6 +930,33 @@ def backup_hooks(args, repo_cwd, repository, repos_template):
                      hook_cwd)
     except SystemExit:
         log_info("Unable to read hooks, skipping")
+
+
+def backup_releases(args, repo_cwd, repository, repos_template, include_assets=False):
+    repository_fullname = repository['full_name']
+
+    # give release files somewhere to live & log intent
+    release_cwd = os.path.join(repo_cwd, 'releases')
+    log_info('Retrieving {0} releases'.format(repository_fullname))
+    mkdir_p(repo_cwd, release_cwd)
+
+    query_args = {}
+
+    release_template = '{0}/{1}/releases'.format(repos_template, repository_fullname)
+    releases = retrieve_data(args, release_template, query_args=query_args)
+
+    # for each release, store it
+    log_info('Saving {0} releases to disk'.format(len(releases)))
+    for release in releases:
+        release_name = release['tag_name']
+        output_filepath = os.path.join(release_cwd, '{0}.json'.format(release_name))
+        with codecs.open(output_filepath, 'w+', encoding='utf-8') as f:
+            json_dump(release, f)
+
+        if include_assets:
+            assets = retrieve_data(args, release['assets_url'])
+            for asset in assets:
+                download_file(asset['url'], os.path.join(release_cwd, asset['name']), get_auth(args))
 
 
 def fetch_repository(name,
