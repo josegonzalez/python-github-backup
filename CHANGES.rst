@@ -1,9 +1,16 @@
 Changelog
 =========
 
-0.24.0 (2019-06-27)
+0.25.0 (2019-07-03)
 -------------------
 ------------------------
+- Issue 119: Change retrieve_data to be a generator. [2a]
+
+  See issue #119.
+
+
+0.24.0 (2019-06-27)
+-------------------
 - QKT-45: include assets - update readme. [Ethan Timm]
 
   update readme with flag information for including assets alongside their respective releases
