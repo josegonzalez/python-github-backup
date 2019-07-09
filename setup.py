@@ -35,7 +35,7 @@ def read_file(*path_pieces):
 def get_version():
     path_parts = ('github_backup', '__init__.py')
     init_file = read_file(*path_parts)
-    version_match = re.search(r'^__version__ = [\'"](.*)[\'"]', init_file, re.M)
+    version_match = re.search(r'^__version__ = [\'"](.*)[\'"]$', init_file, re.M)
     if version_match:
         return version_match.group(1)
     raise RuntimeError("Could not find version string")
