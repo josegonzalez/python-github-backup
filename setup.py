@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import os
-from github_backup import __version__
+import re
 
 try:
     from setuptools import setup
@@ -19,14 +19,31 @@ try:
 except ImportError:
     pass
 
+# path prefix to build from
+loc = os.path.abspath(os.path.dirname(__file__))
+
 
 def open_file(fname):
     return open(os.path.join(os.path.dirname(__file__), fname))
 
 
+def read_file(*path_pieces):
+    with open(os.path.join(loc, *path_pieces), 'r') as f:
+        return f.read()
+
+
+def get_version():
+    path_parts = ('github_backup', '__init__.py')
+    init_file = read_file(*path_parts)
+    version_match = re.search(r'^__version__ = [\'"](.*)[\'"]', init_file, re.M)
+    if version_match:
+        return version_match.group(1)
+    raise RuntimeError("Could not find version string")
+
+
 setup(
     name='github-backup',
-    version=__version__,
+    version=get_version(),
     author='Jose Diaz-Gonzalez',
     author_email='github-backup@josediazgonzalez.com',
     packages=['github_backup'],
