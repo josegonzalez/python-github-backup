@@ -387,11 +387,11 @@ def get_github_host(args):
 
 
 def get_github_repo_url(args, repository):
-    if args.prefer_ssh:
-        return repository['ssh_url']
-
     if repository.get('is_gist'):
         return repository['git_pull_url']
+
+    if args.prefer_ssh:
+        return repository['ssh_url']
 
     auth = get_auth(args, False)
     if auth:
