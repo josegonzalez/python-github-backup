@@ -1,9 +1,16 @@
 Changelog
 =========
 
-0.25.0 (2019-07-03)
+0.26.0 (2019-09-23)
 -------------------
 ------------------------
+- Workaround gist clone in `--prefer-ssh` mode. [Vladislav Yarmak]
+- Create PULL_REQUEST.md. [Jose Diaz-Gonzalez]
+- Create ISSUE_TEMPLATE.md. [Jose Diaz-Gonzalez]
+
+
+0.25.0 (2019-07-03)
+-------------------
 - Issue 119: Change retrieve_data to be a generator. [2a]
 
   See issue #119.
