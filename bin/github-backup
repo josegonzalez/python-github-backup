@@ -584,7 +584,7 @@ def download_file(url, path, auth):
         # Gracefully handle 404 responses (and others) when downloading from S3
         log_warning('Skipping download of asset {0} due to HTTPError: {1}'.format(url, exc.reason))
     except URLError as e:
-        # Gracefully hadnle other URL errors
+        # Gracefully handle other URL errors
         log_warning('Skipping download of asset {0} due to URLError: {1}'.format(url, e.reason))
     except socket.error as e:
         # Gracefully handle socket errors
