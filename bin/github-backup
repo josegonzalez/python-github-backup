@@ -565,6 +565,10 @@ class S3HTTPRedirectHandler(HTTPRedirectHandler):
 
 
 def download_file(url, path, auth):
+    # Skip downloading release assets if they already exist on disk so we don't redownload on every sync
+    if os.path.exists(path):
+        return
+
     request = Request(url)
     request.add_header('Accept', 'application/octet-stream')
     request.add_header('Authorization', 'Basic '.encode('ascii') + auth)
@@ -958,8 +962,12 @@ def backup_releases(args, repo_cwd, repository, repos_template, include_assets=F
 
         if include_assets:
             assets = retrieve_data(args, release['assets_url'])
-            for asset in assets:
-                download_file(asset['url'], os.path.join(release_cwd, asset['name']), get_auth(args))
+            if len(assets) > 0:
+                # give release asset files somewhere to live & download them (not including source archives)
+                release_assets_cwd = os.path.join(release_cwd, release_name)
+                mkdir_p(release_assets_cwd)
+                for asset in assets:
+                    download_file(asset['url'], os.path.join(release_assets_cwd, asset['name']), get_auth(args))
 
 
 def fetch_repository(name,
