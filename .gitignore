@@ -25,3 +25,12 @@ doc/_build
 
 # Generated man page
 doc/aws_hostname.1
+
+# Annoying macOS files
+.DS_Store
+._*
+
+# IDE configuration files
+.vscode
+.atom
+
