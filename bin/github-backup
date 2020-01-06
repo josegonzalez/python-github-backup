@@ -582,14 +582,14 @@ def download_file(url, path, auth):
                 f.write(chunk)
     except HTTPError as exc:
         # Gracefully handle 404 responses (and others) when downloading from S3
-        log_info('Skipping download of asset {0} due to HTTPError: {1}'.format(url, exc.reason))
+        log_warning('Skipping download of asset {0} due to HTTPError: {1}'.format(url, exc.reason))
     except URLError as e:
         # Gracefully hadnle other URL errors
-        log_info('Skipping download of asset {0} due to URLError: {1}'.format(url, e.reason))
+        log_warning('Skipping download of asset {0} due to URLError: {1}'.format(url, e.reason))
     except socket.error as e:
         # Gracefully handle socket errors
         # TODO: Implement retry logic
-        log_info('Skipping download of asset {0} due to socker error: {1}'.format(url, e.strerror))
+        log_warning('Skipping download of asset {0} due to socker error: {1}'.format(url, e.strerror))
 
 
 def get_authenticated_user(args):
