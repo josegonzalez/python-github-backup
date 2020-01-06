@@ -6,7 +6,7 @@ If pull requests implementing bug fixes or enhancements are pushed, I am happy t
 
 If you wish to have a bug fixed, you have a few options:
 
-- Fix it yourself.
+- Fix it yourself and file a pull request.
 - File a bug and hope someone else fixes it for you.
 - Pay me to fix it (my rate is $200 an hour, minimum 1 hour, contact me via my [github email address](https://github.com/josegonzalez) if you want to go this route).
 
