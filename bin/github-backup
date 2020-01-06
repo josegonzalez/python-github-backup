@@ -963,13 +963,11 @@ def backup_releases(args, repo_cwd, repository, repos_template, include_assets=F
         if include_assets:
             assets = retrieve_data(args, release['assets_url'])
             if len(assets) > 0:
-                # give release asset files somewhere to live
+                # give release asset files somewhere to live & download them (not including source archives)
                 release_assets_cwd = os.path.join(release_cwd, release_name)
                 mkdir_p(release_assets_cwd)
-            
-            # download any release asset files (not including source archives)
-            for asset in assets:
-                download_file(asset['url'], os.path.join(release_assets_cwd, asset['name']), get_auth(args))
+                for asset in assets:
+                    download_file(asset['url'], os.path.join(release_assets_cwd, asset['name']), get_auth(args))
 
 
 def fetch_repository(name,
