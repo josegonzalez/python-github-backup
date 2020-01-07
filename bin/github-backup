@@ -337,6 +337,8 @@ def get_auth(args, encode=True):
                         '-s', args.osx_keychain_item_name,
                         '-a', args.osx_keychain_item_account,
                         '-w'], stderr=devnull).strip())
+                if not PY2:
+                    token = token.decode('utf-8')
                 auth = token + ':' + 'x-oauth-basic'
             except:
                 log_error('No password item matching the provided name and account could be found in the osx keychain.')
