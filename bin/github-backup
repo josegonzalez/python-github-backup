@@ -573,15 +573,27 @@ def download_file(url, path, auth):
     request.add_header('Accept', 'application/octet-stream')
     request.add_header('Authorization', 'Basic '.encode('ascii') + auth)
     opener = build_opener(S3HTTPRedirectHandler)
-    response = opener.open(request)
 
-    chunk_size = 16 * 1024
-    with open(path, 'wb') as f:
-        while True:
-            chunk = response.read(chunk_size)
-            if not chunk:
-                break
-            f.write(chunk)
+    try:
+        response = opener.open(request)
+
+        chunk_size = 16 * 1024
+        with open(path, 'wb') as f:
+            while True:
+                chunk = response.read(chunk_size)
+                if not chunk:
+                    break
+                f.write(chunk)
+    except HTTPError as exc:
+        # Gracefully handle 404 responses (and others) when downloading from S3
+        log_warning('Skipping download of asset {0} due to HTTPError: {1}'.format(url, exc.reason))
+    except URLError as e:
+        # Gracefully handle other URL errors
+        log_warning('Skipping download of asset {0} due to URLError: {1}'.format(url, e.reason))
+    except socket.error as e:
+        # Gracefully handle socket errors
+        # TODO: Implement retry logic
+        log_warning('Skipping download of asset {0} due to socker error: {1}'.format(url, e.strerror))
 
 
 def get_authenticated_user(args):
