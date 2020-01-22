@@ -1,9 +1,49 @@
 Changelog
 =========
 
-0.26.0 (2019-09-23)
+0.27.0 (2020-01-21)
 -------------------
 ------------------------
+- Fixed script fails if not installed from pip. [Ben Baron]
+
+  At the top of the script, the line from github_backup import __version__ gets the script's version number to use if the script is called with the -v or --version flags. The problem is that if the script hasn't been installed via pip (for example I cloned the repo directly to my backup server), the script will fail due to an import exception.
+
+  Also presumably it will always use the version number from pip even if running a modified version from git or a fork or something, though this does not fix that as I have no idea how to check if it's running the pip installed version or not. But at least the script will now work fine if cloned from git or just copied to another machine.
+
+  closes https://github.com/josegonzalez/python-github-backup/issues/141
+- Fixed macOS keychain access when using Python 3. [Ben Baron]
+
+  Python 3 is returning bytes rather than a string, so the string concatenation to create the auth variable was throwing an exception which the script was interpreting to mean it couldn't find the password. Adding a conversion to string first fixed the issue.
+- Public repos no longer include the auth token. [Ben Baron]
+
+  When backing up repositories using an auth token and https, the GitHub personal auth token is leaked in each backed up repository. It is included in the URL of each repository's git remote url.
+
+  This is not needed as they are public and can be accessed without the token and can cause issues in the future if the token is ever changed, so I think it makes more sense not to have the token stored in each repo backup. I think the token should only be "leaked" like this out of necessity, e.g. it's a private repository and the --prefer-ssh option was not chosen so https with auth token was required to perform the clone.
+- Fixed comment typo. [Ben Baron]
+- Switched log_info to log_warning in download_file. [Ben Baron]
+- Crash when an release asset doesn't exist. [Ben Baron]
+
+  Currently, the script crashes whenever a release asset is unable to download (for example a 404 response). This change instead logs the failure and allows the script to continue. No retry logic is enabled, but at least it prevents the crash and allows the backup to complete. Retry logic can be implemented later if wanted.
+
+  closes https://github.com/josegonzalez/python-github-backup/issues/129
+- Moved asset downloading loop inside the if block. [Ben Baron]
+- Separate release assets and skip re-downloading. [Ben Baron]
+
+  Currently the script puts all release assets into the same folder called `releases`. So any time 2 release files have the same name, only the last one downloaded is actually saved. A particularly bad example of this is MacDownApp/macdown where all of their releases are named `MacDown.app.zip`. So even though they have 36 releases and all 36 are downloaded, only the last one is actually saved.
+
+  With this change, each releases' assets are now stored in a fubfolder inside `releases` named after the release name. There could still be edge cases if two releases have the same name, but this is still much safer tha the previous behavior.
+
+  This change also now checks if the asset file already exists on disk and skips downloading it. This drastically speeds up addiotnal syncs as it no longer downloads every single release every single time. It will now only download new releases which I believe is the expected behavior.
+
+  closes https://github.com/josegonzalez/python-github-backup/issues/126
+- Added newline to end of file. [Ben Baron]
+- Improved gitignore, macOS files and IDE configs. [Ben Baron]
+
+  Ignores the annoying hidden macOS files .DS_Store and ._* as well as the IDE configuration folders for contributors using the popular Visual Studio Code and Atom IDEs (more can be added later as needed).
+
+
+0.26.0 (2019-09-23)
+-------------------
 - Workaround gist clone in `--prefer-ssh` mode. [Vladislav Yarmak]
 - Create PULL_REQUEST.md. [Jose Diaz-Gonzalez]
 - Create ISSUE_TEMPLATE.md. [Jose Diaz-Gonzalez]
