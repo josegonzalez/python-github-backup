@@ -41,7 +41,11 @@ except ImportError:
     from urllib2 import HTTPRedirectHandler
     from urllib2 import build_opener
 
-from github_backup import __version__
+try:
+    from github_backup import __version__
+    VERSION = __version__
+except ImportError:
+    VERSION = 'unknown'
 
 FNULL = open(os.devnull, 'w')
 
@@ -302,7 +306,7 @@ def parse_args():
                         help='Clone repositories using SSH instead of HTTPS')
     parser.add_argument('-v', '--version',
                         action='version',
-                        version='%(prog)s ' + __version__)
+                        version='%(prog)s ' + VERSION)
     parser.add_argument('--keychain-name',
                         dest='osx_keychain_item_name',
                         help='OSX ONLY: name field of password item in OSX keychain that holds the personal access or OAuth token')
