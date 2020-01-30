@@ -1131,6 +1131,7 @@ def json_dump(data, output_file):
 
 
 def upload_to_aws(local_file, bucket, s3_file):
+    log_info('Uploading tarball to S3 bucket {}'.format(bucket))
     s3 = boto3.client('s3')
 
     try:
@@ -1144,14 +1145,17 @@ def upload_to_aws(local_file, bucket, s3_file):
         print("Credentials not available")
         return False
 
-def make_tarfile(output_filename, source_dir):
-    tar = tarfile.open(output_filename, "w:gz")
+def create_tarball(file_name, source_dir):
+    log_info('Compressing {}'.format(source_dir))
+    tar = tarfile.open(file_name, "w:gz")
     os.chdir(source_dir)
     for name in os.listdir("."):
         tar.add(name)
     tar.close()
 
-def cleanup(tarball, output_directory):
+
+def cleanup_artifacts(tarball, output_directory):
+    log_info('Cleaning up artifacts')
     os.unlink("../{}".format(tarball))
     shutil.rmtree(output_directory)
 
@@ -1177,12 +1181,9 @@ def main():
     if args.s3_bucket:
         now = datetime.date.today()
         file_name = '{}-{}.tar.gz'.format(args.output_directory, now)
-        log_info('Compressing...')
-        make_tarfile(file_name, output_directory)
-        log_info('Uploading...')
+        create_tarball(file_name, output_directory)
         upload_to_aws(file_name, args.s3_bucket, file_name)
-        log_info('Cleaning up...')
-        cleanup(file_name, output_directory)
+        cleanup_artifacts(file_name, output_directory)
 
 if __name__ == '__main__':
     main()
