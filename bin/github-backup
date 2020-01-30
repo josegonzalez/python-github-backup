@@ -1135,14 +1135,14 @@ def upload_to_aws(local_file, bucket, s3_file):
     s3 = boto3.client('s3')
 
     try:
-        s3.upload_file("../{}".format(local_file), bucket, s3_file)
+        s3.upload_file(local_file, bucket, s3_file)
         print("Upload Successful")
         return True
     except FileNotFoundError:
-        print("The file was not found")
+        print("Upload Failed: The file was not found")
         return False
     except NoCredentialsError:
-        print("Credentials not available")
+        print("Upload Failed: Credentials not available")
         return False
 
 def create_tarball(file_name, source_dir):
@@ -1152,11 +1152,12 @@ def create_tarball(file_name, source_dir):
     for name in os.listdir("."):
         tar.add(name)
     tar.close()
+    os.chdir('../')
 
 
 def cleanup_artifacts(tarball, output_directory):
     log_info('Cleaning up artifacts')
-    os.unlink("../{}".format(tarball))
+    os.unlink(tarball)
     shutil.rmtree(output_directory)
 
 def main():
