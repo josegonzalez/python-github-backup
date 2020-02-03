@@ -25,6 +25,8 @@ import time
 import boto3
 
 from botocore.exceptions import NoCredentialsError
+from contextlib import contextmanager
+
 PY2 = False
 try:
     # python 3
@@ -1145,20 +1147,25 @@ def upload_to_aws(local_file, bucket, s3_file):
         print("Upload Failed: Credentials not available")
         return False
 
-def create_tarball(file_name, source_dir):
-    log_info('Compressing {}'.format(source_dir))
+def create_tarball(file_name):
+    log_info('Creating tarball')
     tar = tarfile.open(file_name, "w:gz")
-    os.chdir(source_dir)
     for name in os.listdir("."):
         tar.add(name)
     tar.close()
-    os.chdir('../')
 
-
-def cleanup_artifacts(tarball, output_directory):
+def cleanup_artifacts(output_directory):
     log_info('Cleaning up artifacts')
-    os.unlink(tarball)
     shutil.rmtree(output_directory)
+
+@contextmanager
+def cd(newdir):
+    prevdir = os.getcwd()
+    os.chdir(os.path.expanduser(newdir))
+    try:
+        yield
+    finally:
+        os.chdir(prevdir)
 
 def main():
     args = parse_args()
@@ -1180,11 +1187,12 @@ def main():
     backup_account(args, output_directory)
 
     if args.s3_bucket:
-        now = datetime.date.today()
-        file_name = '{}-{}.tar.gz'.format(args.output_directory, now)
-        create_tarball(file_name, output_directory)
-        upload_to_aws(file_name, args.s3_bucket, file_name)
-        cleanup_artifacts(file_name, output_directory)
+        with cd(output_directory):
+            now = datetime.date.today()
+            file_name = '{}-{}.tar.gz'.format(args.output_directory, now)
+            create_tarball(file_name)
+            upload_to_aws(file_name, args.s3_bucket, file_name)
+        cleanup_artifacts(output_directory)
 
 if __name__ == '__main__':
     main()
