@@ -7,17 +7,26 @@ import argparse
 import base64
 import calendar
 import codecs
+import datetime
 import errno
 import getpass
 import json
 import logging
 import os
+import platform
 import re
 import select
+import shutil
 import subprocess
 import sys
+import tarfile
 import time
-import platform
+
+import boto3
+
+from botocore.exceptions import NoCredentialsError
+from contextlib import contextmanager
+
 PY2 = False
 try:
     # python 3
@@ -322,6 +331,10 @@ def parse_args():
                         action='store_true',
                         dest='include_assets',
                         help='include assets alongside release information; only applies if including releases')
+    parser.add_argument('-U',
+                        '--upload-to',
+                        dest='s3_bucket',
+                        help='compress and upload tarball to S3 bucket')
     return parser.parse_args()
 
 
@@ -1119,6 +1132,41 @@ def json_dump(data, output_file):
               separators=(',', ': '))
 
 
+def upload_to_aws(local_file, bucket, s3_file):
+    log_info('Uploading tarball to S3 bucket {}'.format(bucket))
+    s3 = boto3.client('s3')
+
+    try:
+        s3.upload_file(local_file, bucket, s3_file)
+        print("Upload Successful")
+        return True
+    except FileNotFoundError:
+        print("Upload Failed: The file was not found")
+        return False
+    except NoCredentialsError:
+        print("Upload Failed: Credentials not available")
+        return False
+
+def create_tarball(file_name):
+    log_info('Creating tarball')
+    tar = tarfile.open(file_name, "w:gz")
+    for name in os.listdir("."):
+        tar.add(name)
+    tar.close()
+
+def cleanup_artifacts(output_directory):
+    log_info('Cleaning up artifacts')
+    shutil.rmtree(output_directory)
+
+@contextmanager
+def cd(newdir):
+    prevdir = os.getcwd()
+    os.chdir(os.path.expanduser(newdir))
+    try:
+        yield
+    finally:
+        os.chdir(prevdir)
+
 def main():
     args = parse_args()
 
@@ -1138,6 +1186,13 @@ def main():
     backup_repositories(args, output_directory, repositories)
     backup_account(args, output_directory)
 
+    if args.s3_bucket:
+        with cd(output_directory):
+            now = datetime.date.today()
+            file_name = '{}-{}.tar.gz'.format(args.output_directory, now)
+            create_tarball(file_name)
+            upload_to_aws(file_name, args.s3_bucket, file_name)
+        cleanup_artifacts(output_directory)
 
 if __name__ == '__main__':
     main()
