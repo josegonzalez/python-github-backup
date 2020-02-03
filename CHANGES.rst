@@ -1,9 +1,16 @@
 Changelog
 =========
 
-0.27.0 (2020-01-21)
+0.28.0 (2020-02-03)
 -------------------
 ------------------------
+- Remove deprecated (and removed) git lfs flags. [smiley]
+
+  "--tags" and "--force" were removed at some point from "git lfs fetch". This broke our backup script.
+
+
+0.27.0 (2020-01-22)
+-------------------
 - Fixed script fails if not installed from pip. [Ben Baron]
 
   At the top of the script, the line from github_backup import __version__ gets the script's version number to use if the script is called with the -v or --version flags. The problem is that if the script hasn't been installed via pip (for example I cloned the repo directly to my backup server), the script will fail due to an import exception.
