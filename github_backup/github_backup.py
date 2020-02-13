@@ -1117,27 +1117,3 @@ def json_dump(data, output_file):
               sort_keys=True,
               indent=4,
               separators=(',', ': '))
-
-
-def main():
-    args = parse_args()
-
-    output_directory = os.path.realpath(args.output_directory)
-    if not os.path.isdir(output_directory):
-        log_info('Create output directory {0}'.format(output_directory))
-        mkdir_p(output_directory)
-
-    if args.lfs_clone:
-        check_git_lfs_install()
-
-    log_info('Backing up user {0} to {1}'.format(args.user, output_directory))
-
-    authenticated_user = get_authenticated_user(args)
-    repositories = retrieve_repositories(args, authenticated_user)
-    repositories = filter_repositories(args, repositories)
-    backup_repositories(args, output_directory, repositories)
-    backup_account(args, output_directory)
-
-
-if __name__ == '__main__':
-    main()
