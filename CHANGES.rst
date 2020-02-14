@@ -1,9 +1,15 @@
 Changelog
 =========
 
+0.30.0 (2020-02-14)
+-------------------
+-------------------
+- #50 update: keep main() in bin. [ethan]
+- #50 - refactor for friendlier import. [ethan]
+
+
 0.28.0 (2020-02-03)
 -------------------
-------------------------
 - Remove deprecated (and removed) git lfs flags. [smiley]
 
   "--tags" and "--force" were removed at some point from "git lfs fetch". This broke our backup script.
