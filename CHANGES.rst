@@ -1,8 +1,14 @@
 Changelog
 =========
 
-0.30.0 (2020-02-14)
+0.31.0 (2020-02-25)
 -------------------
+------------------------
+- #123 update: changed --as-app 'help' description. [ethan]
+- #123: Support Authenticating As Github Application. [ethan]
+
+
+0.29.0 (2020-02-14)
 -------------------
 - #50 update: keep main() in bin. [ethan]
 - #50 - refactor for friendlier import. [ethan]
