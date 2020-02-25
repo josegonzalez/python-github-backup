@@ -26,9 +26,12 @@ def main():
     if args.lfs_clone:
         check_git_lfs_install()
 
-    log_info('Backing up user {0} to {1}'.format(args.user, output_directory))
+    if not args.as_app:
+        log_info('Backing up user {0} to {1}'.format(args.user, output_directory))
+        authenticated_user = get_authenticated_user(args)
+    else:
+        authenticated_user = {'login': None}
 
-    authenticated_user = get_authenticated_user(args)
     repositories = retrieve_repositories(args, authenticated_user)
     repositories = filter_repositories(args, repositories)
     backup_repositories(args, output_directory, repositories)
