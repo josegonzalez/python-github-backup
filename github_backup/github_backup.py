@@ -168,7 +168,11 @@ def parse_args():
     parser.add_argument('-t',
                         '--token',
                         dest='token',
-                        help='personal access or OAuth token, or path to token (file://...)')  # noqa
+                        help='personal access, OAuth, or JSON Web token, or path to token (file://...)')  # noqa
+    parser.add_argument('--as-app',
+                        action='store_true',
+                        dest='as_app',
+                        help='authenticate as github app instead of as a user.')
     parser.add_argument('-o',
                         '--output-directory',
                         default='.',
@@ -325,7 +329,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def get_auth(args, encode=True):
+def get_auth(args, encode=True, for_git_cli=False):
     auth = None
 
     if args.osx_keychain_item_name:
@@ -353,7 +357,13 @@ def get_auth(args, encode=True):
         if args.token.startswith(_path_specifier):
             args.token = open(args.token[len(_path_specifier):],
                               'rt').readline().strip()
-        auth = args.token + ':' + 'x-oauth-basic'
+        if not args.as_app:
+            auth = args.token + ':' + 'x-oauth-basic'
+        else:
+            if not for_git_cli:
+                auth = args.token
+            else:
+                auth = 'x-access-token:' + args.token
     elif args.username:
         if not args.password:
             args.password = getpass.getpass()
@@ -399,7 +409,7 @@ def get_github_repo_url(args, repository):
     if args.prefer_ssh:
         return repository['ssh_url']
 
-    auth = get_auth(args, False)
+    auth = get_auth(args, encode=False, for_git_cli=True)
     if auth and repository['private'] == True:
         repo_url = 'https://{0}@{1}/{2}/{3}.git'.format(
             auth,
@@ -413,14 +423,14 @@ def get_github_repo_url(args, repository):
 
 
 def retrieve_data_gen(args, template, query_args=None, single_request=False):
-    auth = get_auth(args)
+    auth = get_auth(args, encode=not args.as_app)
     query_args = get_query_args(query_args)
     per_page = 100
     page = 0
 
     while True:
         page = page + 1
-        request = _construct_request(per_page, page, query_args, template, auth)  # noqa
+        request = _construct_request(per_page, page, query_args, template, auth, as_app=args.as_app)  # noqa
         r, errors = _get_response(request, auth, template)
 
         status_code = int(r.getcode())
@@ -430,7 +440,7 @@ def retrieve_data_gen(args, template, query_args=None, single_request=False):
             print('API request returned HTTP 502: Bad Gateway. Retrying in 5 seconds')
             retries += 1
             time.sleep(5)
-            request = _construct_request(per_page, page, query_args, template, auth)  # noqa
+            request = _construct_request(per_page, page, query_args, template, auth, as_app=args.as_app)  # noqa
             r, errors = _get_response(request, auth, template)
 
             status_code = int(r.getcode())
@@ -495,7 +505,7 @@ def _get_response(request, auth, template):
     return r, errors
 
 
-def _construct_request(per_page, page, query_args, template, auth):
+def _construct_request(per_page, page, query_args, template, auth, as_app=None):
     querystring = urlencode(dict(list({
         'per_page': per_page,
         'page': page
@@ -503,7 +513,13 @@ def _construct_request(per_page, page, query_args, template, auth):
 
     request = Request(template + '?' + querystring)
     if auth is not None:
-        request.add_header('Authorization', 'Basic '.encode('ascii') + auth)
+        if not as_app:
+            request.add_header('Authorization', 'Basic '.encode('ascii') + auth)
+        else:
+            if not PY2:
+                auth = auth.encode('ascii')
+            request.add_header('Authorization', 'token '.encode('ascii') + auth)
+            request.add_header('Accept', 'application/vnd.github.machine-man-preview+json')
     log_info('Requesting {}?{}'.format(template, querystring))
     return request
 
