@@ -172,12 +172,7 @@ def parse_args():
     parser.add_argument('--as-app',
                         action='store_true',
                         dest='as_app',
-                        help='authenticate as github app instead of as a user. '
-                             'Using this option will probably break the following options: '
-                             'starred, all-starred, watched, gists, starred-gists, '
-                             'followers, following. '
-                             'Other options may be affected. '
-                             'User account information will not be backed up.')
+                        help='authenticate as github app instead of as a user.')
     parser.add_argument('-o',
                         '--output-directory',
                         default='.',
