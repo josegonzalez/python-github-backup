@@ -1,9 +1,20 @@
 Changelog
 =========
 
-0.32.0 (2020-04-13)
+0.33.0 (2020-04-13)
 -------------------
 ------------------------
+- Add basic API request throttling. [Enrico Tröger]
+
+  A simple approach to throttle API requests and so keep within the rate
+  limits of the API. Can be enabled with "--throttle-limit" to specify
+  when throttling should start.
+  "--throttle-pause" defines the time to sleep between further API
+  requests.
+
+
+0.32.0 (2020-04-13)
+-------------------
 - Add timestamp to log messages. [Enrico Tröger]
 
 
