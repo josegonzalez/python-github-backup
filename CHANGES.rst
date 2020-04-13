@@ -1,9 +1,14 @@
 Changelog
 =========
 
-0.31.0 (2020-02-25)
+0.32.0 (2020-04-13)
 -------------------
 ------------------------
+- Add timestamp to log messages. [Enrico Tröger]
+
+
+0.31.0 (2020-02-25)
+-------------------
 - #123 update: changed --as-app 'help' description. [ethan]
 - #123: Support Authenticating As Github Application. [ethan]
 
