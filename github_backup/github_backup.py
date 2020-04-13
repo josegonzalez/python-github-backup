@@ -7,6 +7,7 @@ import argparse
 import base64
 import calendar
 import codecs
+import datetime
 import errno
 import getpass
 import json
@@ -50,6 +51,10 @@ except ImportError:
 FNULL = open(os.devnull, 'w')
 
 
+def _get_log_date():
+    return datetime.datetime.isoformat(datetime.datetime.now())
+
+
 def log_error(message):
     """
     Log message (str) or messages (List[str]) to stderr and exit with status 1
@@ -66,7 +71,7 @@ def log_info(message):
         message = [message]
 
     for msg in message:
-        sys.stdout.write("{0}\n".format(msg))
+        sys.stdout.write("{0}: {1}\n".format(_get_log_date(), msg))
 
 
 def log_warning(message):
@@ -77,7 +82,7 @@ def log_warning(message):
         message = [message]
 
     for msg in message:
-        sys.stderr.write("{0}\n".format(msg))
+        sys.stderr.write("{0}: {1}\n".format(_get_log_date(), msg))
 
 
 def logging_subprocess(popenargs,
@@ -437,7 +442,7 @@ def retrieve_data_gen(args, template, query_args=None, single_request=False):
 
         retries = 0
         while retries < 3 and status_code == 502:
-            print('API request returned HTTP 502: Bad Gateway. Retrying in 5 seconds')
+            log_warning('API request returned HTTP 502: Bad Gateway. Retrying in 5 seconds')
             retries += 1
             time.sleep(5)
             request = _construct_request(per_page, page, query_args, template, auth, as_app=args.as_app)  # noqa
@@ -544,12 +549,10 @@ def _request_http_error(exc, auth, errors):
         delta = max(10, reset - gm_now)
 
         limit = headers.get('x-ratelimit-limit')
-        print('Exceeded rate limit of {} requests; waiting {} seconds to reset'.format(limit, delta),  # noqa
-              file=sys.stderr)
+        log_warning('Exceeded rate limit of {} requests; waiting {} seconds to reset'.format(limit, delta))  # noqa
 
         if auth is None:
-            print('Hint: Authenticate to raise your GitHub rate limit',
-                  file=sys.stderr)
+            log_info('Hint: Authenticate to raise your GitHub rate limit')
 
         time.sleep(delta)
         should_continue = True
