@@ -1,9 +1,9 @@
 Changelog
 =========
 
-0.33.0 (2020-04-13)
+0.33.1 (2020-05-28)
 -------------------
-------------------------
+-------------------
 - Add basic API request throttling. [Enrico Tröger]
 
   A simple approach to throttle API requests and so keep within the rate
