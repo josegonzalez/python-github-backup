@@ -41,7 +41,8 @@ CLI Usage is as follows::
                   [-P] [-F] [--prefer-ssh] [-v]
                   [--keychain-name OSX_KEYCHAIN_ITEM_NAME]
                   [--keychain-account OSX_KEYCHAIN_ITEM_ACCOUNT]
-                  [--releases] [--assets]
+                  [--releases] [--assets] [--throttle-limit THROTTLE_LIMIT]
+                  [--throttle-pause THROTTLE_PAUSE]
                   USER
 
     Backup a github account
@@ -111,6 +112,13 @@ CLI Usage is as follows::
                             binaries
       --assets              include assets alongside release information; only
                             applies if including releases
+      --throttle-limit THROTTLE_LIMIT
+                            start throttling of GitHub API requests after this
+                            amount of API requests remain
+      --throttle-pause THROTTLE_PAUSE
+                            wait this amount of seconds when API request
+                            throttling is active (default: 30.0, requires
+                            --throttle-limit to be set)
 
 
 The package can be used to backup an *entire* organization or repository, including issues and wikis in the most appropriate format (clones for wikis, json files for issues).
