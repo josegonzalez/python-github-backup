@@ -1,8 +1,13 @@
 Changelog
 =========
 
-0.33.1 (2020-05-28)
+0.34.0 (2020-07-24)
 -------------------
+------------------------
+- Add logic for transforming gist repository urls to ssh. [Matt Fields]
+
+
+0.33.0 (2020-04-13)
 -------------------
 - Add basic API request throttling. [Enrico Tröger]
 
