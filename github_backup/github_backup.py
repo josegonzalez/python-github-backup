@@ -457,7 +457,7 @@ def retrieve_data_gen(args, template, query_args=None, single_request=False):
         status_code = int(r.getcode())
         # be gentle with API request limit and throttle requests if remaining requests getting low
         limit_remaining = int(r.headers.get('x-ratelimit-remaining', 0))
-        if limit_remaining <= args.throttle_limit:
+        if args.throttle_limit and limit_remaining <= args.throttle_limit:
             log_info(
                 'API request limit hit: {} requests left, pausing further requests for {}s'.format(
                     limit_remaining,
