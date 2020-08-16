@@ -19,30 +19,14 @@ import subprocess
 import sys
 import time
 import platform
-PY2 = False
-try:
-    # python 3
-    from urllib.parse import urlparse
-    from urllib.parse import quote as urlquote
-    from urllib.parse import urlencode
-    from urllib.error import HTTPError, URLError
-    from urllib.request import urlopen
-    from urllib.request import Request
-    from urllib.request import HTTPRedirectHandler
-    from urllib.request import build_opener
-    from subprocess import SubprocessError
-except ImportError:
-    # python 2
-    PY2 = True
-    from subprocess import CalledProcessError as SubprocessError
-    from urlparse import urlparse
-    from urllib import quote as urlquote
-    from urllib import urlencode
-    from urllib2 import HTTPError, URLError
-    from urllib2 import urlopen
-    from urllib2 import Request
-    from urllib2 import HTTPRedirectHandler
-    from urllib2 import build_opener
+from urllib.parse import urlparse
+from urllib.parse import quote as urlquote
+from urllib.parse import urlencode
+from urllib.error import HTTPError, URLError
+from urllib.request import urlopen
+from urllib.request import Request
+from urllib.request import HTTPRedirectHandler
+from urllib.request import build_opener
 
 try:
     from . import __version__
@@ -362,10 +346,9 @@ def get_auth(args, encode=True, for_git_cli=False):
                         '-s', args.osx_keychain_item_name,
                         '-a', args.osx_keychain_item_account,
                         '-w'], stderr=devnull).strip())
-                if not PY2:
-                    token = token.decode('utf-8')
+                token = token.decode('utf-8')
                 auth = token + ':' + 'x-oauth-basic'
-            except SubprocessError:
+            except subprocess.SubprocessError:
                 log_error('No password item matching the provided name and account could be found in the osx keychain.')
     elif args.osx_keychain_item_account:
         log_error('You must specify both name and account fields for osx keychain password items')
@@ -549,8 +532,7 @@ def _construct_request(per_page, page, query_args, template, auth, as_app=None):
         if not as_app:
             request.add_header('Authorization', 'Basic '.encode('ascii') + auth)
         else:
-            if not PY2:
-                auth = auth.encode('ascii')
+            auth = auth.encode('ascii')
             request.add_header('Authorization', 'token '.encode('ascii') + auth)
             request.add_header('Accept', 'application/vnd.github.machine-man-preview+json')
     log_info('Requesting {}?{}'.format(template, querystring))
@@ -608,11 +590,7 @@ class S3HTTPRedirectHandler(HTTPRedirectHandler):
     so we should remove said header on redirect.
     """
     def redirect_request(self, req, fp, code, msg, headers, newurl):
-        if PY2:
-            # HTTPRedirectHandler is an old style class
-            request = HTTPRedirectHandler.redirect_request(self, req, fp, code, msg, headers, newurl)
-        else:
-            request = super(S3HTTPRedirectHandler, self).redirect_request(req, fp, code, msg, headers, newurl)
+        request = super(S3HTTPRedirectHandler, self).redirect_request(req, fp, code, msg, headers, newurl)
         del request.headers['Authorization']
         return request
 
