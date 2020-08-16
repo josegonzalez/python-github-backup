@@ -1,23 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import os
+from setuptools import setup
+
 from github_backup import __version__
-
-try:
-    from setuptools import setup
-    setup  # workaround for pyflakes issue #13
-except ImportError:
-    from distutils.core import setup
-
-# Hack to prevent stupid TypeError: 'NoneType' object is not callable error on
-# exit of python setup.py test # in multiprocessing/util.py _exit_function when
-# running python setup.py test (see
-# http://www.eby-sarna.com/pipermail/peak/2010-May/003357.html)
-try:
-    import multiprocessing
-    multiprocessing
-except ImportError:
-    pass
 
 
 def open_file(fname):
