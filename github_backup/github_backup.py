@@ -423,8 +423,8 @@ def get_github_repo_url(args, repository):
     if repository.get('is_gist'):
         if args.prefer_ssh:
             # The git_pull_url value is always https for gists, so we need to transform it to ssh form
-            repo_url = re.sub('^https?:\/\/(.+)\/(.+)\.git$', r'git@\1:\2.git', repository['git_pull_url'])
-            repo_url = re.sub('^git@gist\.', 'git@', repo_url)  # strip gist subdomain for better hostkey compatibility
+            repo_url = re.sub(r'^https?:\/\/(.+)\/(.+)\.git$', r'git@\1:\2.git', repository['git_pull_url'])
+            repo_url = re.sub(r'^git@gist\.', 'git@', repo_url)  # strip gist subdomain for better hostkey compatibility
         else:
             repo_url = repository['git_pull_url']
         return repo_url
