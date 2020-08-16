@@ -424,7 +424,7 @@ def get_github_repo_url(args, repository):
         if args.prefer_ssh:
             # The git_pull_url value is always https for gists, so we need to transform it to ssh form
             repo_url = re.sub('^https?:\/\/(.+)\/(.+)\.git$', r'git@\1:\2.git', repository['git_pull_url'])
-            repo_url = re.sub('^git@gist\.', 'git@', repo_url) # strip gist subdomain for better hostkey compatibility
+            repo_url = re.sub('^git@gist\.', 'git@', repo_url)  # strip gist subdomain for better hostkey compatibility
         else:
             repo_url = repository['git_pull_url']
         return repo_url
@@ -497,8 +497,10 @@ def retrieve_data_gen(args, template, query_args=None, single_request=False):
         if single_request:
             break
 
+
 def retrieve_data(args, template, query_args=None, single_request=False):
     return list(retrieve_data_gen(args, template, query_args, single_request))
+
 
 def get_query_args(query_args=None):
     if not query_args:
@@ -903,18 +905,22 @@ def backup_pulls(args, repo_cwd, repository, repos_template):
         pull_states = ['open', 'closed']
         for pull_state in pull_states:
             query_args['state'] = pull_state
-            _pulls = retrieve_data_gen(args,
-                                   _pulls_template,
-                                   query_args=query_args)
+            _pulls = retrieve_data_gen(
+                args,
+                _pulls_template,
+                query_args=query_args
+            )
             for pull in _pulls:
                 if args.since and pull['updated_at'] < args.since:
                     break
                 if not args.since or pull['updated_at'] >= args.since:
                     pulls[pull['number']] = pull
     else:
-        _pulls = retrieve_data_gen(args,
-                               _pulls_template,
-                               query_args=query_args)
+        _pulls = retrieve_data_gen(
+            args,
+            _pulls_template,
+            query_args=query_args
+        )
         for pull in _pulls:
             if args.since and pull['updated_at'] < args.since:
                 break
