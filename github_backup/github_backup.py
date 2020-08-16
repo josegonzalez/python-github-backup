@@ -30,9 +30,11 @@ try:
     from urllib.request import Request
     from urllib.request import HTTPRedirectHandler
     from urllib.request import build_opener
+    from subprocess import SubprocessError
 except ImportError:
     # python 2
     PY2 = True
+    from subprocess import CalledProcessError as SubprocessError
     from urlparse import urlparse
     from urllib import quote as urlquote
     from urllib import urlencode
@@ -363,7 +365,7 @@ def get_auth(args, encode=True, for_git_cli=False):
                 if not PY2:
                     token = token.decode('utf-8')
                 auth = token + ':' + 'x-oauth-basic'
-            except:
+            except SubprocessError:
                 log_error('No password item matching the provided name and account could be found in the osx keychain.')
     elif args.osx_keychain_item_account:
         log_error('You must specify both name and account fields for osx keychain password items')
