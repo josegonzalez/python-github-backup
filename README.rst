@@ -166,6 +166,15 @@ Backup a single organization repository with everything else (wiki, pull request
     # e.g. git@github.com:docker/cli.git
     github-backup $ORGANIZATION -P -t $ACCESS_TOKEN -o . --all -O -R $REPO
 
+Testing
+=======
+
+This project currently contains no unit tests.  To run linting::
+
+    pip install flake8
+    flake8 --ignore=E501
+
+
 .. |PyPI| image:: https://img.shields.io/pypi/v/github-backup.svg
    :target: https://pypi.python.org/pypi/github-backup/
 .. |Python Versions| image:: https://img.shields.io/pypi/pyversions/github-backup.svg
