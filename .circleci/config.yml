@@ -1,0 +1,17 @@
+version: 2.1
+
+# Define the jobs we want to run for this project
+jobs:
+  build:
+    working_directory: ~/python-github-backup
+    docker:
+      - image: circleci/python:3.8.2
+    steps:
+      - checkout
+      - run:
+          command: |
+            sudo pip install pipenv
+            pipenv install flake8
+      - run:
+          command: |
+            pip env run flake8
