@@ -153,10 +153,10 @@ Instructions on how to do this can be found on https://git-lfs.github.com.
 Examples
 ========
 
-Backup all repositories::
+Backup all repositories, including private ones::
 
     export ACCESS_TOKEN=SOME-GITHUB-TOKEN
-    github-backup WhiteHouse --token $ACCESS_TOKEN --organization --output-directory /tmp/white-house --repositories
+    github-backup WhiteHouse --token $ACCESS_TOKEN --organization --output-directory /tmp/white-house --repositories --private
 
 Backup a single organization repository with everything else (wiki, pull requests, comments, issues etc)::
 
