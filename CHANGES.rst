@@ -1,9 +1,23 @@
 Changelog
 =========
 
-0.35.0 (2020-08-05)
+0.36.0 (2020-08-29)
 -------------------
 ------------------------
+- Add flake8 instructions to readme. [Albert Wang]
+- Fix regex string. [Albert Wang]
+- Fix whitespace issues. [Albert Wang]
+- Do not use bare excepts. [Albert Wang]
+- Add .circleci/config.yml. [Albert Wang]
+- Include --private flag in example. [wouter bolsterlee]
+
+  By default, private repositories are not included. This is surprising.
+  It took me a while to figure this out, and making that clear in the
+  example can help others to be aware of that.
+
+
+0.35.0 (2020-08-05)
+-------------------
 - Make API request throttling optional. [Samantha Baldwin]
 
 
