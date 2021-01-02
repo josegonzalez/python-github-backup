@@ -1,9 +1,17 @@
 Changelog
 =========
 
-0.37.1 (2021-01-01)
+0.37.2 (2021-01-01)
 -------------------
 ------------
+
+Fix
+~~~
+- Use distutils.core on error. [Jose Diaz-Gonzalez]
+
+
+0.37.1 (2021-01-02)
+-------------------
 
 Fix
 ~~~
@@ -17,6 +25,10 @@ Fix
   - Fix license entry
   - Set long description type
   - Gitignore the temporary readme file
+
+Other
+~~~~~
+- Release version 0.37.1. [Jose Diaz-Gonzalez]
 
 
 0.37.0 (2021-01-02)
