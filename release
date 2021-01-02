@@ -22,12 +22,17 @@ CYAN="\033[0;36m"     # cyan
 pip install wheel > /dev/null
 
 command -v gitchangelog >/dev/null 2>&1 || {
-    echo -e "${RED}WARNING: Missing gitchangelog binary, please run: pip install gitchangelog==2.2.0${COLOR_OFF}\n"
+    echo -e "${RED}WARNING: Missing gitchangelog binary, please run: pip install gitchangelog==3.0.4${COLOR_OFF}\n"
     exit 1
 }
 
 command -v rst-lint > /dev/null || {
     echo -e "${RED}WARNING: Missing rst-lint binary, please run: pip install restructuredtext_lint${COLOR_OFF}\n"
+    exit 1
+}
+
+command -v twine > /dev/null || {
+    echo -e "${RED}WARNING: Missing twine binary, please run: pip install twine==3.2.0${COLOR_OFF}\n"
     exit 1
 }
 
@@ -125,7 +130,8 @@ git push -q origin master && git push -q --tags
 if [[ "$PUBLIC" == "true" ]]; then
     echo -e "${YELLOW}--->${COLOR_OFF} Creating python release"
     cp README.rst README
-    python setup.py sdist bdist_wheel upload > /dev/null
+    python setup.py sdist bdist_wheel > /dev/null
+    twine upload dist/*
     rm README
 fi
 

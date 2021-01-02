@@ -18,7 +18,7 @@ setup(
     packages=['github_backup'],
     scripts=['bin/github-backup'],
     url='http://github.com/josegonzalez/python-github-backup',
-    license=open('LICENSE.txt').read(),
+    license='MIT',
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Topic :: System :: Archiving :: Backup',
@@ -30,6 +30,7 @@ setup(
     ],
     description='backup a github user or organization',
     long_description=open_file('README.rst').read(),
+    long_description_content_type='text/x-rst',
     install_requires=open_file('requirements.txt').readlines(),
     zip_safe=True,
 )
