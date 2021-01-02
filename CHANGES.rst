@@ -1,9 +1,27 @@
 Changelog
 =========
 
-0.37.0 (2021-01-01)
+0.37.1 (2021-01-01)
 -------------------
 ------------
+
+Fix
+~~~
+- Use twine for releases. [Jose Diaz-Gonzalez]
+
+  The old method of releasing to pypi broke for whatever reason and switching to a supported toolchain is easier than debugging the old one.
+
+  Additionally:
+
+  - Update gitchangelog
+  - Fix license entry
+  - Set long description type
+  - Gitignore the temporary readme file
+
+
+0.37.0 (2021-01-02)
+-------------------
+- Release version 0.37.0. [Jose Diaz-Gonzalez]
 - Merge pull request #158 from albertyw/python3. [Jose Diaz-Gonzalez]
 
   Remove support for python 2
