@@ -278,6 +278,10 @@ def parse_args():
                         action='store_true',
                         dest='include_starred_gists',
                         help='include starred gists in backup [*]')
+    parser.add_argument('--skip-archived',
+                        action='store_true',
+                        dest='skip_archived',
+                        help='skip project if it is archived')
     parser.add_argument('--skip-existing',
                         action='store_true',
                         dest='skip_existing',
@@ -742,6 +746,8 @@ def filter_repositories(args, unfiltered_repositories):
         repositories = [r for r in repositories if r.get('language') and r.get('language').lower() in languages]  # noqa
     if name_regex:
         repositories = [r for r in repositories if name_regex.match(r['name'])]
+    if args.skip_archived:
+        repositories = [r for r in repositories if not r.get('archived')]
 
     return repositories
 
