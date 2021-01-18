@@ -178,4 +178,4 @@ This project currently contains no unit tests.  To run linting::
 .. |PyPI| image:: https://img.shields.io/pypi/v/github-backup.svg
    :target: https://pypi.python.org/pypi/github-backup/
 .. |Python Versions| image:: https://img.shields.io/pypi/pyversions/github-backup.svg
-   :target: https://github.com/albertyw/github-backup
+   :target: https://github.com/josegonzalez/python-github-backup
