@@ -420,7 +420,7 @@ def get_github_repo_url(args, repository):
         return repository['ssh_url']
 
     auth = get_auth(args, encode=False, for_git_cli=True)
-    if auth and repository['private'] is True:
+    if auth:
         repo_url = 'https://{0}@{1}/{2}/{3}.git'.format(
             auth,
             get_github_host(args),
