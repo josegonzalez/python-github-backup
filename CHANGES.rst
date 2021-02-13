@@ -1,13 +1,43 @@
 Changelog
 =========
 
-0.37.2 (2021-01-01)
+0.38.0 (2021-02-13)
 -------------------
 ------------
 
 Fix
 ~~~
+- Always clone with OAuth token when provided. [Samantha Baldwin]
+
+  Github Enterprise servers with 'Anonymous Git read access' disabled
+  cause `git ls-remote` to fail (128) for a repo's `clone_url`. Using the
+  OAuth token when provided allows cloning private AND public repos when
+  Anonymous Git read access is disabled.
+
+Other
+~~~~~
+- Merge pull request #172 from samanthaq/always-use-oauth-when-provided.
+  [Jose Diaz-Gonzalez]
+
+  fix: Always clone with OAuth token when provided
+- Merge pull request #170 from Mindavi/bugfix/broken-url. [Jose Diaz-
+  Gonzalez]
+
+  Fix broken and incorrect link to github repository
+- Change broken link to a fork to a working link to upstream. [Rick van
+  Schijndel]
+
+
+0.37.2 (2021-01-02)
+-------------------
+
+Fix
+~~~
 - Use distutils.core on error. [Jose Diaz-Gonzalez]
+
+Other
+~~~~~
+- Release version 0.37.2. [Jose Diaz-Gonzalez]
 
 
 0.37.1 (2021-01-02)
