@@ -1,9 +1,31 @@
 Changelog
 =========
 
-0.38.0 (2021-02-13)
+0.39.0 (2021-03-18)
 -------------------
 ------------
+
+Fix
+~~~
+- Fix missing INFO logs. [Gallo Feliz]
+
+Other
+~~~~~
+- Merge pull request #173 from gallofeliz/make-compatible-python-call.
+  [Jose Diaz-Gonzalez]
+
+  Try to make compatible code with direct Python call ; reduce the hard link of the code with the cli
+- Try to make compatible code with direct Python call ; reduce the hard
+  link of the code with the cli. [Gallo Feliz]
+- Merge pull request #174 from atorrescogollo/master. [Jose Diaz-
+  Gonzalez]
+
+  Fixed release_name with slash bug
+- Fixed release_name with slash bug. [Álvaro Torres Cogollo]
+
+
+0.38.0 (2021-02-13)
+-------------------
 
 Fix
 ~~~
@@ -16,6 +38,7 @@ Fix
 
 Other
 ~~~~~
+- Release version 0.38.0. [Jose Diaz-Gonzalez]
 - Merge pull request #172 from samanthaq/always-use-oauth-when-provided.
   [Jose Diaz-Gonzalez]
 
