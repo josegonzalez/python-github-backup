@@ -17,6 +17,7 @@ import re
 import select
 import subprocess
 import sys
+import logging
 import time
 import platform
 from urllib.parse import urlparse
@@ -40,15 +41,6 @@ FNULL = open(os.devnull, 'w')
 def _get_log_date():
     return datetime.datetime.isoformat(datetime.datetime.now())
 
-
-def log_error(message):
-    """
-    Log message (str) or messages (List[str]) to stderr and exit with status 1
-    """
-    log_warning(message)
-    sys.exit(1)
-
-
 def log_info(message):
     """
     Log message (str) or messages (List[str]) to stdout
@@ -57,7 +49,7 @@ def log_info(message):
         message = [message]
 
     for msg in message:
-        sys.stdout.write("{0}: {1}\n".format(_get_log_date(), msg))
+        logging.info(msg)
 
 
 def log_warning(message):
@@ -68,7 +60,7 @@ def log_warning(message):
         message = [message]
 
     for msg in message:
-        sys.stderr.write("{0}: {1}\n".format(_get_log_date(), msg))
+        logging.warning(msg)
 
 
 def logging_subprocess(popenargs,
@@ -140,7 +132,7 @@ def mask_password(url, secret='*****'):
     return url.replace(parsed.password, secret)
 
 
-def parse_args():
+def parse_args(args = None):
     parser = argparse.ArgumentParser(description='Backup a github account')
     parser.add_argument('user',
                         metavar='USER',
@@ -331,7 +323,7 @@ def parse_args():
                         type=float,
                         default=30.0,
                         help='wait this amount of seconds when API request throttling is active (default: 30.0, requires --throttle-limit to be set)')
-    return parser.parse_args()
+    return parser.parse_args(args)
 
 
 def get_auth(args, encode=True, for_git_cli=False):
@@ -339,10 +331,10 @@ def get_auth(args, encode=True, for_git_cli=False):
 
     if args.osx_keychain_item_name:
         if not args.osx_keychain_item_account:
-            log_error('You must specify both name and account fields for osx keychain password items')
+            raise Exception('You must specify both name and account fields for osx keychain password items')
         else:
             if platform.system() != 'Darwin':
-                log_error("Keychain arguments are only supported on Mac OSX")
+                raise Exception("Keychain arguments are only supported on Mac OSX")
             try:
                 with open(os.devnull, 'w') as devnull:
                     token = (subprocess.check_output([
@@ -353,9 +345,9 @@ def get_auth(args, encode=True, for_git_cli=False):
                 token = token.decode('utf-8')
                 auth = token + ':' + 'x-oauth-basic'
             except subprocess.SubprocessError:
-                log_error('No password item matching the provided name and account could be found in the osx keychain.')
+                raise Exception('No password item matching the provided name and account could be found in the osx keychain.')
     elif args.osx_keychain_item_account:
-        log_error('You must specify both name and account fields for osx keychain password items')
+        raise Exception('You must specify both name and account fields for osx keychain password items')
     elif args.token:
         _path_specifier = 'file://'
         if args.token.startswith(_path_specifier):
@@ -377,7 +369,7 @@ def get_auth(args, encode=True, for_git_cli=False):
             password = urlquote(args.password)
         auth = args.username + ':' + password
     elif args.password:
-        log_error('You must specify a username for basic auth')
+        raise Exception('You must specify a username for basic auth')
 
     if not auth:
         return None
@@ -466,7 +458,7 @@ def retrieve_data_gen(args, template, query_args=None, single_request=False):
         if status_code != 200:
             template = 'API request returned HTTP {0}: {1}'
             errors.append(template.format(status_code, r.reason))
-            log_error(errors)
+            raise Exception(', '.join(errors))
 
         response = json.loads(r.read().decode('utf-8'))
         if len(errors) == 0:
@@ -479,7 +471,7 @@ def retrieve_data_gen(args, template, query_args=None, single_request=False):
                 yield response
 
         if len(errors) > 0:
-            log_error(errors)
+            raise Exception(', '.join(errors))
 
         if single_request:
             break
@@ -582,7 +574,7 @@ def _request_url_error(template, retry_timeout):
     if retry_timeout >= 0:
         return True
 
-    log_error('{} timed out to much, skipping!')
+    raise Exception('{} timed out to much, skipping!')
     return False
 
 
@@ -640,7 +632,7 @@ def get_authenticated_user(args):
 def check_git_lfs_install():
     exit_code = subprocess.call(['git', 'lfs', 'version'])
     if exit_code != 0:
-        log_error('The argument --lfs requires you to have Git LFS installed.\nYou can get it from https://git-lfs.github.com.')
+        raise Exception('The argument --lfs requires you to have Git LFS installed.\nYou can get it from https://git-lfs.github.com.')
 
 
 def retrieve_repositories(args, authenticated_user):

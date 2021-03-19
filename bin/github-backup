@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import os
+import os, sys, logging
 
 from github_backup.github_backup import (
     backup_account,
@@ -9,11 +9,17 @@ from github_backup.github_backup import (
     filter_repositories,
     get_authenticated_user,
     log_info,
+    log_warning,
     mkdir_p,
     parse_args,
     retrieve_repositories,
 )
 
+logging.basicConfig(
+    format='%(asctime)s.%(msecs)03d: %(message)s',
+    datefmt='%Y-%m-%dT%H:%M:%S',
+    level=logging.INFO
+)
 
 def main():
     args = parse_args()
@@ -39,4 +45,8 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except Exception as e:
+        log_warning(str(e))
+        sys.exit(1)
