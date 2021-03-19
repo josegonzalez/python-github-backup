@@ -1009,7 +1009,8 @@ def backup_releases(args, repo_cwd, repository, repos_template, include_assets=F
     log_info('Saving {0} releases to disk'.format(len(releases)))
     for release in releases:
         release_name = release['tag_name']
-        output_filepath = os.path.join(release_cwd, '{0}.json'.format(release_name))
+        release_name_safe = release_name.replace('/', '__')
+        output_filepath = os.path.join(release_cwd, '{0}.json'.format(release_name_safe))
         with codecs.open(output_filepath, 'w+', encoding='utf-8') as f:
             json_dump(release, f)
 
@@ -1017,7 +1018,7 @@ def backup_releases(args, repo_cwd, repository, repos_template, include_assets=F
             assets = retrieve_data(args, release['assets_url'])
             if len(assets) > 0:
                 # give release asset files somewhere to live & download them (not including source archives)
-                release_assets_cwd = os.path.join(release_cwd, release_name)
+                release_assets_cwd = os.path.join(release_cwd, release_name_safe)
                 mkdir_p(release_assets_cwd)
                 for asset in assets:
                     download_file(asset['url'], os.path.join(release_assets_cwd, asset['name']), get_auth(args))
