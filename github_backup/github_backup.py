@@ -277,9 +277,8 @@ def parse_args(args = None):
                         help='GitHub Enterprise hostname')
     parser.add_argument('-O',
                         '--organization',
-                        action='store_true',
                         dest='organization',
-                        help='whether or not this is an organization user')
+                        help='The name of the user organization')
     parser.add_argument('-R',
                         '--repository',
                         dest='repository',
@@ -652,7 +651,7 @@ def retrieve_repositories(args, authenticated_user):
     if args.organization:
         template = 'https://{0}/orgs/{1}/repos'.format(
             get_github_api_host(args),
-            args.user)
+            args.organization)
 
     if args.repository:
         single_request = True
