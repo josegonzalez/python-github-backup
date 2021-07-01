@@ -28,6 +28,7 @@ from urllib.request import urlopen
 from urllib.request import Request
 from urllib.request import HTTPRedirectHandler
 from urllib.request import build_opener
+from http.client import IncompleteRead
 
 try:
     from . import __version__
@@ -436,6 +437,21 @@ def retrieve_data_gen(args, template, query_args=None, single_request=False):
         r, errors = _get_response(request, auth, template)
 
         status_code = int(r.getcode())
+        # Check if we got correct data
+        try:
+            response = json.loads(r.read().decode('utf-8'))
+        except IncompleteRead:
+            log_warning("Incomplete read error detected")
+            read_error = True
+        except json.decoder.JSONDecodeError:
+            log_warning("JSON decode error detected")
+            read_error = True
+        except TimeoutError:
+            log_warning("Tiemout error detected")
+            read_error = True
+        else:
+            read_error = False
+
         # be gentle with API request limit and throttle requests if remaining requests getting low
         limit_remaining = int(r.headers.get('x-ratelimit-remaining', 0))
         if args.throttle_limit and limit_remaining <= args.throttle_limit:
@@ -446,21 +462,37 @@ def retrieve_data_gen(args, template, query_args=None, single_request=False):
             time.sleep(args.throttle_pause)
 
         retries = 0
-        while retries < 3 and status_code == 502:
-            log_warning('API request returned HTTP 502: Bad Gateway. Retrying in 5 seconds')
+        while retries < 3 and (status_code == 502 or read_error):
+            log_warning('API request failed. Retrying in 5 seconds')
             retries += 1
             time.sleep(5)
             request = _construct_request(per_page, page, query_args, template, auth, as_app=args.as_app)  # noqa
             r, errors = _get_response(request, auth, template)
 
             status_code = int(r.getcode())
+            try:
+                response = json.loads(r.read().decode('utf-8'))
+                read_error = False
+            except IncompleteRead:
+                log_warning("Incomplete read error detected")
+                read_error = True
+            except json.decoder.JSONDecodeError:
+                log_warning("JSON decode error detected")
+                read_error = True
+            except TimeoutError:
+                log_warning("Tiemout error detected")
+                read_error = True
 
         if status_code != 200:
             template = 'API request returned HTTP {0}: {1}'
             errors.append(template.format(status_code, r.reason))
             raise Exception(', '.join(errors))
 
-        response = json.loads(r.read().decode('utf-8'))
+        if read_error:
+            template = 'API request problem reading response for {0}'
+            errors.append(template.format(request))
+            raise Exception(', '.join(errors))
+
         if len(errors) == 0:
             if type(response) == list:
                 for resp in response:
