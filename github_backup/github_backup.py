@@ -425,7 +425,7 @@ def get_github_repo_url(args, repository):
     return repo_url
 
 
-def retrieve_data_gen(args, template, query_args=None, single_request=False):
+def retrieve_data_gen(args, template, query_args=None, single_request=False, optional=False):
     auth = get_auth(args, encode=not args.as_app)
     query_args = get_query_args(query_args)
     per_page = 100
@@ -451,6 +451,11 @@ def retrieve_data_gen(args, template, query_args=None, single_request=False):
             read_error = True
         else:
             read_error = False
+
+        # Requested data does not exist for this repository, but that was expected.
+        # Generate an empty list.
+        if status_code == 404 and optional:
+            return
 
         # be gentle with API request limit and throttle requests if remaining requests getting low
         limit_remaining = int(r.headers.get('x-ratelimit-remaining', 0))
@@ -509,8 +514,8 @@ def retrieve_data_gen(args, template, query_args=None, single_request=False):
             break
 
 
-def retrieve_data(args, template, query_args=None, single_request=False):
-    return list(retrieve_data_gen(args, template, query_args, single_request))
+def retrieve_data(args, template, query_args=None, single_request=False, optional=False):
+    return list(retrieve_data_gen(args, template, query_args, single_request, optional))
 
 
 def get_query_args(query_args=None):
@@ -1011,7 +1016,8 @@ def backup_hooks(args, repo_cwd, repository, repos_template):
                      'hooks',
                      template,
                      output_file,
-                     hook_cwd)
+                     hook_cwd,
+                     optional=not args.include_hooks)
     except SystemExit:
         log_info("Unable to read hooks, skipping")
 
@@ -1158,12 +1164,12 @@ def backup_account(args, output_directory):
                      account_cwd)
 
 
-def _backup_data(args, name, template, output_file, output_directory):
+def _backup_data(args, name, template, output_file, output_directory, optional=False):
     skip_existing = args.skip_existing
     if not skip_existing or not os.path.exists(output_file):
         log_info('Retrieving {0} {1}'.format(args.user, name))
         mkdir_p(output_directory)
-        data = retrieve_data(args, template)
+        data = retrieve_data(args, template, optional=optional)
 
         log_info('Writing {0} {1} to disk'.format(len(data), name))
         with codecs.open(output_file, 'w', encoding='utf-8') as f:
