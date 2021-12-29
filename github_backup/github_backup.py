@@ -11,7 +11,6 @@ import datetime
 import errno
 import getpass
 import json
-import logging
 import os
 import re
 import select
@@ -41,6 +40,7 @@ FNULL = open(os.devnull, 'w')
 
 def _get_log_date():
     return datetime.datetime.isoformat(datetime.datetime.now())
+
 
 def log_info(message):
     """
@@ -133,7 +133,7 @@ def mask_password(url, secret='*****'):
     return url.replace(parsed.password, secret)
 
 
-def parse_args(args = None):
+def parse_args(args=None):
     parser = argparse.ArgumentParser(description='Backup a github account')
     parser.add_argument('user',
                         metavar='USER',
