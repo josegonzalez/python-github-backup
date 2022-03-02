@@ -1106,16 +1106,17 @@ def fetch_repository(name,
             masked_remote_url,
             local_dir))
         if bare_clone:
+            git_command = ['git', 'clone', '--mirror', remote_url, local_dir]
+            logging_subprocess(git_command, None)
             if lfs_clone:
-                git_command = ['git', 'lfs', 'clone', '--mirror', remote_url, local_dir]
-            else:
-                git_command = ['git', 'clone', '--mirror', remote_url, local_dir]
+                git_command = ['git', 'lfs', 'fetch', '--all', '--prune']
+                logging_subprocess(git_command, None, cwd=local_dir)
         else:
             if lfs_clone:
                 git_command = ['git', 'lfs', 'clone', remote_url, local_dir]
             else:
                 git_command = ['git', 'clone', remote_url, local_dir]
-        logging_subprocess(git_command, None)
+            logging_subprocess(git_command, None)
 
 
 def backup_account(args, output_directory):
