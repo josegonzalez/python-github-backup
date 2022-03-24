@@ -7,7 +7,6 @@ import argparse
 import base64
 import calendar
 import codecs
-import datetime
 import errno
 import getpass
 import json
@@ -37,31 +36,7 @@ except ImportError:
 
 FNULL = open(os.devnull, 'w')
 
-
-def _get_log_date():
-    return datetime.datetime.isoformat(datetime.datetime.now())
-
-
-def log_info(message):
-    """
-    Log message (str) or messages (List[str]) to stdout
-    """
-    if type(message) == str:
-        message = [message]
-
-    for msg in message:
-        logging.info(msg)
-
-
-def log_warning(message):
-    """
-    Log message (str) or messages (List[str]) to stderr
-    """
-    if type(message) == str:
-        message = [message]
-
-    for msg in message:
-        logging.warning(msg)
+logger = logging.getLogger(__name__)
 
 
 def logging_subprocess(popenargs,
@@ -77,7 +52,7 @@ def logging_subprocess(popenargs,
     child = subprocess.Popen(popenargs, stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE, **kwargs)
     if sys.platform == 'win32':
-        log_info("Windows operating system detected - no subprocess logging will be returned")
+        logger.info("Windows operating system detected - no subprocess logging will be returned")
 
     log_level = {child.stdout: stdout_log_level,
                  child.stderr: stderr_log_level}
@@ -139,6 +114,11 @@ def parse_args(args=None):
                         metavar='USER',
                         type=str,
                         help='github username')
+    parser.add_argument('-q',
+                        '--quiet',
+                        action='store_true',
+                        dest='quiet',
+                        help='supress non-error log messages')
     parser.add_argument('-u',
                         '--username',
                         dest='username',
@@ -441,13 +421,13 @@ def retrieve_data_gen(args, template, query_args=None, single_request=False):
         try:
             response = json.loads(r.read().decode('utf-8'))
         except IncompleteRead:
-            log_warning("Incomplete read error detected")
+            logger.warning("Incomplete read error detected")
             read_error = True
         except json.decoder.JSONDecodeError:
-            log_warning("JSON decode error detected")
+            logger.warning("JSON decode error detected")
             read_error = True
         except TimeoutError:
-            log_warning("Tiemout error detected")
+            logger.warning("Tiemout error detected")
             read_error = True
         else:
             read_error = False
@@ -455,7 +435,7 @@ def retrieve_data_gen(args, template, query_args=None, single_request=False):
         # be gentle with API request limit and throttle requests if remaining requests getting low
         limit_remaining = int(r.headers.get('x-ratelimit-remaining', 0))
         if args.throttle_limit and limit_remaining <= args.throttle_limit:
-            log_info(
+            logger.info(
                 'API request limit hit: {} requests left, pausing further requests for {}s'.format(
                     limit_remaining,
                     args.throttle_pause))
@@ -463,7 +443,7 @@ def retrieve_data_gen(args, template, query_args=None, single_request=False):
 
         retries = 0
         while retries < 3 and (status_code == 502 or read_error):
-            log_warning('API request failed. Retrying in 5 seconds')
+            logger.warning('API request failed. Retrying in 5 seconds')
             retries += 1
             time.sleep(5)
             request = _construct_request(per_page, page, query_args, template, auth, as_app=args.as_app)  # noqa
@@ -474,13 +454,13 @@ def retrieve_data_gen(args, template, query_args=None, single_request=False):
                 response = json.loads(r.read().decode('utf-8'))
                 read_error = False
             except IncompleteRead:
-                log_warning("Incomplete read error detected")
+                logger.warning("Incomplete read error detected")
                 read_error = True
             except json.decoder.JSONDecodeError:
-                log_warning("JSON decode error detected")
+                logger.warning("JSON decode error detected")
                 read_error = True
             except TimeoutError:
-                log_warning("Tiemout error detected")
+                logger.warning("Tiemout error detected")
                 read_error = True
 
         if status_code != 200:
@@ -532,12 +512,12 @@ def _get_response(request, auth, template):
             errors, should_continue = _request_http_error(exc, auth, errors)  # noqa
             r = exc
         except URLError as e:
-            log_warning(e.reason)
+            logger.warning(e.reason)
             should_continue = _request_url_error(template, retry_timeout)
             if not should_continue:
                 raise
         except socket.error as e:
-            log_warning(e.strerror)
+            logger.warning(e.strerror)
             should_continue = _request_url_error(template, retry_timeout)
             if not should_continue:
                 raise
@@ -563,7 +543,7 @@ def _construct_request(per_page, page, query_args, template, auth, as_app=None):
             auth = auth.encode('ascii')
             request.add_header('Authorization', 'token '.encode('ascii') + auth)
             request.add_header('Accept', 'application/vnd.github.machine-man-preview+json')
-    log_info('Requesting {}?{}'.format(template, querystring))
+    logger.info('Requesting {}?{}'.format(template, querystring))
     return request
 
 
@@ -587,10 +567,10 @@ def _request_http_error(exc, auth, errors):
         delta = max(10, reset - gm_now)
 
         limit = headers.get('x-ratelimit-limit')
-        log_warning('Exceeded rate limit of {} requests; waiting {} seconds to reset'.format(limit, delta))  # noqa
+        logger.warning('Exceeded rate limit of {} requests; waiting {} seconds to reset'.format(limit, delta))  # noqa
 
         if auth is None:
-            log_info('Hint: Authenticate to raise your GitHub rate limit')
+            logger.info('Hint: Authenticate to raise your GitHub rate limit')
 
         time.sleep(delta)
         should_continue = True
@@ -600,7 +580,7 @@ def _request_http_error(exc, auth, errors):
 def _request_url_error(template, retry_timeout):
     # Incase of a connection timing out, we can retry a few time
     # But we won't crash and not back-up the rest now
-    log_info('{} timed out'.format(template))
+    logger.info('{} timed out'.format(template))
     retry_timeout -= 1
 
     if retry_timeout >= 0:
@@ -645,14 +625,14 @@ def download_file(url, path, auth):
                 f.write(chunk)
     except HTTPError as exc:
         # Gracefully handle 404 responses (and others) when downloading from S3
-        log_warning('Skipping download of asset {0} due to HTTPError: {1}'.format(url, exc.reason))
+        logger.warning('Skipping download of asset {0} due to HTTPError: {1}'.format(url, exc.reason))
     except URLError as e:
         # Gracefully handle other URL errors
-        log_warning('Skipping download of asset {0} due to URLError: {1}'.format(url, e.reason))
+        logger.warning('Skipping download of asset {0} due to URLError: {1}'.format(url, e.reason))
     except socket.error as e:
         # Gracefully handle socket errors
         # TODO: Implement retry logic
-        log_warning('Skipping download of asset {0} due to socker error: {1}'.format(url, e.strerror))
+        logger.warning('Skipping download of asset {0} due to socker error: {1}'.format(url, e.strerror))
 
 
 def get_authenticated_user(args):
@@ -668,7 +648,7 @@ def check_git_lfs_install():
 
 
 def retrieve_repositories(args, authenticated_user):
-    log_info('Retrieving repositories')
+    logger.info('Retrieving repositories')
     single_request = False
     if args.user == authenticated_user['login']:
         # we must use the /user/repos API to be able to access private repos
@@ -676,7 +656,7 @@ def retrieve_repositories(args, authenticated_user):
             get_github_api_host(args))
     else:
         if args.private and not args.organization:
-            log_warning('Authenticated user is different from user being backed up, thus private repositories cannot be accessed')
+            logger.warning('Authenticated user is different from user being backed up, thus private repositories cannot be accessed')
         template = 'https://{0}/users/{1}/repos'.format(
             get_github_api_host(args),
             args.user)
@@ -724,7 +704,7 @@ def retrieve_repositories(args, authenticated_user):
 
 
 def filter_repositories(args, unfiltered_repositories):
-    log_info('Filtering repositories')
+    logger.info('Filtering repositories')
 
     repositories = []
     for r in unfiltered_repositories:
@@ -755,7 +735,7 @@ def filter_repositories(args, unfiltered_repositories):
 
 
 def backup_repositories(args, output_directory, repositories):
-    log_info('Backing up repositories')
+    logger.info('Backing up repositories')
     repos_template = 'https://{0}/repos'.format(get_github_api_host(args))
 
     if args.incremental:
@@ -837,7 +817,7 @@ def backup_issues(args, repo_cwd, repository, repos_template):
     if args.skip_existing and has_issues_dir:
         return
 
-    log_info('Retrieving {0} issues'.format(repository['full_name']))
+    logger.info('Retrieving {0} issues'.format(repository['full_name']))
     issue_cwd = os.path.join(repo_cwd, 'issues')
     mkdir_p(repo_cwd, issue_cwd)
 
@@ -873,7 +853,7 @@ def backup_issues(args, repo_cwd, repository, repos_template):
         issues_skipped_message = ' (skipped {0} pull requests)'.format(
             issues_skipped)
 
-    log_info('Saving {0} issues to disk{1}'.format(
+    logger.info('Saving {0} issues to disk{1}'.format(
         len(list(issues.keys())), issues_skipped_message))
     comments_template = _issue_template + '/{0}/comments'
     events_template = _issue_template + '/{0}/events'
@@ -895,7 +875,7 @@ def backup_pulls(args, repo_cwd, repository, repos_template):
     if args.skip_existing and has_pulls_dir:
         return
 
-    log_info('Retrieving {0} pull requests'.format(repository['full_name']))  # noqa
+    logger.info('Retrieving {0} pull requests'.format(repository['full_name']))  # noqa
     pulls_cwd = os.path.join(repo_cwd, 'pulls')
     mkdir_p(repo_cwd, pulls_cwd)
 
@@ -939,7 +919,7 @@ def backup_pulls(args, repo_cwd, repository, repos_template):
                     single_request=True
                 )[0]
 
-    log_info('Saving {0} pull requests to disk'.format(
+    logger.info('Saving {0} pull requests to disk'.format(
         len(list(pulls.keys()))))
     comments_template = _pulls_template + '/{0}/comments'
     commits_template = _pulls_template + '/{0}/commits'
@@ -961,7 +941,7 @@ def backup_milestones(args, repo_cwd, repository, repos_template):
     if args.skip_existing and os.path.isdir(milestone_cwd):
         return
 
-    log_info('Retrieving {0} milestones'.format(repository['full_name']))
+    logger.info('Retrieving {0} milestones'.format(repository['full_name']))
     mkdir_p(repo_cwd, milestone_cwd)
 
     template = '{0}/{1}/milestones'.format(repos_template,
@@ -977,7 +957,7 @@ def backup_milestones(args, repo_cwd, repository, repos_template):
     for milestone in _milestones:
         milestones[milestone['number']] = milestone
 
-    log_info('Saving {0} milestones to disk'.format(
+    logger.info('Saving {0} milestones to disk'.format(
         len(list(milestones.keys()))))
     for number, milestone in list(milestones.items()):
         milestone_file = '{0}/{1}.json'.format(milestone_cwd, number)
@@ -1000,7 +980,7 @@ def backup_labels(args, repo_cwd, repository, repos_template):
 def backup_hooks(args, repo_cwd, repository, repos_template):
     auth = get_auth(args)
     if not auth:
-        log_info("Skipping hooks since no authentication provided")
+        logger.info("Skipping hooks since no authentication provided")
         return
     hook_cwd = os.path.join(repo_cwd, 'hooks')
     output_file = '{0}/hooks.json'.format(hook_cwd)
@@ -1013,7 +993,7 @@ def backup_hooks(args, repo_cwd, repository, repos_template):
                      output_file,
                      hook_cwd)
     except SystemExit:
-        log_info("Unable to read hooks, skipping")
+        logger.info("Unable to read hooks, skipping")
 
 
 def backup_releases(args, repo_cwd, repository, repos_template, include_assets=False):
@@ -1021,7 +1001,7 @@ def backup_releases(args, repo_cwd, repository, repos_template, include_assets=F
 
     # give release files somewhere to live & log intent
     release_cwd = os.path.join(repo_cwd, 'releases')
-    log_info('Retrieving {0} releases'.format(repository_fullname))
+    logger.info('Retrieving {0} releases'.format(repository_fullname))
     mkdir_p(repo_cwd, release_cwd)
 
     query_args = {}
@@ -1030,7 +1010,7 @@ def backup_releases(args, repo_cwd, repository, repos_template, include_assets=F
     releases = retrieve_data(args, release_template, query_args=query_args)
 
     # for each release, store it
-    log_info('Saving {0} releases to disk'.format(len(releases)))
+    logger.info('Saving {0} releases to disk'.format(len(releases)))
     for release in releases:
         release_name = release['tag_name']
         release_name_safe = release_name.replace('/', '__')
@@ -1075,12 +1055,12 @@ def fetch_repository(name,
                                   stderr=FNULL,
                                   shell=True)
     if initialized == 128:
-        log_info("Skipping {0} ({1}) since it's not initialized".format(
+        logger.info("Skipping {0} ({1}) since it's not initialized".format(
             name, masked_remote_url))
         return
 
     if clone_exists:
-        log_info('Updating {0} in {1}'.format(name, local_dir))
+        logger.info('Updating {0} in {1}'.format(name, local_dir))
 
         remotes = subprocess.check_output(['git', 'remote', 'show'],
                                           cwd=local_dir)
@@ -1101,7 +1081,7 @@ def fetch_repository(name,
             git_command = ['git', 'fetch', '--all', '--force', '--tags', '--prune']
         logging_subprocess(git_command, None, cwd=local_dir)
     else:
-        log_info('Cloning {0} repository from {1} to {2}'.format(
+        logger.info('Cloning {0} repository from {1} to {2}'.format(
             name,
             masked_remote_url,
             local_dir))
@@ -1161,11 +1141,11 @@ def backup_account(args, output_directory):
 def _backup_data(args, name, template, output_file, output_directory):
     skip_existing = args.skip_existing
     if not skip_existing or not os.path.exists(output_file):
-        log_info('Retrieving {0} {1}'.format(args.user, name))
+        logger.info('Retrieving {0} {1}'.format(args.user, name))
         mkdir_p(output_directory)
         data = retrieve_data(args, template)
 
-        log_info('Writing {0} {1} to disk'.format(len(data), name))
+        logger.info('Writing {0} {1} to disk'.format(len(data), name))
         with codecs.open(output_file, 'w', encoding='utf-8') as f:
             json_dump(data, f)
 
