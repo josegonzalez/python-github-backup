@@ -32,6 +32,11 @@ def main():
     if args.lfs_clone:
         check_git_lfs_install()
 
+    if args.log_level:
+        log_level = logging.getLevelName(args.log_level.upper())
+        if isinstance(log_level, int):
+            logging.root.setLevel(log_level)
+
     if not args.as_app:
         log_info('Backing up user {0} to {1}'.format(args.user, output_directory))
         authenticated_user = get_authenticated_user(args)

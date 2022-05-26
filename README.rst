@@ -30,15 +30,15 @@ Usage
 CLI Usage is as follows::
 
     github-backup [-h] [-u USERNAME] [-p PASSWORD] [-t TOKEN] [--as-app]
-                  [-o OUTPUT_DIRECTORY] [-i] [--starred] [--all-starred]
-                  [--watched] [--followers] [--following] [--all]
-                  [--issues] [--issue-comments] [--issue-events] [--pulls]
-                  [--pull-comments] [--pull-commits] [--pull-details]
-                  [--labels] [--hooks] [--milestones] [--repositories]
-                  [--bare] [--lfs] [--wikis] [--gists] [--starred-gists]
-                  [--skip-existing] [-L [LANGUAGES [LANGUAGES ...]]]
-                  [-N NAME_REGEX] [-H GITHUB_HOST] [-O] [-R REPOSITORY]
-                  [-P] [-F] [--prefer-ssh] [-v]
+                  [-o OUTPUT_DIRECTORY] [-l LOG_LEVEL] [-i] [--starred]
+                  [--all-starred] [--watched] [--followers] [--following]
+                  [--all] [--issues] [--issue-comments] [--issue-events]
+                  [--pulls] [--pull-comments] [--pull-commits]
+                  [--pull-details] [--labels] [--hooks] [--milestones]
+                  [--repositories] [--bare] [--lfs] [--wikis] [--gists]
+                  [--starred-gists] [--skip-archived] [--skip-existing]
+                  [-L [LANGUAGES ...]] [-N NAME_REGEX] [-H GITHUB_HOST]
+                  [-O] [-R REPOSITORY] [-P] [-F] [--prefer-ssh] [-v]
                   [--keychain-name OSX_KEYCHAIN_ITEM_NAME]
                   [--keychain-account OSX_KEYCHAIN_ITEM_ACCOUNT]
                   [--releases] [--assets] [--throttle-limit THROTTLE_LIMIT]
@@ -63,6 +63,9 @@ CLI Usage is as follows::
       --as-app              authenticate as github app instead of as a user.
       -o OUTPUT_DIRECTORY, --output-directory OUTPUT_DIRECTORY
                             directory at which to backup the repositories
+      -l LOG_LEVEL, --log-level LOG_LEVEL
+                            log level to use (default: info, possible levels:
+                            debug, info, warning, error, critical)
       -i, --incremental     incremental backup
       --starred             include JSON output of starred repositories in backup
       --all-starred         include starred repositories in backup [*]

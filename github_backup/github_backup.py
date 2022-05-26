@@ -162,6 +162,11 @@ def parse_args(args=None):
                         default='.',
                         dest='output_directory',
                         help='directory at which to backup the repositories')
+    parser.add_argument('-l',
+                        '--log-level',
+                        default='info',
+                        dest='log_level',
+                        help='log level to use (default: info, possible levels: debug, info, warning, error, critical)')
     parser.add_argument('-i',
                         '--incremental',
                         action='store_true',
