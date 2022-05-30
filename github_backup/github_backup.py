@@ -239,6 +239,10 @@ def parse_args(args=None):
                         action='store_true',
                         dest='bare_clone',
                         help='clone bare repositories')
+    parser.add_argument('--no-prune',
+                        action='store_true',
+                        dest='no_prune',
+                        help='disable prune option for git fetch')
     parser.add_argument('--lfs',
                         action='store_true',
                         dest='lfs_clone',
@@ -790,7 +794,8 @@ def backup_repositories(args, output_directory, repositories):
                              repo_dir,
                              skip_existing=args.skip_existing,
                              bare_clone=args.bare_clone,
-                             lfs_clone=args.lfs_clone)
+                             lfs_clone=args.lfs_clone,
+                             no_prune=args.no_prune)
 
             if repository.get('is_gist'):
                 # dump gist information to a file as well
@@ -807,8 +812,9 @@ def backup_repositories(args, output_directory, repositories):
                              os.path.join(repo_cwd, 'wiki'),
                              skip_existing=args.skip_existing,
                              bare_clone=args.bare_clone,
-                             lfs_clone=args.lfs_clone)
-
+                             lfs_clone=args.lfs_clone,
+                             no_prune=args.no_prune
+                             )
         if args.include_issues or args.include_everything:
             backup_issues(args, repo_cwd, repository, repos_template)
 
@@ -1053,7 +1059,8 @@ def fetch_repository(name,
                      local_dir,
                      skip_existing=False,
                      bare_clone=False,
-                     lfs_clone=False):
+                     lfs_clone=False,
+                     no_prune=False):
     if bare_clone:
         if os.path.exists(local_dir):
             clone_exists = subprocess.check_output(['git',
@@ -1099,6 +1106,8 @@ def fetch_repository(name,
             git_command = ['git', 'lfs', 'fetch', '--all', '--prune']
         else:
             git_command = ['git', 'fetch', '--all', '--force', '--tags', '--prune']
+        if no_prune:
+            git_command.pop()
         logging_subprocess(git_command, None, cwd=local_dir)
     else:
         log_info('Cloning {0} repository from {1} to {2}'.format(
@@ -1110,6 +1119,8 @@ def fetch_repository(name,
             logging_subprocess(git_command, None)
             if lfs_clone:
                 git_command = ['git', 'lfs', 'fetch', '--all', '--prune']
+                if no_prune:
+                    git_command.pop()
                 logging_subprocess(git_command, None, cwd=local_dir)
         else:
             if lfs_clone:
