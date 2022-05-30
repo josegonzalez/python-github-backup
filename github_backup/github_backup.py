@@ -533,12 +533,12 @@ def _get_response(request, auth, template):
             r = exc
         except URLError as e:
             log_warning(e.reason)
-            should_continue = _request_url_error(template, retry_timeout)
+            should_continue, retry_timeout = _request_url_error(template, retry_timeout)
             if not should_continue:
                 raise
         except socket.error as e:
             log_warning(e.strerror)
-            should_continue = _request_url_error(template, retry_timeout)
+            should_continue, retry_timeout = _request_url_error(template, retry_timeout)
             if not should_continue:
                 raise
 
@@ -598,16 +598,15 @@ def _request_http_error(exc, auth, errors):
 
 
 def _request_url_error(template, retry_timeout):
-    # Incase of a connection timing out, we can retry a few time
+    # In case of a connection timing out, we can retry a few time
     # But we won't crash and not back-up the rest now
     log_info('{} timed out'.format(template))
     retry_timeout -= 1
 
     if retry_timeout >= 0:
-        return True
+        return True, retry_timeout
 
     raise Exception('{} timed out to much, skipping!')
-    return False
 
 
 class S3HTTPRedirectHandler(HTTPRedirectHandler):
