@@ -328,6 +328,10 @@ def parse_args(args=None):
                         type=float,
                         default=30.0,
                         help='wait this amount of seconds when API request throttling is active (default: 30.0, requires --throttle-limit to be set)')
+    parser.add_argument('--exclude',
+                        dest='exclude',
+                        help='names of repositories to exclude',
+                        nargs="*")
     return parser.parse_args(args)
 
 
@@ -753,6 +757,8 @@ def filter_repositories(args, unfiltered_repositories):
         repositories = [r for r in repositories if name_regex.match(r['name'])]
     if args.skip_archived:
         repositories = [r for r in repositories if not r.get('archived')]
+    if args.exclude:
+        repositories = [r for r in repositories if r['name'] not in args.exclude]
 
     return repositories
 

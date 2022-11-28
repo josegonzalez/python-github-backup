@@ -41,8 +41,8 @@ CLI Usage is as follows::
                   [-P] [-F] [--prefer-ssh] [-v]
                   [--keychain-name OSX_KEYCHAIN_ITEM_NAME]
                   [--keychain-account OSX_KEYCHAIN_ITEM_ACCOUNT]
-                  [--releases] [--assets] [--throttle-limit THROTTLE_LIMIT]
-                  [--throttle-pause THROTTLE_PAUSE]
+                  [--releases] [--assets] [--exclude [REPOSITORY [REPOSITORY ...]]
+                  [--throttle-limit THROTTLE_LIMIT] [--throttle-pause THROTTLE_PAUSE]
                   USER
 
     Backup a github account
@@ -112,6 +112,8 @@ CLI Usage is as follows::
                             binaries
       --assets              include assets alongside release information; only
                             applies if including releases
+      --exclude [REPOSITORY [REPOSITORY ...]]
+                            names of repositories to exclude from backup.
       --throttle-limit THROTTLE_LIMIT
                             start throttling of GitHub API requests after this
                             amount of API requests remain
