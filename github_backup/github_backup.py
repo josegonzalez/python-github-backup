@@ -907,6 +907,8 @@ def backup_pulls(args, repo_cwd, repository, repos_template):
     pulls = {}
     _pulls_template = '{0}/{1}/pulls'.format(repos_template,
                                              repository['full_name'])
+    _issue_template = '{0}/{1}/issues'.format(repos_template,
+                                              repository['full_name'])
     query_args = {
         'filter': 'all',
         'state': 'all',
@@ -946,10 +948,17 @@ def backup_pulls(args, repo_cwd, repository, repos_template):
 
     log_info('Saving {0} pull requests to disk'.format(
         len(list(pulls.keys()))))
+    # Comments from pulls API are only _review_ comments
+    # regular comments need to be fetched via issue API.
+    # For backwards compatibility with versions <= 0.41.0
+    # keep name "comment_data" for review comments
+    comments_regular_template = _issue_template + '/{0}/comments'
     comments_template = _pulls_template + '/{0}/comments'
     commits_template = _pulls_template + '/{0}/commits'
     for number, pull in list(pulls.items()):
         if args.include_pull_comments or args.include_everything:
+            template = comments_regular_template.format(number)
+            pulls[number]['comment_regular_data'] = retrieve_data(args, template)
             template = comments_template.format(number)
             pulls[number]['comment_data'] = retrieve_data(args, template)
         if args.include_pull_commits or args.include_everything:
