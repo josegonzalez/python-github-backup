@@ -768,7 +768,6 @@ def backup_repositories(args, output_directory, repositories):
     repos_template = 'https://{0}/repos'.format(get_github_api_host(args))
 
     if args.incremental:
-        last_update = max(list(repository['updated_at'] for repository in repositories) or [time.strftime('%Y-%m-%dT%H:%M:%SZ', time.localtime())])  # noqa
         last_update_path = os.path.join(output_directory, 'last_update')
         if os.path.exists(last_update_path):
             args.since = open(last_update_path).read().strip()
@@ -777,7 +776,13 @@ def backup_repositories(args, output_directory, repositories):
     else:
         args.since = None
 
+    last_update = '0000-00-00T00:00:00Z'
     for repository in repositories:
+        if 'updated_at' in repository and repository['updated_at'] > last_update:
+            last_update = repository['updated_at']
+        elif 'pushed_at' in repository and repository['pushed_at'] > last_update:
+            last_update = repository['pushed_at']
+                    
         if repository.get('is_gist'):
             repo_cwd = os.path.join(output_directory, 'gists', repository['id'])
         elif repository.get('is_starred'):
@@ -840,6 +845,9 @@ def backup_repositories(args, output_directory, repositories):
                             include_assets=args.include_assets or args.include_everything)
 
     if args.incremental:
+        if last_update == '0000-00-00T00:00:00Z':
+            last_update = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.localtime())
+            
         open(last_update_path, 'w').write(last_update)
 
 
