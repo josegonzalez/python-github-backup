@@ -150,9 +150,13 @@ def parse_args(args=None):
                              'If a username is given but not a password, the '
                              'password will be prompted for.')
     parser.add_argument('-t',
-                        '--token',
-                        dest='token',
+                        '--token-classic',
+                        dest='token_classic',
                         help='personal access, OAuth, or JSON Web token, or path to token (file://...)')  # noqa
+    parser.add_argument('-f',
+                        '--token-fine',
+                        dest='token_fine',
+                        help='fine-grained personal access token (github_pat_....)')  # noqa
     parser.add_argument('--as-app',
                         action='store_true',
                         dest='as_app',
@@ -357,18 +361,23 @@ def get_auth(args, encode=True, for_git_cli=False):
                 raise Exception('No password item matching the provided name and account could be found in the osx keychain.')
     elif args.osx_keychain_item_account:
         raise Exception('You must specify both name and account fields for osx keychain password items')
-    elif args.token:
+    elif args.token_fine:
+        if args.token_fine.startswith("github_pat_"):
+            auth = args.token_fine
+        else:
+            raise Exception("Fine-grained token supplied does not look like a GitHub PAT")
+    elif args.token_classic:
         _path_specifier = 'file://'
-        if args.token.startswith(_path_specifier):
-            args.token = open(args.token[len(_path_specifier):],
-                              'rt').readline().strip()
+        if args.token_classic.startswith(_path_specifier):
+            args.token_classic = open(args.token_classic[len(_path_specifier):],
+                                      'rt').readline().strip()
         if not args.as_app:
-            auth = args.token + ':' + 'x-oauth-basic'
+            auth = args.token_classic + ':' + 'x-oauth-basic'
         else:
             if not for_git_cli:
-                auth = args.token
+                auth = args.token_classic
             else:
-                auth = 'x-access-token:' + args.token
+                auth = 'x-access-token:' + args.token_classic
     elif args.username:
         if not args.password:
             args.password = getpass.getpass()
@@ -383,7 +392,7 @@ def get_auth(args, encode=True, for_git_cli=False):
     if not auth:
         return None
 
-    if not encode:
+    if not encode or args.token_fine is not None:
         return auth
 
     return base64.b64encode(auth.encode('ascii'))
@@ -421,12 +430,19 @@ def get_github_repo_url(args, repository):
         return repository['ssh_url']
 
     auth = get_auth(args, encode=False, for_git_cli=True)
-    if auth:
-        repo_url = 'https://{0}@{1}/{2}/{3}.git'.format(
-            auth,
-            get_github_host(args),
-            repository['owner']['login'],
-            repository['name'])
+    if auth: 
+        if args.token_fine is None:
+            repo_url = 'https://{0}@{1}/{2}/{3}.git'.format(
+                auth,
+                get_github_host(args),
+                repository['owner']['login'],
+                repository['name'])
+        else:
+            repo_url = 'https://{0}@{1}/{2}/{3}.git'.format(
+                "oauth2:"+auth,
+                get_github_host(args),
+                repository['owner']['login'],
+                repository['name'])
     else:
         repo_url = repository['clone_url']
 
@@ -441,7 +457,7 @@ def retrieve_data_gen(args, template, query_args=None, single_request=False):
 
     while True:
         page = page + 1
-        request = _construct_request(per_page, page, query_args, template, auth, as_app=args.as_app)  # noqa
+        request = _construct_request(per_page, page, query_args, template, auth, as_app=args.as_app, fine=True if args.token_fine is not None else False)  # noqa
         r, errors = _get_response(request, auth, template)
 
         status_code = int(r.getcode())
@@ -474,7 +490,7 @@ def retrieve_data_gen(args, template, query_args=None, single_request=False):
             log_warning('API request failed. Retrying in 5 seconds')
             retries += 1
             time.sleep(5)
-            request = _construct_request(per_page, page, query_args, template, auth, as_app=args.as_app)  # noqa
+            request = _construct_request(per_page, page, query_args, template, auth, as_app=args.as_app, fine=True if args.token_fine is not None else False)  # noqa
             r, errors = _get_response(request, auth, template)
 
             status_code = int(r.getcode())
@@ -557,7 +573,7 @@ def _get_response(request, auth, template):
     return r, errors
 
 
-def _construct_request(per_page, page, query_args, template, auth, as_app=None):
+def _construct_request(per_page, page, query_args, template, auth, as_app=None, fine=False):
     querystring = urlencode(dict(list({
         'per_page': per_page,
         'page': page
@@ -566,7 +582,10 @@ def _construct_request(per_page, page, query_args, template, auth, as_app=None):
     request = Request(template + '?' + querystring)
     if auth is not None:
         if not as_app:
-            request.add_header('Authorization', 'Basic '.encode('ascii') + auth)
+            if fine:
+                request.add_header('Authorization', 'token ' + auth)
+            else:
+                request.add_header('Authorization', 'Basic '.encode('ascii') + auth)
         else:
             auth = auth.encode('ascii')
             request.add_header('Authorization', 'token '.encode('ascii') + auth)
