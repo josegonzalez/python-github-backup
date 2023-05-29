@@ -460,9 +460,8 @@ def get_auth(args, encode=True, for_git_cli=False):
     elif args.token:
         _path_specifier = "file://"
         if args.token.startswith(_path_specifier):
-            args.token = (
-                open(args.token[len(_path_specifier) :], "rt").readline().strip()
-            )
+            path_specifier_len = len(_path_specifier)
+            args.token = open(args.token[path_specifier_len:], "rt").readline().strip()
         if not args.as_app:
             auth = args.token + ":" + "x-oauth-basic"
         else:
@@ -673,8 +672,7 @@ def _get_response(request, auth, template):
 def _construct_request(per_page, page, query_args, template, auth, as_app=None):
     querystring = urlencode(
         dict(
-            list({"per_page": per_page, "page": page}.items())
-            + list(query_args.items())
+            list({"per_page": per_page, "page": page}.items()) + list(query_args.items())
         )
     )
 
