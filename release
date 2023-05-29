@@ -92,12 +92,6 @@ replace_with="__version__ = \"$next_version\""
 echo -e "${YELLOW}--->${COLOR_OFF} Updating ${INIT_PACKAGE_NAME}/__init__.py"
 sed "s/$find_this/$replace_with/" ${INIT_PACKAGE_NAME}/__init__.py > $TMPFILE && mv $TMPFILE ${INIT_PACKAGE_NAME}/__init__.py
 
-find_this="${PACKAGE_NAME}.git@$current_version"
-replace_with="${PACKAGE_NAME}.git@$next_version"
-
-echo -e "${YELLOW}--->${COLOR_OFF} Updating README.rst"
-sed "s/$find_this/$replace_with/" README.rst > $TMPFILE && mv $TMPFILE README.rst
-
 if [ -f docs/conf.py ]; then
     echo -e "${YELLOW}--->${COLOR_OFF} Updating docs"
     find_this="version = '${current_version}'"
