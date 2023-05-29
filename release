@@ -6,7 +6,7 @@ if [[ ! -f setup.py ]]; then
   exit 1
 fi
 
-PACKAGE_NAME="$(cat setup.py | grep "name=\"" | head | cut -d "'" -f2)"
+PACKAGE_NAME="$(cat setup.py | grep 'name="' | head | cut -d '"' -f2)"
 INIT_PACKAGE_NAME="$(echo "${PACKAGE_NAME//-/_}")"
 PUBLIC="true"
 
