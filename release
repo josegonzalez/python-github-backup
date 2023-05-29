@@ -86,8 +86,8 @@ TMPFILE=$(mktemp /tmp/${tempfoo}.XXXXXX) || {
     exit 1
 }
 
-find_this="__version__ = '$current_version'"
-replace_with="__version__ = '$next_version'"
+find_this="__version__ = \"$current_version\""
+replace_with="__version__ = \"$next_version\""
 
 echo -e "${YELLOW}--->${COLOR_OFF} Updating ${INIT_PACKAGE_NAME}/__init__.py"
 sed "s/$find_this/$replace_with/" ${INIT_PACKAGE_NAME}/__init__.py > $TMPFILE && mv $TMPFILE ${INIT_PACKAGE_NAME}/__init__.py
