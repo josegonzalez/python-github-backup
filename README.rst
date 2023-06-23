@@ -4,7 +4,7 @@ github-backup
 
 |PyPI| |Python Versions|
 
-    This project is considered feature complete for the primary maintainer. If you would like a bugfix or enhancement and cannot sponsor the work, pull requests are welcome. Feel free to contact the maintainer for consulting estimates if desired.
+    This project is considered feature complete for the primary maintainer. If you would like a bugfix or enhancement and can not sponsor the work, pull requests are welcome. Feel free to contact the maintainer for consulting estimates if desired.
 
 backup a github user or organization
 
