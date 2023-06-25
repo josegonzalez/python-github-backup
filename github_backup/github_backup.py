@@ -707,7 +707,7 @@ def _request_url_error(template, retry_timeout):
     if retry_timeout >= 0:
         return True, retry_timeout
 
-    raise Exception("{} timed out to much, skipping!")
+    raise Exception("{} timed out to much, skipping!".format(template))
 
 
 class S3HTTPRedirectHandler(HTTPRedirectHandler):
