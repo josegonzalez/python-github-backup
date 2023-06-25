@@ -2,31 +2,31 @@
 
 import os, sys, logging
 
-from github_backup.github_backup import (
-    backup_account,
-    backup_repositories,
-    check_git_lfs_install,
-    filter_repositories,
-    get_authenticated_user,
-    log_info,
-    log_warning,
-    mkdir_p,
-    parse_args,
-    retrieve_repositories,
-)
-
 logging.basicConfig(
     format='%(asctime)s.%(msecs)03d: %(message)s',
     datefmt='%Y-%m-%dT%H:%M:%S',
     level=logging.INFO
 )
 
+from github_backup.github_backup import (
+    backup_account,
+    backup_repositories,
+    check_git_lfs_install,
+    filter_repositories,
+    get_authenticated_user,
+    logger,
+    mkdir_p,
+    parse_args,
+    retrieve_repositories,
+)
+
+
 def main():
     args = parse_args()
 
     output_directory = os.path.realpath(args.output_directory)
     if not os.path.isdir(output_directory):
-        log_info('Create output directory {0}'.format(output_directory))
+        logger.info('Create output directory {0}'.format(output_directory))
         mkdir_p(output_directory)
 
     if args.lfs_clone:
@@ -35,10 +35,10 @@ def main():
     if args.log_level:
         log_level = logging.getLevelName(args.log_level.upper())
         if isinstance(log_level, int):
-            logging.root.setLevel(log_level)
+            logger.root.setLevel(log_level)
 
     if not args.as_app:
-        log_info('Backing up user {0} to {1}'.format(args.user, output_directory))
+        logger.info('Backing up user {0} to {1}'.format(args.user, output_directory))
         authenticated_user = get_authenticated_user(args)
     else:
         authenticated_user = {'login': None}
@@ -53,5 +53,5 @@ if __name__ == '__main__':
     try:
         main()
     except Exception as e:
-        log_warning(str(e))
+        logger.error(str(e))
         sys.exit(1)
