@@ -701,13 +701,13 @@ def _request_http_error(exc, auth, errors):
 def _request_url_error(template, retry_timeout):
     # In case of a connection timing out, we can retry a few time
     # But we won't crash and not back-up the rest now
-    logger.info("{} timed out".format(template))
+    logger.info("'{}' timed out".format(template))
     retry_timeout -= 1
 
     if retry_timeout >= 0:
         return True, retry_timeout
 
-    raise Exception("{} timed out to much, skipping!".format(template))
+    raise Exception("'{}' timed out to much, skipping!".format(template))
 
 
 class S3HTTPRedirectHandler(HTTPRedirectHandler):
