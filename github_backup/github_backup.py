@@ -127,13 +127,13 @@ def parse_args(args=None):
         "-t",
         "--token",
         dest="token_classic",
-        help="personal access, OAuth, or JSON Web token, or path to token (file://...)"
+        help="personal access, OAuth, or JSON Web token, or path to token (file://...)",
     )  # noqa
     parser.add_argument(
         "-f",
-        '--token-fine',
+        "--token-fine",
         dest="token_fine",
-        help="fine-grained personal access token (github_pat_....), or path to token (file://...)"
+        help="fine-grained personal access token (github_pat_....), or path to token (file://...)",
     )  # noqa
     parser.add_argument(
         "--as-app",
@@ -436,22 +436,28 @@ def get_auth(args, encode=True, for_git_cli=False):
     elif args.osx_keychain_item_account:
         raise Exception(
             "You must specify both name and account fields for osx keychain password items"
-            )
+        )
     elif args.token_fine:
         _path_specifier = "file://"
         if args.token_fine.startswith(_path_specifier):
-            args.token_fine = open(args.token_fine[len(_path_specifier):],
-                                      "rt").readline().strip()
+            args.token_fine = (
+                open(args.token_fine[len(_path_specifier) :], "rt").readline().strip()
+            )
 
         if args.token_fine.startswith("github_pat_"):
             auth = args.token_fine
         else:
-            raise Exception("Fine-grained token supplied does not look like a GitHub PAT")
+            raise Exception(
+                "Fine-grained token supplied does not look like a GitHub PAT"
+            )
     elif args.token_classic:
         _path_specifier = "file://"
         if args.token_classic.startswith(_path_specifier):
-            args.token_classic = open(args.token_classic[len(_path_specifier):],
-                                      "rt").readline().strip()
+            args.token_classic = (
+                open(args.token_classic[len(_path_specifier) :], "rt")
+                .readline()
+                .strip()
+            )
 
         if not args.as_app:
             auth = args.token_classic + ":" + "x-oauth-basic"
@@ -518,7 +524,7 @@ def get_github_repo_url(args, repository):
         return repository["ssh_url"]
 
     auth = get_auth(args, encode=False, for_git_cli=True)
-    if auth: 
+    if auth:
         if args.token_fine is None:
             repo_url = "https://{0}@{1}/{2}/{3}.git".format(
                 auth,
@@ -528,7 +534,7 @@ def get_github_repo_url(args, repository):
             )
         else:
             repo_url = "https://{0}@{1}/{2}/{3}.git".format(
-                "oauth2:"+auth,
+                "oauth2:" + auth,
                 get_github_host(args),
                 repository["owner"]["login"],
                 repository["name"],
@@ -548,7 +554,13 @@ def retrieve_data_gen(args, template, query_args=None, single_request=False):
     while True:
         page = page + 1
         request = _construct_request(
-            per_page, page, query_args, template, auth, as_app=args.as_app, fine=True if args.token_fine is not None else False
+            per_page,
+            page,
+            query_args,
+            template,
+            auth,
+            as_app=args.as_app,
+            fine=True if args.token_fine is not None else False,
         )  # noqa
         r, errors = _get_response(request, auth, template)
 
@@ -584,7 +596,13 @@ def retrieve_data_gen(args, template, query_args=None, single_request=False):
             retries += 1
             time.sleep(5)
             request = _construct_request(
-                per_page, page, query_args, template, auth, as_app=args.as_app, fine=True if args.token_fine is not None else False
+                per_page,
+                page,
+                query_args,
+                template,
+                auth,
+                as_app=args.as_app,
+                fine=True if args.token_fine is not None else False,
             )  # noqa
             r, errors = _get_response(request, auth, template)
 
@@ -668,10 +686,13 @@ def _get_response(request, auth, template):
     return r, errors
 
 
-def _construct_request(per_page, page, query_args, template, auth, as_app=None, fine=False):
+def _construct_request(
+    per_page, page, query_args, template, auth, as_app=None, fine=False
+):
     querystring = urlencode(
         dict(
-            list({"per_page": per_page, "page": page}.items()) + list(query_args.items())
+            list({"per_page": per_page, "page": page}.items())
+            + list(query_args.items())
         )
     )
 
