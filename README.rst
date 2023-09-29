@@ -4,7 +4,7 @@ github-backup
 
 |PyPI| |Python Versions|
 
-    This project is considered feature complete for the primary maintainer. If you would like a bugfix or enhancement and cannot sponsor the work, pull requests are welcome. Feel free to contact the maintainer for consulting estimates if desired.
+    This project is considered feature complete for the primary maintainer. If you would like a bugfix or enhancement and can not sponsor the work, pull requests are welcome. Feel free to contact the maintainer for consulting estimates if desired.
 
 backup a github user or organization
 
@@ -29,15 +29,15 @@ Usage
 
 CLI Usage is as follows::
 
-    github-backup [-h] [-u USERNAME] [-p PASSWORD]  
-                  [-t TOKEN_CLASSIC] [-f TOKEN_FINE] [--as-app]
-                  [-o OUTPUT_DIRECTORY] [-i] [--starred] [--all-starred]
-                  [--watched] [--followers] [--following] [--all]
-                  [--issues] [--issue-comments] [--issue-events] [--pulls]
+    github-backup [-h] [-u USERNAME] [-p PASSWORD] [-t TOKEN_CLASSIC]
+                  [-f TOKEN_FINE] [--as-app] [-o OUTPUT_DIRECTORY]
+                  [-l LOG_LEVEL] [-i] [--starred] [--all-starred]
+                  [--watched] [--followers] [--following] [--all] [--issues]
+                  [--issue-comments] [--issue-events] [--pulls]
                   [--pull-comments] [--pull-commits] [--pull-details]
                   [--labels] [--hooks] [--milestones] [--repositories]
                   [--bare] [--lfs] [--wikis] [--gists] [--starred-gists]
-                  [--skip-existing] [-L [LANGUAGES [LANGUAGES ...]]]
+                  [--skip-archived] [--skip-existing] [-L [LANGUAGES ...]]
                   [-N NAME_REGEX] [-H GITHUB_HOST] [-O] [-R REPOSITORY]
                   [-P] [-F] [--prefer-ssh] [-v]
                   [--keychain-name OSX_KEYCHAIN_ITEM_NAME]
@@ -67,6 +67,9 @@ CLI Usage is as follows::
       --as-app              authenticate as github app instead of as a user.
       -o OUTPUT_DIRECTORY, --output-directory OUTPUT_DIRECTORY
                             directory at which to backup the repositories
+      -l LOG_LEVEL, --log-level LOG_LEVEL
+                            log level to use (default: info, possible levels:
+                            debug, info, warning, error, critical)
       -i, --incremental     incremental backup
       --starred             include JSON output of starred repositories in backup
       --all-starred         include starred repositories in backup [*]
