@@ -58,9 +58,10 @@ CLI Usage is as follows::
       -p PASSWORD, --password PASSWORD
                             password for basic auth. If a username is given but
                             not a password, the password will be prompted for.
-      -f TOKEN_FINE, --token-fine TOKEN
-                            fine-grained personal access token
-      -t TOKEN_CLASSIC, --token-classic TOKEN
+      -f TOKEN_FINE, --token-fine TOKEN_FINE
+                            fine-grained personal access token or path to token
+                            (file://...)
+      -t TOKEN_CLASSIC, --token TOKEN_CLASSIC
                             personal access, OAuth, or JSON Web token, or path to
                             token (file://...)
       --as-app              authenticate as github app instead of as a user.

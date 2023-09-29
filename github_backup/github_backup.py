@@ -150,7 +150,7 @@ def parse_args(args=None):
                              'If a username is given but not a password, the '
                              'password will be prompted for.')
     parser.add_argument('-t',
-                        '--token-classic',
+                        '--token',
                         dest='token_classic',
                         help='personal access, OAuth, or JSON Web token, or path to token (file://...)')  # noqa
     parser.add_argument('-f',
@@ -362,6 +362,11 @@ def get_auth(args, encode=True, for_git_cli=False):
     elif args.osx_keychain_item_account:
         raise Exception('You must specify both name and account fields for osx keychain password items')
     elif args.token_fine:
+        _path_specifier = 'file://'
+        if args.token_fine.startswith(_path_specifier):
+            args.token_fine = open(args.token_fine[len(_path_specifier):],
+                                      'rt').readline().strip()
+
         if args.token_fine.startswith("github_pat_"):
             auth = args.token_fine
         else:
@@ -371,6 +376,7 @@ def get_auth(args, encode=True, for_git_cli=False):
         if args.token_classic.startswith(_path_specifier):
             args.token_classic = open(args.token_classic[len(_path_specifier):],
                                       'rt').readline().strip()
+
         if not args.as_app:
             auth = args.token_classic + ':' + 'x-oauth-basic'
         else:
