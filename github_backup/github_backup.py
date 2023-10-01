@@ -36,6 +36,7 @@ except ImportError:
     VERSION = "unknown"
 
 FNULL = open(os.devnull, "w")
+FILE_URI_PREFIX = "file://"
 logger = logging.getLogger(__name__)
 
 
@@ -438,11 +439,8 @@ def get_auth(args, encode=True, for_git_cli=False):
             "You must specify both name and account fields for osx keychain password items"
         )
     elif args.token_fine:
-        _path_specifier = "file://"
-        if args.token_fine.startswith(_path_specifier):
-            args.token_fine = (
-                open(args.token_fine[len(_path_specifier) :], "rt").readline().strip()
-            )
+        if args.token_fine.startswith(FILE_URI_PREFIX):
+            args.token_fine = read_file_contents(args.token_fine)
 
         if args.token_fine.startswith("github_pat_"):
             auth = args.token_fine
@@ -451,13 +449,8 @@ def get_auth(args, encode=True, for_git_cli=False):
                 "Fine-grained token supplied does not look like a GitHub PAT"
             )
     elif args.token_classic:
-        _path_specifier = "file://"
-        if args.token_classic.startswith(_path_specifier):
-            args.token_classic = (
-                open(args.token_classic[len(_path_specifier) :], "rt")
-                .readline()
-                .strip()
-            )
+        if args.token_classic.startswith(FILE_URI_PREFIX):
+            args.token_classic = read_file_contents(args.token_classic)
 
         if not args.as_app:
             auth = args.token_classic + ":" + "x-oauth-basic"
@@ -504,6 +497,10 @@ def get_github_host(args):
     return host
 
 
+def read_file_contents(file_uri):
+    result = open(file_uri[len(FILE_URI_PREFIX) :], "rt").readline().strip()
+
+
 def get_github_repo_url(args, repository):
     if repository.get("is_gist"):
         if args.prefer_ssh:
@@ -525,20 +522,12 @@ def get_github_repo_url(args, repository):
 
     auth = get_auth(args, encode=False, for_git_cli=True)
     if auth:
-        if args.token_fine is None:
-            repo_url = "https://{0}@{1}/{2}/{3}.git".format(
-                auth,
-                get_github_host(args),
-                repository["owner"]["login"],
-                repository["name"],
-            )
-        else:
-            repo_url = "https://{0}@{1}/{2}/{3}.git".format(
-                "oauth2:" + auth,
-                get_github_host(args),
-                repository["owner"]["login"],
-                repository["name"],
-            )
+        repo_url = "https://{0}@{1}/{2}/{3}.git".format(
+            auth if args.token_fine is None else "oauth2:" + auth,
+            get_github_host(args),
+            repository["owner"]["login"],
+            repository["name"],
+        )
     else:
         repo_url = repository["clone_url"]
 
