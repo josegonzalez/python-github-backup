@@ -498,7 +498,7 @@ def get_github_host(args):
 
 
 def read_file_contents(file_uri):
-    result = open(file_uri[len(FILE_URI_PREFIX) :], "rt").readline().strip()
+    return open(file_uri[len(FILE_URI_PREFIX) :], "rt").readline().strip()
 
 
 def get_github_repo_url(args, repository):
