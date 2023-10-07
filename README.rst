@@ -29,16 +29,17 @@ Usage
 
 CLI Usage is as follows::
 
-    github-backup [-h] [-u USERNAME] [-p PASSWORD] [-t TOKEN] [--as-app]
-                  [-o OUTPUT_DIRECTORY] [-l LOG_LEVEL] [-i] [--starred]
-                  [--all-starred] [--watched] [--followers] [--following]
-                  [--all] [--issues] [--issue-comments] [--issue-events]
-                  [--pulls] [--pull-comments] [--pull-commits]
-                  [--pull-details] [--labels] [--hooks] [--milestones]
-                  [--repositories] [--bare] [--lfs] [--wikis] [--gists]
-                  [--starred-gists] [--skip-archived] [--skip-existing]
-                  [-L [LANGUAGES ...]] [-N NAME_REGEX] [-H GITHUB_HOST]
-                  [-O] [-R REPOSITORY] [-P] [-F] [--prefer-ssh] [-v]
+    github-backup [-h] [-u USERNAME] [-p PASSWORD] [-t TOKEN_CLASSIC]
+                  [-f TOKEN_FINE] [--as-app] [-o OUTPUT_DIRECTORY]
+                  [-l LOG_LEVEL] [-i] [--starred] [--all-starred]
+                  [--watched] [--followers] [--following] [--all] [--issues]
+                  [--issue-comments] [--issue-events] [--pulls]
+                  [--pull-comments] [--pull-commits] [--pull-details]
+                  [--labels] [--hooks] [--milestones] [--repositories]
+                  [--bare] [--lfs] [--wikis] [--gists] [--starred-gists]
+                  [--skip-archived] [--skip-existing] [-L [LANGUAGES ...]]
+                  [-N NAME_REGEX] [-H GITHUB_HOST] [-O] [-R REPOSITORY]
+                  [-P] [-F] [--prefer-ssh] [-v]
                   [--keychain-name OSX_KEYCHAIN_ITEM_NAME]
                   [--keychain-account OSX_KEYCHAIN_ITEM_ACCOUNT]
                   [--releases] [--assets] [--exclude [REPOSITORY [REPOSITORY ...]]
@@ -57,7 +58,10 @@ CLI Usage is as follows::
       -p PASSWORD, --password PASSWORD
                             password for basic auth. If a username is given but
                             not a password, the password will be prompted for.
-      -t TOKEN, --token TOKEN
+      -f TOKEN_FINE, --token-fine TOKEN_FINE
+                            fine-grained personal access token or path to token
+                            (file://...)
+      -t TOKEN_CLASSIC, --token TOKEN_CLASSIC
                             personal access, OAuth, or JSON Web token, or path to
                             token (file://...)
       --as-app              authenticate as github app instead of as a user.
@@ -163,13 +167,13 @@ Backup all repositories, including private ones::
     export ACCESS_TOKEN=SOME-GITHUB-TOKEN
     github-backup WhiteHouse --token $ACCESS_TOKEN --organization --output-directory /tmp/white-house --repositories --private
 
-Backup a single organization repository with everything else (wiki, pull requests, comments, issues etc)::
+Use a fine-grained access token to backup a single organization repository with everything else (wiki, pull requests, comments, issues etc)::
 
     export ACCESS_TOKEN=SOME-GITHUB-TOKEN
     ORGANIZATION=docker
     REPO=cli
     # e.g. git@github.com:docker/cli.git
-    github-backup $ORGANIZATION -P -t $ACCESS_TOKEN -o . --all -O -R $REPO
+    github-backup $ORGANIZATION -P -f $ACCESS_TOKEN -o . --all -O -R $REPO
 
 Testing
 =======
