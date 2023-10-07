@@ -42,7 +42,6 @@ logger = logging.getLogger(__name__)
 
 def logging_subprocess(
     popenargs,
-    logger,
     stdout_log_level=logging.DEBUG,
     stderr_log_level=logging.ERROR,
     **kwargs
@@ -1278,12 +1277,12 @@ def fetch_repository(
 
         if "origin" not in remotes:
             git_command = ["git", "remote", "rm", "origin"]
-            logging_subprocess(git_command, None, cwd=local_dir)
+            logging_subprocess(git_command, cwd=local_dir)
             git_command = ["git", "remote", "add", "origin", remote_url]
-            logging_subprocess(git_command, None, cwd=local_dir)
+            logging_subprocess(git_command, cwd=local_dir)
         else:
             git_command = ["git", "remote", "set-url", "origin", remote_url]
-            logging_subprocess(git_command, None, cwd=local_dir)
+            logging_subprocess(git_command, cwd=local_dir)
 
         if lfs_clone:
             git_command = ["git", "lfs", "fetch", "--all", "--prune"]
@@ -1291,7 +1290,7 @@ def fetch_repository(
             git_command = ["git", "fetch", "--all", "--force", "--tags", "--prune"]
         if no_prune:
             git_command.pop()
-        logging_subprocess(git_command, None, cwd=local_dir)
+        logging_subprocess(git_command, cwd=local_dir)
     else:
         logger.info(
             "Cloning {0} repository from {1} to {2}".format(
@@ -1300,18 +1299,18 @@ def fetch_repository(
         )
         if bare_clone:
             git_command = ["git", "clone", "--mirror", remote_url, local_dir]
-            logging_subprocess(git_command, None)
+            logging_subprocess(git_command)
             if lfs_clone:
                 git_command = ["git", "lfs", "fetch", "--all", "--prune"]
                 if no_prune:
                     git_command.pop()
-                logging_subprocess(git_command, None, cwd=local_dir)
+                logging_subprocess(git_command, cwd=local_dir)
         else:
             if lfs_clone:
                 git_command = ["git", "lfs", "clone", remote_url, local_dir]
             else:
                 git_command = ["git", "clone", remote_url, local_dir]
-            logging_subprocess(git_command, None)
+            logging_subprocess(git_command)
 
 
 def backup_account(args, output_directory):
