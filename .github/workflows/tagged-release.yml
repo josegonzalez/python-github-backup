@@ -1,0 +1,19 @@
+---
+name: "tagged-release"
+
+# yamllint disable-line rule:truthy
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  tagged-release:
+    name: tagged-release
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: "marvinpinto/action-automatic-releases@v1.2.1"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          prerelease: false

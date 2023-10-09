@@ -4,7 +4,7 @@ github-backup
 
 |PyPI| |Python Versions|
 
-    This project is considered feature complete for the primary maintainer. If you would like a bugfix or enhancement and cannot sponsor the work, pull requests are welcome. Feel free to contact the maintainer for consulting estimates if desired.
+    This project is considered feature complete for the primary maintainer. If you would like a bugfix or enhancement and can not sponsor the work, pull requests are welcome. Feel free to contact the maintainer for consulting estimates if desired.
 
 backup a github user or organization
 
@@ -29,20 +29,21 @@ Usage
 
 CLI Usage is as follows::
 
-    github-backup [-h] [-u USERNAME] [-p PASSWORD] [-t TOKEN] [--as-app]
-                  [-o OUTPUT_DIRECTORY] [-i] [--starred] [--all-starred]
-                  [--watched] [--followers] [--following] [--all]
-                  [--issues] [--issue-comments] [--issue-events] [--pulls]
+    github-backup [-h] [-u USERNAME] [-p PASSWORD] [-t TOKEN_CLASSIC]
+                  [-f TOKEN_FINE] [--as-app] [-o OUTPUT_DIRECTORY]
+                  [-l LOG_LEVEL] [-i] [--starred] [--all-starred]
+                  [--watched] [--followers] [--following] [--all] [--issues]
+                  [--issue-comments] [--issue-events] [--pulls]
                   [--pull-comments] [--pull-commits] [--pull-details]
                   [--labels] [--hooks] [--milestones] [--repositories]
                   [--bare] [--lfs] [--wikis] [--gists] [--starred-gists]
-                  [--skip-existing] [-L [LANGUAGES [LANGUAGES ...]]]
+                  [--skip-archived] [--skip-existing] [-L [LANGUAGES ...]]
                   [-N NAME_REGEX] [-H GITHUB_HOST] [-O] [-R REPOSITORY]
                   [-P] [-F] [--prefer-ssh] [-v]
                   [--keychain-name OSX_KEYCHAIN_ITEM_NAME]
                   [--keychain-account OSX_KEYCHAIN_ITEM_ACCOUNT]
-                  [--releases] [--assets] [--throttle-limit THROTTLE_LIMIT]
-                  [--throttle-pause THROTTLE_PAUSE]
+                  [--releases] [--assets] [--exclude [REPOSITORY [REPOSITORY ...]]
+                  [--throttle-limit THROTTLE_LIMIT] [--throttle-pause THROTTLE_PAUSE]
                   USER
 
     Backup a github account
@@ -57,12 +58,18 @@ CLI Usage is as follows::
       -p PASSWORD, --password PASSWORD
                             password for basic auth. If a username is given but
                             not a password, the password will be prompted for.
-      -t TOKEN, --token TOKEN
+      -f TOKEN_FINE, --token-fine TOKEN_FINE
+                            fine-grained personal access token or path to token
+                            (file://...)
+      -t TOKEN_CLASSIC, --token TOKEN_CLASSIC
                             personal access, OAuth, or JSON Web token, or path to
                             token (file://...)
       --as-app              authenticate as github app instead of as a user.
       -o OUTPUT_DIRECTORY, --output-directory OUTPUT_DIRECTORY
                             directory at which to backup the repositories
+      -l LOG_LEVEL, --log-level LOG_LEVEL
+                            log level to use (default: info, possible levels:
+                            debug, info, warning, error, critical)
       -i, --incremental     incremental backup
       --starred             include JSON output of starred repositories in backup
       --all-starred         include starred repositories in backup [*]
@@ -112,6 +119,8 @@ CLI Usage is as follows::
                             binaries
       --assets              include assets alongside release information; only
                             applies if including releases
+      --exclude [REPOSITORY [REPOSITORY ...]]
+                            names of repositories to exclude from backup.
       --throttle-limit THROTTLE_LIMIT
                             start throttling of GitHub API requests after this
                             amount of API requests remain
@@ -158,13 +167,13 @@ Backup all repositories, including private ones::
     export ACCESS_TOKEN=SOME-GITHUB-TOKEN
     github-backup WhiteHouse --token $ACCESS_TOKEN --organization --output-directory /tmp/white-house --repositories --private
 
-Backup a single organization repository with everything else (wiki, pull requests, comments, issues etc)::
+Use a fine-grained access token to backup a single organization repository with everything else (wiki, pull requests, comments, issues etc)::
 
     export ACCESS_TOKEN=SOME-GITHUB-TOKEN
     ORGANIZATION=docker
     REPO=cli
     # e.g. git@github.com:docker/cli.git
-    github-backup $ORGANIZATION -P -t $ACCESS_TOKEN -o . --all -O -R $REPO
+    github-backup $ORGANIZATION -P -f $ACCESS_TOKEN -o . --all -O -R $REPO
 
 Testing
 =======
