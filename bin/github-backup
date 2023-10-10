@@ -24,6 +24,9 @@ from github_backup.github_backup import (
 def main():
     args = parse_args()
 
+    if args.quiet:
+        logger.setLevel(logging.WARNING)
+
     output_directory = os.path.realpath(args.output_directory)
     if not os.path.isdir(output_directory):
         logger.info('Create output directory {0}'.format(output_directory))

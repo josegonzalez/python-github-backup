@@ -137,6 +137,13 @@ def parse_args(args=None):
         help="fine-grained personal access token (github_pat_....), or path to token (file://...)",
     )  # noqa
     parser.add_argument(
+        "-q",
+        "--quiet",
+        action="store_true",
+        dest="quiet",
+        help="supress log messages less severe than warning, e.g. info",
+    )
+    parser.add_argument(
         "--as-app",
         action="store_true",
         dest="as_app",
