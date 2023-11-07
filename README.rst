@@ -12,6 +12,7 @@ Requirements
 ============
 
 - GIT 1.9+
+- Python
 
 Installation
 ============
@@ -20,9 +21,12 @@ Using PIP via PyPI::
 
     pip install github-backup
 
-Using PIP via Github::
+Using PIP via Github (more likely the latest version)::
 
     pip install git+https://github.com/josegonzalez/python-github-backup.git#egg=github-backup
+    
+*Note for Python newcomers: even after you've installed pip and python etc, (e.g. debian based: ``sudo apt install pip``), an installed python scripts are unlikely to be included in your ``$PATH`` by default, this means it cannot be run directly in terminal with ``$ github-backup ...``, you can either add pythons install path to your environments ``$PATH`` or call the script directly e.g. `$ ~/.local/bin/github-backup`.*
+
 
 Usage
 =====
