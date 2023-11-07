@@ -305,6 +305,15 @@ Development
 
 This project is considered feature complete for the primary maintainer @josegonzalez. If you would like a bugfix or enhancement, pull requests are welcome. Feel free to contact the maintainer for consulting estimates if you'd like to sponsor the work instead.
 
+Contibuters
+-----------
+
+A huge thanks to all the contibuters!
+
+<a href="https://github.com/josegonzalez/python-github-backup/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=josegonzalez/python-github-backup" />
+</a>
+
 Testing
 -------
 
