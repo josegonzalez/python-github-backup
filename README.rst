@@ -25,7 +25,7 @@ Using PIP via Github (more likely the latest version)::
     
 *Install note for python newcomers:*
 
-After you've installed pip and python, python scripts are unlikely to be included in your ``$PATH`` by default, this means it cannot be run directly in terminal with ``$ github-backup ...``, you can either add python's install path to your environments ``$PATH`` or call the script directly e.g. using ``$ ~/.local/bin/github-backup``.*
+Python scripts are unlikely to be included in your ``$PATH`` by default, this means it cannot be run directly in terminal with ``$ github-backup ...``, you can either add python's install path to your environments ``$PATH`` or call the script directly e.g. using ``$ ~/.local/bin/github-backup``.*
 
 Basic Help
 ===========
@@ -195,9 +195,9 @@ Github Rate-limit and Throttling
 
 ``github-backup`` will automatically throttle itself based on feedback from the Github API. 
 
-Their API is usually rate-limited to 5000 calls per hour, and it tells github-backup when to pause and wait until a specific time when the limit is reset.
+Their API is usually rate-limited to 5000 calls per hour. The API will ask github-backup to pause until a specific time when the limit is reset again (at the start of the next hour). This continues until the backup is complete.
 
-During a large backup such as ``--all-starred``, and on a fast connection this can result in (~20 min) pauses with bursts of API calls periodically maxing out the API limit. If this is not suitable `it has been observed <https://github.com/josegonzalez/python-github-backup/issues/76#issuecomment-636158717>`_ under real-world conditions that overriding the throttle with ``--throttle-limit 5000 --throttle-pause 0.6`` provides a smooth rate across the hour, although a ``--throttle-pause 0.72`` (3600 seconds [1 hour] / 5000 limit) is theoretically safer to prevent pauses.
+During a large backup such as ``--all-starred``, and on a fast connection this can result in (~20 min) pauses with bursts of API calls periodically maxing out the API limit. If this is not suitable `it has been observed <https://github.com/josegonzalez/python-github-backup/issues/76#issuecomment-636158717>`_ under real-world conditions that overriding the throttle with ``--throttle-limit 5000 --throttle-pause 0.6`` provides a smooth rate across the hour, although a ``--throttle-pause 0.72`` (3600 seconds [1 hour] / 5000 limit) is theoretically safer to prevent rate-limit pauses.
 
 
 About Git LFS
@@ -211,20 +211,20 @@ Instructions on how to do this can be found on https://git-lfs.github.com.
 Gotchas / Known-issues
 ======================
 
-All is not all
---------------
+All is not everything
+---------------------
 
 The ``--all`` argument does not include; cloning private repos (``-P, --private``), cloning forks (``-F, --fork``) cloning starred repositories (``--all-starred``), ``--pull-details``, cloning LFS repositories (``--lfs``), cloning gists (``--starred-gists``) or cloning starred gist repos (``--starred-gists``). See examples for more.
 
 Cloning all starred size
 ------------------------
 
-Using the ``--all-starred`` argument to clone all starred repositories may use a large amount of storage space, especially if ``--all`` or more arguments are used. e.g. thousands of JSON issues files, assets and the repos.
+Using the ``--all-starred`` argument to clone all starred repositories may use a large amount of storage space, especially if ``--all`` or more arguments are used. e.g. thousands of JSON issues files, assets and the repos etc. Consider just storing the links to starred repos with ``--starred``.
 
 Incremental Backup
 -------------------
 
-Incremental (``-i, --incremental``) will request only new data from the API since the last run (successful or not). e.g. only request issues from the API since the last run. 
+Using (``-i, --incremental``) will request only new data from the API since the last run (successful or not). e.g. only request issues from the API since the last run. 
 
 This means any blocking errors on previous runs can cause a large amount of missing data in backups.
 
@@ -233,43 +233,41 @@ Known blocking errors
 
 Some errors will block the backup by exit the script, such as receiving a 403 Forbidden error from the Github API. 
 
-If the incremental argument is used, this will result in the next backup only requesting API data since the last blocked/failed run. 
+If the incremental argument is used, this will result in the next backup only requesting API data since the last blocked/failed run. Potentially causing unexpected large amounts of missing data.
 
-It's therefore recommended to only use the incremental argument if the output/result is being actively monitored to avoid unexpected missing data in a regular backup runs.
+It's therefore recommended to only use the incremental argument if the output/result is being actively monitored, or complimented with periodic full non-incremental runs, to avoid unexpected missing data in a regular backup runs.
 
 1. **Starred public repo blocking**
 
    Since the ``--all`` argument includes ``--hooks``, if you use ``--all`` and ``--all-starred`` together to clone a users starred public repositories, the backup will likely error and block the backup continuing. 
 
-   This is due to needing the correct permission for ``-hooks`` on public repos.
+   This is due to needing the correct permission for ``--hooks`` on public repos.
 
 2. **Releases blocking**
 
-   A known ``--releases`` (required for ``--assets``) error will sometimes block the backup. If you're backing up a lot of repositories with releases e.g. an organisation or ``--all-starred``.
+   A known ``--releases`` (required for ``--assets``) error will sometimes block the backup. 
 
-   You may need to remove ``--releases`` (and therefore ``--assets``) to complete a backup. Documented in `issue 209 <https://github.com/josegonzalez/python-github-backup/issues/209>`_.
+   If you're backing up a lot of repositories with releases e.g. an organisation or ``--all-starred``. You may need to remove ``--releases`` (and therefore ``--assets``) to complete a backup. Documented in `issue 209 <https://github.com/josegonzalez/python-github-backup/issues/209>`_.
 
 
 "bare" is actually "mirror"
 --------------------------
 
-Using the bare clone argument (``--bare``) will actually call git's ``clone --mirror`` command. There's a subtle difference between `bare <https://www.git-scm.com/docs/git-clone#Documentation/git-clone.txt---bare>`_ and `mirror <https://www.git-scm.com/docs/git-clone#Documentation/git-clone.txt---mirror>`_ clone.::
+Using the bare clone argument (``--bare``) will actually call git's ``clone --mirror`` command. There's a subtle difference between `bare <https://www.git-scm.com/docs/git-clone#Documentation/git-clone.txt---bare>`_ and `mirror <https://www.git-scm.com/docs/git-clone#Documentation/git-clone.txt---mirror>`_ clone. ::
+    
+    Compared to --bare, --mirror not only maps local branches of the source to local branches of the target, it maps all refs (including remote-tracking branches, notes etc.) and sets up a refspec configuration such that all these refs are overwritten by a git remote update in the target repository.
 
-   Compared to --bare, --mirror not only maps local branches of the source to local branches of the target, it maps all refs (including remote-tracking branches, notes etc.) and sets up a refspec configuration such that all these refs are overwritten by a git remote update in the target repository.
 
+Starred gists vs starred repo behaviour
+---------------------------------------
 
-Starred gists stored with user gists
-------------------------------------
-
-The starred repo cloning (``--all-starred``) argument stores starred repos separately to the users own repositories. However, using ``--starred-gists`` will store starred gists within the same directory as the users own gists ``--gists``.
+The starred normal repo cloning (``--all-starred``) argument stores starred repos separately to the users own repositories. However, using ``--starred-gists`` will store starred gists within the same directory as the users own gists ``--gists``. Also, all gist repo directory names are IDs not the gist's name.
 
 
 Skip existing on incomplete backups
 -------------------------------------------------------
 
-The ``--skip-existing`` argument will skip a backup if the directory already exists, regardless of if the backup in that directory was not successfully completed (perhaps due to a blocking error).
-
-This may result in unexpected missing data in a regular backup.
+The ``--skip-existing`` argument will skip a backup if the directory already exists, regardless of if the backup in that directory was not successfully completed (perhaps due to a blocking error). This may result in unexpected missing data in a regular backup.
 
 
 Github Backup Examples
@@ -288,14 +286,14 @@ Use a fine-grained access token to backup a single organization repository with 
     # e.g. git@github.com:docker/cli.git
     github-backup $ORGANIZATION -P -f $FINE_ACCESS_TOKEN -o . --all -O -R $REPO
 
-Quietly and incrementally backup useful Github user data (public and private repos with SSH) including; all issues, pulls, all public starred repos and gists (omitting "hooks", "releases" and therefore "assets" to prevent blocking). *Great for a cron job.*::
+Quietly and incrementally backup useful Github user data (public and private repos with SSH) including; all issues, pulls, all public starred repos and gists (omitting "hooks", "releases" and therefore "assets" to prevent blocking). *Great for a cron job.* ::
 
     export FINE_ACCESS_TOKEN=SOME-GITHUB-TOKEN
     GH_USER=YOUR-GITHUB-USER
 
     github-backup -f $FINE_ACCESS_TOKEN --prefer-ssh -o ~/github-backup/ -l error -P -i --all-starred --starred --watched --followers --following --issues --issue-comments --issue-events --pulls --pull-comments --pull-commits --labels --milestones --repositories --wikis --releases --assets --pull-details --gists --starred-gists $GH_USER
     
-Debug an erroring/blocking or incomplete backup into a temporary directory. Omit "incremental" to fix a previous incomplete backup.::
+Debug an erroring/blocking or incomplete backup into a temporary directory. Omit "incremental" to fix a previous incomplete backup. ::
 
     export FINE_ACCESS_TOKEN=SOME-GITHUB-TOKEN
     GH_USER=YOUR-GITHUB-USER
@@ -304,11 +302,10 @@ Debug an erroring/blocking or incomplete backup into a temporary directory. Omit
 
 
 
-
 Development
 ===========
 
-This project is considered feature complete for the primary maintainer. If you would like a bugfix or enhancement and can not sponsor the work, pull requests are welcome. Feel free to contact the maintainer for consulting estimates if desired.
+This project is considered feature complete for the primary maintainer @josegonzalez. If you would like a bugfix or enhancement, pull requests are welcome. Feel free to contact the maintainer for consulting estimates if you'd like to sponsor the work instead.
 
 Testing
 -------
