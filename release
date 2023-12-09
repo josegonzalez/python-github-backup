@@ -118,6 +118,15 @@ if [ -f docs/conf.py ]; then git add docs/conf.py; fi
 echo -e "${YELLOW}--->${COLOR_OFF} Creating release"
 git commit -q -m "Release version $next_version"
 
+if [[ "$PUBLIC" == "true" ]]; then
+    echo -e "${YELLOW}--->${COLOR_OFF} Creating python release files"
+    cp README.rst README
+    python setup.py sdist bdist_wheel >/dev/null
+
+    echo -e "${YELLOW}--->${COLOR_OFF} Validating long_description"
+    twine check dist/*
+fi
+
 echo -e "${YELLOW}--->${COLOR_OFF} Tagging release"
 git tag -a $next_version -m "Release version $next_version"
 
@@ -125,9 +134,7 @@ echo -e "${YELLOW}--->${COLOR_OFF} Pushing release and tags to github"
 git push -q origin master && git push -q --tags
 
 if [[ "$PUBLIC" == "true" ]]; then
-    echo -e "${YELLOW}--->${COLOR_OFF} Creating python release"
-    cp README.rst README
-    python setup.py sdist bdist_wheel >/dev/null
+    echo -e "${YELLOW}--->${COLOR_OFF} Uploading python release"
     twine upload dist/*
     rm README
 fi
