@@ -1,9 +1,63 @@
 Changelog
 =========
 
-0.44.0 (2023-12-09)
+0.44.1 (2023-12-09)
 -------------------
 ------------------------
+
+Fix
+~~~
+- Use a deploy key to push tags so releases get auto-created. [Jose
+  Diaz-Gonzalez]
+
+Other
+~~~~~
+- Chore(deps): bump certifi from 2023.5.7 to 2023.7.22.
+  [dependabot[bot]]
+
+  Bumps [certifi](https://github.com/certifi/python-certifi) from 2023.5.7 to 2023.7.22.
+  - [Commits](https://github.com/certifi/python-certifi/compare/2023.05.07...2023.07.22)
+
+  ---
+  updated-dependencies:
+  - dependency-name: certifi
+    dependency-type: direct:production
+  ...
+- Tests: run lint on pull requests. [Jose Diaz-Gonzalez]
+- Chore(deps): bump urllib3 from 2.0.2 to 2.0.7. [dependabot[bot]]
+
+  Bumps [urllib3](https://github.com/urllib3/urllib3) from 2.0.2 to 2.0.7.
+  - [Release notes](https://github.com/urllib3/urllib3/releases)
+  - [Changelog](https://github.com/urllib3/urllib3/blob/main/CHANGES.rst)
+  - [Commits](https://github.com/urllib3/urllib3/compare/2.0.2...2.0.7)
+
+  ---
+  updated-dependencies:
+  - dependency-name: urllib3
+    dependency-type: direct:production
+  ...
+- Chore: remove circleci as tests now run in github actions. [Jose Diaz-
+  Gonzalez]
+- Tests: install correct dependencies and rename job. [Jose Diaz-
+  Gonzalez]
+- Tests: add lint github action workflow. [Jose Diaz-Gonzalez]
+- Feat: install autopep8. [Jose Diaz-Gonzalez]
+- Chore(deps): bump certifi from 2023.5.7 to 2023.7.22.
+  [dependabot[bot]]
+
+  Bumps [certifi](https://github.com/certifi/python-certifi) from 2023.5.7 to 2023.7.22.
+  - [Commits](https://github.com/certifi/python-certifi/compare/2023.05.07...2023.07.22)
+
+  ---
+  updated-dependencies:
+  - dependency-name: certifi
+    dependency-type: direct:production
+  ...
+- Chore: reformat file and update flake8. [Jose Diaz-Gonzalez]
+
+
+0.44.0 (2023-12-09)
+-------------------
 
 Fix
 ~~~
