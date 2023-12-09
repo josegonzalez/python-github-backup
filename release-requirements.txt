@@ -33,6 +33,6 @@ rich==13.3.5
 six==1.16.0
 tqdm==4.65.0
 twine==4.0.2
-urllib3==2.0.2
+urllib3==2.0.7
 webencodings==0.5.1
 zipp==3.15.0
