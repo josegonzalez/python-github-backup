@@ -310,11 +310,9 @@ Contibuters
 
 A huge thanks to all the contibuters!
 
-.. raw:: html
-
-  <a href="https://github.com/josegonzalez/python-github-backup/graphs/contributors">
-    <img src="https://contrib.rocks/image?repo=josegonzalez/python-github-backup" />
-  </a>
+.. image:: https://contrib.rocks/image?repo=josegonzalez/python-github-backup
+   :target: https://github.com/josegonzalez/python-github-backup/graphs/contributors
+   :alt: contributors
 
 Testing
 -------
