@@ -9,7 +9,7 @@ on:
 
 jobs:
   lint:
-    name: tagged-release
+    name: lint
     runs-on: ubuntu-22.04
 
     steps:
@@ -22,7 +22,7 @@ jobs:
         with:
           python-version: "3.8"
           cache: "pip"
-      - run: pip install -r requirements.txt
+      - run: pip install -r release-requirements.txt
       - run: flake8 --ignore=E501,E203,W503
       - run: black .
       - run: rst-lint README.rst

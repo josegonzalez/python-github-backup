@@ -1,7 +1,9 @@
 autopep8==2.0.4
+black==23.11.0
 bleach==6.0.0
-certifi==2023.7.22
+certifi==2023.5.7
 charset-normalizer==3.1.0
+click==8.1.7
 colorama==0.4.6
 docutils==0.20.1
 flake8==6.1.0
@@ -14,7 +16,11 @@ markdown-it-py==2.2.0
 mccabe==0.7.0
 mdurl==0.1.2
 more-itertools==9.1.0
+mypy-extensions==1.0.0
+packaging==23.2
+pathspec==0.11.2
 pkginfo==1.9.6
+platformdirs==4.1.0
 pycodestyle==2.11.1
 pyflakes==3.1.0
 Pygments==2.15.1
