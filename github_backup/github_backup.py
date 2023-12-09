@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
-import socket
 
 import argparse
 import base64
@@ -10,23 +9,20 @@ import codecs
 import errno
 import getpass
 import json
+import logging
 import os
+import platform
 import re
 import select
+import socket
 import subprocess
 import sys
-import logging
 import time
-import platform
-from urllib.parse import urlparse
-from urllib.parse import quote as urlquote
-from urllib.parse import urlencode
-from urllib.error import HTTPError, URLError
-from urllib.request import urlopen
-from urllib.request import Request
-from urllib.request import HTTPRedirectHandler
-from urllib.request import build_opener
 from http.client import IncompleteRead
+from urllib.error import HTTPError, URLError
+from urllib.parse import quote as urlquote
+from urllib.parse import urlencode, urlparse
+from urllib.request import HTTPRedirectHandler, Request, build_opener, urlopen
 
 try:
     from . import __version__
@@ -41,10 +37,7 @@ logger = logging.getLogger(__name__)
 
 
 def logging_subprocess(
-    popenargs,
-    stdout_log_level=logging.DEBUG,
-    stderr_log_level=logging.ERROR,
-    **kwargs
+    popenargs, stdout_log_level=logging.DEBUG, stderr_log_level=logging.ERROR, **kwargs
 ):
     """
     Variant of subprocess.call that accepts a logger instead of stdout/stderr,
@@ -626,12 +619,12 @@ def retrieve_data_gen(args, template, query_args=None, single_request=False):
             raise Exception(", ".join(errors))
 
         if len(errors) == 0:
-            if type(response) == list:
+            if type(response) is list:
                 for resp in response:
                     yield resp
                 if len(response) < per_page:
                     break
-            elif type(response) == dict and single_request:
+            elif type(response) is dict and single_request:
                 yield response
 
         if len(errors) > 0:
