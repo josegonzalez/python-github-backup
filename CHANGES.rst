@@ -1,9 +1,73 @@
 Changelog
 =========
 
-0.43.1 (2023-05-29)
+0.44.0 (2023-12-09)
 -------------------
 ------------------------
+
+Fix
+~~~
+- Do not use raw property in readme. [Jose Diaz-Gonzalez]
+
+  This is disabled on pypi.
+- Validate release before committing and uploading it. [Jose Diaz-
+  Gonzalez]
+- Correct lint issues and show errors on lint. [Jose Diaz-Gonzalez]
+- Minor cosmetic changes. [ZhymabekRoman]
+- Add forgotten variable formatting. [ZhymabekRoman]
+- Refactor logging Based on #195. [ZhymabekRoman]
+- Minor typo fix. [Zhymabek Roman]
+
+Other
+~~~~~
+- Bump certifi from 2023.5.7 to 2023.7.22. [dependabot[bot]]
+
+  Bumps [certifi](https://github.com/certifi/python-certifi) from 2023.5.7 to 2023.7.22.
+  - [Commits](https://github.com/certifi/python-certifi/compare/2023.05.07...2023.07.22)
+
+  ---
+  updated-dependencies:
+  - dependency-name: certifi
+    dependency-type: direct:production
+  ...
+- Checkout everything. [Halvor Holsten Strand]
+- Added automatic release workflow, for use with GitHub Actions. [Halvor
+  Holsten Strand]
+- Feat: create Dockerfile. [Tom Plant]
+- Fix rst html. [hozza]
+- Add contributor section. [hozza]
+- Fix readme wording and format. [hozza]
+- Fixed readme working and layout. [hozza]
+- Fix readme formatting, spelling and layout. [hozza]
+- Added details usage and examples including gotchas, errors and
+  development instructions. [hozza]
+- Added verbose install instructions. [hozza]
+- Bump urllib3 from 2.0.2 to 2.0.7. [dependabot[bot]]
+
+  Bumps [urllib3](https://github.com/urllib3/urllib3) from 2.0.2 to 2.0.7.
+  - [Release notes](https://github.com/urllib3/urllib3/releases)
+  - [Changelog](https://github.com/urllib3/urllib3/blob/main/CHANGES.rst)
+  - [Commits](https://github.com/urllib3/urllib3/compare/2.0.2...2.0.7)
+
+  ---
+  updated-dependencies:
+  - dependency-name: urllib3
+    dependency-type: direct:production
+  ...
+- Suggested modification to fix win32 logging failure, due to local
+  variable scope. Logger does not appear to have any utility within
+  "logging_subprocess". [Halvor Holsten Strand]
+- Simplified one if/elif scenario. Extracted file reading of another
+  if/elif scenario. [Halvor Holsten Strand]
+- Ran black. [Halvor Holsten Strand]
+- Keep backwards compatability by going back to "--token" for classic.
+  Allow "file://" uri for "--token-fine". [Halvor Holsten Strand]
+- Add support for fine-grained tokens. [froggleston]
+- Refactor logging and add support for quiet flag. [Harrison Wright]
+
+
+0.43.1 (2023-05-29)
+-------------------
 - Chore: add release requirements. [Jose Diaz-Gonzalez]
 
 
