@@ -28,7 +28,7 @@ Using PIP via Github (more likely the latest version)::
 Python scripts are unlikely to be included in your ``$PATH`` by default, this means it cannot be run directly in terminal with ``$ github-backup ...``, you can either add python's install path to your environments ``$PATH`` or call the script directly e.g. using ``$ ~/.local/bin/github-backup``.*
 
 Basic Help
-===========
+==========
 
 Show the CLI help output::
 
@@ -220,7 +220,7 @@ Cloning all starred size
 Using the ``--all-starred`` argument to clone all starred repositories may use a large amount of storage space, especially if ``--all`` or more arguments are used. e.g. commonly starred repos can have tens of thousands of issues, many large assets and the repo itself etc. Consider just storing links to starred repos in JSON format with ``--starred``.
 
 Incremental Backup
--------------------
+------------------
 
 Using (``-i, --incremental``) will only request new data from the API **since the last run (successful or not)**. e.g. only request issues from the API since the last run. 
 
@@ -249,7 +249,7 @@ It's therefore recommended to only use the incremental argument if the output/re
 
 
 "bare" is actually "mirror"
---------------------------
+---------------------------
 
 Using the bare clone argument (``--bare``) will actually call git's ``clone --mirror`` command. There's a subtle difference between `bare <https://www.git-scm.com/docs/git-clone#Documentation/git-clone.txt---bare>`_ and `mirror <https://www.git-scm.com/docs/git-clone#Documentation/git-clone.txt---mirror>`_ clone.
 
@@ -263,13 +263,13 @@ The starred normal repo cloning (``--all-starred``) argument stores starred repo
 
 
 Skip existing on incomplete backups
--------------------------------------------------------
+-----------------------------------
 
 The ``--skip-existing`` argument will skip a backup if the directory already exists, even if the backup in that directory failed (perhaps due to a blocking error). This may result in unexpected missing data in a regular backup.
 
 
 Github Backup Examples
-========
+======================
 
 Backup all repositories, including private ones using a classic token::
 
