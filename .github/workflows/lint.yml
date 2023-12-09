@@ -3,9 +3,13 @@ name: "lint"
 
 # yamllint disable-line rule:truthy
 on:
+  pull_request:
+    branches:
+      - '*'
   push:
     branches:
-      - "*"
+      - 'main'
+      - 'master'
 
 jobs:
   lint:
