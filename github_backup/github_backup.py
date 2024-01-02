@@ -23,6 +23,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import quote as urlquote
 from urllib.parse import urlencode, urlparse
 from urllib.request import HTTPRedirectHandler, Request, build_opener, urlopen
+from operator import itemgetter
 
 try:
     from . import __version__
@@ -381,6 +382,13 @@ def parse_args(args=None):
         action="store_true",
         dest="include_assets",
         help="include assets alongside release information; only applies if including releases",
+    )
+    parser.add_argument(
+        "--latest-releases",
+        type=int,
+        default=0,
+        dest="include_latest_releases",
+        help="include certain number of the latest releases; only applies if including releases",
     )
     parser.add_argument(
         "--throttle-limit",
@@ -1206,8 +1214,14 @@ def backup_releases(args, repo_cwd, repository, repos_template, include_assets=F
     release_template = "{0}/{1}/releases".format(repos_template, repository_fullname)
     releases = retrieve_data(args, release_template, query_args=query_args)
 
+    if args.include_latest_releases and args.include_latest_releases < len(releases):
+        releases = sorted(releases, key=itemgetter('tag_name'), reverse=True)
+        releases = releases[:args.include_latest_releases]
+        logger.info("Saving the latest {0} releases to disk".format(len(releases)))
+    else:
+        logger.info("Saving {0} releases to disk".format(len(releases)))
+
     # for each release, store it
-    logger.info("Saving {0} releases to disk".format(len(releases)))
     for release in releases:
         release_name = release["tag_name"]
         release_name_safe = release_name.replace("/", "__")
