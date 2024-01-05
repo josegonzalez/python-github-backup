@@ -125,10 +125,11 @@ CLI Help output::
                             keychain that holds the personal access or OAuth token
       --releases            include release information, not including assets or
                             binaries
-      --assets              include assets alongside release information; only
-                            applies if including releases
       --latest-releases INCLUDE_LATEST_RELEASES
-                            include certain number of the latest releases; only
+                            include certain number of the latest releases;
+                            only applies if including releases
+      --skip-prerelease     skip prerelease and draft versions; only applies if including releases
+      --assets              include assets alongside release information; only
                             applies if including releases
       --exclude [REPOSITORY [REPOSITORY ...]]
                             names of repositories to exclude from backup.
