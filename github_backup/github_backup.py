@@ -511,7 +511,7 @@ def get_github_host(args):
 
 
 def read_file_contents(file_uri):
-    return open(file_uri[len(FILE_URI_PREFIX) :], "rt").readline().strip()
+    return open(file_uri[len(FILE_URI_PREFIX):], "rt").readline().strip()
 
 
 def get_github_repo_url(args, repository):
@@ -1221,10 +1221,10 @@ def backup_releases(args, repo_cwd, repository, repos_template, include_assets=F
     releases = retrieve_data(args, release_template, query_args=query_args)
 
     if args.skip_prerelease:
-        releases = [r for r in releases if r["prerelease"] == False and r["draft"] == False]
+        releases = [r for r in releases if not r["prerelease"] and not r["draft"]]
 
     if args.number_of_latest_releases and args.number_of_latest_releases < len(releases):
-        releases.sort(key=lambda item: datetime.strptime(item["created_at"], "%Y-%m-%dT%H:%M:%SZ"), \
+        releases.sort(key=lambda item: datetime.strptime(item["created_at"], "%Y-%m-%dT%H:%M:%SZ"),
                       reverse=True)
         releases = releases[:args.number_of_latest_releases]
         logger.info("Saving the latest {0} releases to disk".format(len(releases)))
