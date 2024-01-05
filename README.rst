@@ -49,7 +49,8 @@ CLI Help output::
                   [-P] [-F] [--prefer-ssh] [-v]
                   [--keychain-name OSX_KEYCHAIN_ITEM_NAME]
                   [--keychain-account OSX_KEYCHAIN_ITEM_ACCOUNT]
-                  [--releases] [--assets] [--latest-releases INCLUDE_LATEST_RELEASES]
+                  [--releases] [--latest-releases NUMBER_OF_LATEST_RELEASES]
+                  [--skip-prerelease] [--assets]
                   [--exclude [REPOSITORY [REPOSITORY ...]]
                   [--throttle-limit THROTTLE_LIMIT] [--throttle-pause THROTTLE_PAUSE]
                   USER
@@ -125,7 +126,7 @@ CLI Help output::
                             keychain that holds the personal access or OAuth token
       --releases            include release information, not including assets or
                             binaries
-      --latest-releases INCLUDE_LATEST_RELEASES
+      --latest-releases NUMBER_OF_LATEST_RELEASES
                             include certain number of the latest releases;
                             only applies if including releases
       --skip-prerelease     skip prerelease and draft versions; only applies if including releases

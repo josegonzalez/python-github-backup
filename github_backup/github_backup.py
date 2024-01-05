@@ -381,7 +381,7 @@ def parse_args(args=None):
         "--latest-releases",
         type=int,
         default=0,
-        dest="include_latest_releases",
+        dest="number_of_latest_releases",
         help="include certain number of the latest releases; only applies if including releases",
     )
     parser.add_argument(
@@ -1223,10 +1223,10 @@ def backup_releases(args, repo_cwd, repository, repos_template, include_assets=F
     if args.skip_prerelease:
         releases = [r for r in releases if r["prerelease"] == False and r["draft"] == False]
 
-    if args.include_latest_releases and args.include_latest_releases < len(releases):
+    if args.number_of_latest_releases and args.number_of_latest_releases < len(releases):
         releases.sort(key=lambda item: datetime.strptime(item["created_at"], "%Y-%m-%dT%H:%M:%SZ"), \
                       reverse=True)
-        releases = releases[:args.include_latest_releases]
+        releases = releases[:args.number_of_latest_releases]
         logger.info("Saving the latest {0} releases to disk".format(len(releases)))
     else:
         logger.info("Saving {0} releases to disk".format(len(releases)))
