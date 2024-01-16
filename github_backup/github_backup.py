@@ -1189,8 +1189,11 @@ def backup_hooks(args, repo_cwd, repository, repos_template):
     template = "{0}/{1}/hooks".format(repos_template, repository["full_name"])
     try:
         _backup_data(args, "hooks", template, output_file, hook_cwd)
-    except SystemExit:
-        logger.info("Unable to read hooks, skipping")
+    except Exception as e:
+        if "404" in str(e):
+            logger.info("Unable to read hooks, skipping")
+        else:
+            raise e
 
 
 def backup_releases(args, repo_cwd, repository, repos_template, include_assets=False):
