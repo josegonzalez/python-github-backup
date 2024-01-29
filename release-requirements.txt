@@ -1,5 +1,5 @@
 autopep8==2.0.4
-black==24.1.0
+black==24.1.1
 bleach==6.1.0
 certifi==2023.11.17
 charset-normalizer==3.3.2
