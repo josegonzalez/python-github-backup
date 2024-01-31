@@ -20,7 +20,7 @@ mypy-extensions==1.0.0
 packaging==23.2
 pathspec==0.12.1
 pkginfo==1.9.6
-platformdirs==4.1.0
+platformdirs==4.2.0
 pycodestyle==2.11.1
 pyflakes==3.2.0
 Pygments==2.17.2
@@ -33,6 +33,6 @@ rich==13.7.0
 six==1.16.0
 tqdm==4.66.1
 twine==4.0.2
-urllib3==2.1.0
+urllib3==2.2.0
 webencodings==0.5.1
 zipp==3.17.0
