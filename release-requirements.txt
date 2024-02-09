@@ -10,7 +10,7 @@ flake8==7.0.0
 gitchangelog==3.0.4
 idna==3.6
 importlib-metadata==7.0.1
-jaraco.classes==3.3.0
+jaraco.classes==3.3.1
 keyring==24.3.0
 markdown-it-py==3.0.0
 mccabe==0.7.0
