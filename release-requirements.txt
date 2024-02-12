@@ -31,8 +31,8 @@ restructuredtext-lint==1.4.0
 rfc3986==2.0.0
 rich==13.7.0
 six==1.16.0
-tqdm==4.66.1
-twine==4.0.2
+tqdm==4.66.2
+twine==5.0.0
 urllib3==2.2.0
 webencodings==0.5.1
 zipp==3.17.0
