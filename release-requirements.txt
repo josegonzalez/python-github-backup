@@ -29,7 +29,7 @@ requests==2.31.0
 requests-toolbelt==1.0.0
 restructuredtext-lint==1.4.0
 rfc3986==2.0.0
-rich==13.7.0
+rich==13.7.1
 six==1.16.0
 tqdm==4.66.2
 twine==5.0.0
