@@ -9,7 +9,7 @@ docutils==0.20.1
 flake8==7.0.0
 gitchangelog==3.0.4
 idna==3.6
-importlib-metadata==7.0.1
+importlib-metadata==7.0.2
 jaraco.classes==3.3.1
 keyring==24.3.1
 markdown-it-py==3.0.0
@@ -17,7 +17,7 @@ mccabe==0.7.0
 mdurl==0.1.2
 more-itertools==10.2.0
 mypy-extensions==1.0.0
-packaging==23.2
+packaging==24.0
 pathspec==0.12.1
 pkginfo==1.10.0
 platformdirs==4.2.0
