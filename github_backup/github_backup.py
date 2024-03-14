@@ -782,12 +782,12 @@ def download_file(url, path, auth, as_app=False, fine=False):
     if os.path.exists(path):
         return
 
-    request = _construct_request(per_page=100, 
-                                 page=1, 
-                                 query_args={}, 
-                                 template=url, 
-                                 auth=auth, 
-                                 as_app=as_app, 
+    request = _construct_request(per_page=100,
+                                 page=1,
+                                 query_args={},
+                                 template=url,
+                                 auth=auth,
+                                 as_app=as_app,
                                  fine=fine)
     request.add_header("Accept", "application/octet-stream")
     opener = build_opener(S3HTTPRedirectHandler)
