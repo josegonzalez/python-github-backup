@@ -1260,7 +1260,7 @@ def backup_releases(args, repo_cwd, repository, repos_template, include_assets=F
                         asset["url"],
                         os.path.join(release_assets_cwd, asset["name"]),
                         get_auth(args),
-                        as_app=True if args.as_app is not None else False,
+                        as_app=args.as_app,
                         fine=True if args.token_fine is not None else False
                     )
 
