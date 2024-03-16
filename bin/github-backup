@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
-import os, sys, logging
+import logging
+import os
+import sys
 
 from github_backup.github_backup import (
     backup_account,
@@ -8,35 +10,43 @@ from github_backup.github_backup import (
     check_git_lfs_install,
     filter_repositories,
     get_authenticated_user,
-    log_info,
-    log_warning,
+    logger,
     mkdir_p,
     parse_args,
     retrieve_repositories,
 )
 
 logging.basicConfig(
-    format='%(asctime)s.%(msecs)03d: %(message)s',
-    datefmt='%Y-%m-%dT%H:%M:%S',
-    level=logging.INFO
+    format="%(asctime)s.%(msecs)03d: %(message)s",
+    datefmt="%Y-%m-%dT%H:%M:%S",
+    level=logging.INFO,
 )
+
 
 def main():
     args = parse_args()
 
+    if args.quiet:
+        logger.setLevel(logging.WARNING)
+
     output_directory = os.path.realpath(args.output_directory)
     if not os.path.isdir(output_directory):
-        log_info('Create output directory {0}'.format(output_directory))
+        logger.info("Create output directory {0}".format(output_directory))
         mkdir_p(output_directory)
 
     if args.lfs_clone:
         check_git_lfs_install()
 
+    if args.log_level:
+        log_level = logging.getLevelName(args.log_level.upper())
+        if isinstance(log_level, int):
+            logger.root.setLevel(log_level)
+
     if not args.as_app:
-        log_info('Backing up user {0} to {1}'.format(args.user, output_directory))
+        logger.info("Backing up user {0} to {1}".format(args.user, output_directory))
         authenticated_user = get_authenticated_user(args)
     else:
-        authenticated_user = {'login': None}
+        authenticated_user = {"login": None}
 
     repositories = retrieve_repositories(args, authenticated_user)
     repositories = filter_repositories(args, repositories)
@@ -44,9 +54,9 @@ def main():
     backup_account(args, output_directory)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        log_warning(str(e))
+        logger.error(str(e))
         sys.exit(1)

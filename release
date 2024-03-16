@@ -1,37 +1,38 @@
 #!/usr/bin/env bash
-set -eo pipefail; [[ $RELEASE_TRACE ]] && set -x
+set -eo pipefail
+[[ $RELEASE_TRACE ]] && set -x
 
 if [[ ! -f setup.py ]]; then
-  echo -e "${RED}WARNING: Missing setup.py${COLOR_OFF}\n"
-  exit 1
+    echo -e "${RED}WARNING: Missing setup.py${COLOR_OFF}\n"
+    exit 1
 fi
 
-PACKAGE_NAME="$(cat setup.py | grep "name='" | head | cut -d "'" -f2)"
+PACKAGE_NAME="$(cat setup.py | grep 'name="' | head | cut -d '"' -f2)"
 INIT_PACKAGE_NAME="$(echo "${PACKAGE_NAME//-/_}")"
 PUBLIC="true"
 
 # Colors
-COLOR_OFF="\033[0m"   # unsets color to term fg color
-RED="\033[0;31m"      # red
-GREEN="\033[0;32m"    # green
-YELLOW="\033[0;33m"   # yellow
-MAGENTA="\033[0;35m"  # magenta
-CYAN="\033[0;36m"     # cyan
+COLOR_OFF="\033[0m"  # unsets color to term fg color
+RED="\033[0;31m"     # red
+GREEN="\033[0;32m"   # green
+YELLOW="\033[0;33m"  # yellow
+MAGENTA="\033[0;35m" # magenta
+CYAN="\033[0;36m"    # cyan
 
 # ensure wheel is available
-pip install wheel > /dev/null
+pip install wheel >/dev/null
 
 command -v gitchangelog >/dev/null 2>&1 || {
     echo -e "${RED}WARNING: Missing gitchangelog binary, please run: pip install gitchangelog==3.0.4${COLOR_OFF}\n"
     exit 1
 }
 
-command -v rst-lint > /dev/null || {
+command -v rst-lint >/dev/null || {
     echo -e "${RED}WARNING: Missing rst-lint binary, please run: pip install restructuredtext_lint${COLOR_OFF}\n"
     exit 1
 }
 
-command -v twine > /dev/null || {
+command -v twine >/dev/null || {
     echo -e "${RED}WARNING: Missing twine binary, please run: pip install twine==3.2.0${COLOR_OFF}\n"
     exit 1
 }
@@ -43,41 +44,41 @@ fi
 
 echo -e "\n${GREEN}STARTING RELEASE PROCESS${COLOR_OFF}\n"
 
-set +e;
-git status | grep -Eo "working (directory|tree) clean" &> /dev/null
+set +e
+git status | grep -Eo "working (directory|tree) clean" &>/dev/null
 if [ ! $? -eq 0 ]; then # working directory is NOT clean
     echo -e "${RED}WARNING: You have uncomitted changes, you may have forgotten something${COLOR_OFF}\n"
     exit 1
 fi
-set -e;
+set -e
 
 echo -e "${YELLOW}--->${COLOR_OFF} Updating local copy"
 git pull -q origin master
 
 echo -e "${YELLOW}--->${COLOR_OFF} Retrieving release versions"
 
-current_version=$(cat ${INIT_PACKAGE_NAME}/__init__.py |grep '__version__ ='|sed 's/[^0-9.]//g')
+current_version=$(cat ${INIT_PACKAGE_NAME}/__init__.py | grep '__version__ =' | sed 's/[^0-9.]//g')
 major=$(echo $current_version | awk '{split($0,a,"."); print a[1]}')
 minor=$(echo $current_version | awk '{split($0,a,"."); print a[2]}')
 patch=$(echo $current_version | awk '{split($0,a,"."); print a[3]}')
 
 if [[ "$@" == "major" ]]; then
-    major=$(($major + 1));
+    major=$(($major + 1))
     minor="0"
     patch="0"
 elif [[ "$@" == "minor" ]]; then
-    minor=$(($minor + 1));
+    minor=$(($minor + 1))
     patch="0"
 elif [[ "$@" == "patch" ]]; then
-    patch=$(($patch + 1));
+    patch=$(($patch + 1))
 fi
 
 next_version="${major}.${minor}.${patch}"
 
-echo -e  "${YELLOW}   >${COLOR_OFF} ${MAGENTA}${current_version}${COLOR_OFF} -> ${MAGENTA}${next_version}${COLOR_OFF}"
+echo -e "${YELLOW}   >${COLOR_OFF} ${MAGENTA}${current_version}${COLOR_OFF} -> ${MAGENTA}${next_version}${COLOR_OFF}"
 
 echo -e "${YELLOW}--->${COLOR_OFF} Ensuring readme passes lint checks (if this fails, run rst-lint)"
-rst-lint README.rst > /dev/null
+rst-lint README.rst || exit 1
 
 echo -e "${YELLOW}--->${COLOR_OFF} Creating necessary temp file"
 tempfoo=$(basename $0)
@@ -86,33 +87,29 @@ TMPFILE=$(mktemp /tmp/${tempfoo}.XXXXXX) || {
     exit 1
 }
 
-find_this="__version__ = '$current_version'"
-replace_with="__version__ = '$next_version'"
+find_this="__version__ = \"$current_version\""
+replace_with="__version__ = \"$next_version\""
 
 echo -e "${YELLOW}--->${COLOR_OFF} Updating ${INIT_PACKAGE_NAME}/__init__.py"
-sed "s/$find_this/$replace_with/" ${INIT_PACKAGE_NAME}/__init__.py > $TMPFILE && mv $TMPFILE ${INIT_PACKAGE_NAME}/__init__.py
-
-find_this="${PACKAGE_NAME}.git@$current_version"
-replace_with="${PACKAGE_NAME}.git@$next_version"
-
-echo -e "${YELLOW}--->${COLOR_OFF} Updating README.rst"
-sed "s/$find_this/$replace_with/" README.rst > $TMPFILE && mv $TMPFILE README.rst
+sed "s/$find_this/$replace_with/" ${INIT_PACKAGE_NAME}/__init__.py >$TMPFILE && mv $TMPFILE ${INIT_PACKAGE_NAME}/__init__.py
 
 if [ -f docs/conf.py ]; then
     echo -e "${YELLOW}--->${COLOR_OFF} Updating docs"
     find_this="version = '${current_version}'"
     replace_with="version = '${next_version}'"
-    sed "s/$find_this/$replace_with/" docs/conf.py > $TMPFILE && mv $TMPFILE docs/conf.py
+    sed "s/$find_this/$replace_with/" docs/conf.py >$TMPFILE && mv $TMPFILE docs/conf.py
 
     find_this="version = '${current_version}'"
     replace_with="release = '${next_version}'"
-    sed "s/$find_this/$replace_with/" docs/conf.py > $TMPFILE && mv $TMPFILE docs/conf.py
+    sed "s/$find_this/$replace_with/" docs/conf.py >$TMPFILE && mv $TMPFILE docs/conf.py
 fi
 
 echo -e "${YELLOW}--->${COLOR_OFF} Updating CHANGES.rst for new release"
 version_header="$next_version ($(date +%F))"
-set +e; dashes=$(yes '-'|head -n ${#version_header}|tr -d '\n') ; set -e
-gitchangelog |sed "4s/.*/$version_header/"|sed "5s/.*/$dashes/" > $TMPFILE && mv $TMPFILE CHANGES.rst
+set +e
+dashes=$(yes '-' | head -n ${#version_header} | tr -d '\n')
+set -e
+gitchangelog | sed "4s/.*/$version_header/" | sed "5s/.*/$dashes/" >$TMPFILE && mv $TMPFILE CHANGES.rst
 
 echo -e "${YELLOW}--->${COLOR_OFF} Adding changed files to git"
 git add CHANGES.rst README.rst ${INIT_PACKAGE_NAME}/__init__.py
@@ -121,6 +118,15 @@ if [ -f docs/conf.py ]; then git add docs/conf.py; fi
 echo -e "${YELLOW}--->${COLOR_OFF} Creating release"
 git commit -q -m "Release version $next_version"
 
+if [[ "$PUBLIC" == "true" ]]; then
+    echo -e "${YELLOW}--->${COLOR_OFF} Creating python release files"
+    cp README.rst README
+    python setup.py sdist bdist_wheel >/dev/null
+
+    echo -e "${YELLOW}--->${COLOR_OFF} Validating long_description"
+    twine check dist/*
+fi
+
 echo -e "${YELLOW}--->${COLOR_OFF} Tagging release"
 git tag -a $next_version -m "Release version $next_version"
 
@@ -128,9 +134,7 @@ echo -e "${YELLOW}--->${COLOR_OFF} Pushing release and tags to github"
 git push -q origin master && git push -q --tags
 
 if [[ "$PUBLIC" == "true" ]]; then
-    echo -e "${YELLOW}--->${COLOR_OFF} Creating python release"
-    cp README.rst README
-    python setup.py sdist bdist_wheel > /dev/null
+    echo -e "${YELLOW}--->${COLOR_OFF} Uploading python release"
     twine upload dist/*
     rm README
 fi
