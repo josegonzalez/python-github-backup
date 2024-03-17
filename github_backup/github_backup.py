@@ -777,14 +777,19 @@ class S3HTTPRedirectHandler(HTTPRedirectHandler):
         return request
 
 
-def download_file(url, path, auth):
+def download_file(url, path, auth, as_app=False, fine=False):
     # Skip downloading release assets if they already exist on disk so we don't redownload on every sync
     if os.path.exists(path):
         return
 
-    request = Request(url)
+    request = _construct_request(per_page=100,
+                                 page=1,
+                                 query_args={},
+                                 template=url,
+                                 auth=auth,
+                                 as_app=as_app,
+                                 fine=fine)
     request.add_header("Accept", "application/octet-stream")
-    request.add_header("Authorization", "Basic ".encode("ascii") + auth)
     opener = build_opener(S3HTTPRedirectHandler)
 
     try:
@@ -1255,6 +1260,8 @@ def backup_releases(args, repo_cwd, repository, repos_template, include_assets=F
                         asset["url"],
                         os.path.join(release_assets_cwd, asset["name"]),
                         get_auth(args),
+                        as_app=args.as_app,
+                        fine=True if args.token_fine is not None else False
                     )
 
 
