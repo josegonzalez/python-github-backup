@@ -1,9 +1,293 @@
 Changelog
 =========
 
-0.45.0 (2024-01-29)
+0.45.1 (2024-03-17)
 -------------------
 ------------------------
+- Remove trailing whitespaces. [dale-primer-e]
+
+  That are triggering flake.
+- Fix error with as_app flag. [dale-primer-e]
+- Fix error downloading assets. [dale-primer-e]
+
+  When downloading assets using a fine grained token you will get a "can't
+  concat str to bytes" error. This is due to the fine grained token being
+  concatenated onto bytes in the line:
+
+  `request.add_header("Authorization", "Basic ".encode("ascii") + auth)`
+
+  This is better handled in the function `_construct_request` so I changed
+  the lines that construct the request in `download_file` to use the
+  function `_construct_request` and updated the function signature to
+  reflect that.
+- Chore(deps): bump the python-packages group with 1 update.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [zipp](https://github.com/jaraco/zipp).
+
+
+  Updates `zipp` from 3.18.0 to 3.18.1
+  - [Release notes](https://github.com/jaraco/zipp/releases)
+  - [Changelog](https://github.com/jaraco/zipp/blob/main/NEWS.rst)
+  - [Commits](https://github.com/jaraco/zipp/compare/v3.18.0...v3.18.1)
+
+  ---
+  updated-dependencies:
+  - dependency-name: zipp
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump the python-packages group with 1 update.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [zipp](https://github.com/jaraco/zipp).
+
+
+  Updates `zipp` from 3.17.0 to 3.18.0
+  - [Release notes](https://github.com/jaraco/zipp/releases)
+  - [Changelog](https://github.com/jaraco/zipp/blob/main/NEWS.rst)
+  - [Commits](https://github.com/jaraco/zipp/compare/v3.17.0...v3.18.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: zipp
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump the python-packages group with 2 updates.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 2 updates: [importlib-metadata](https://github.com/python/importlib_metadata) and [packaging](https://github.com/pypa/packaging).
+
+
+  Updates `importlib-metadata` from 7.0.1 to 7.0.2
+  - [Release notes](https://github.com/python/importlib_metadata/releases)
+  - [Changelog](https://github.com/python/importlib_metadata/blob/main/NEWS.rst)
+  - [Commits](https://github.com/python/importlib_metadata/compare/v7.0.1...v7.0.2)
+
+  Updates `packaging` from 23.2 to 24.0
+  - [Release notes](https://github.com/pypa/packaging/releases)
+  - [Changelog](https://github.com/pypa/packaging/blob/main/CHANGELOG.rst)
+  - [Commits](https://github.com/pypa/packaging/compare/23.2...24.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: importlib-metadata
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  - dependency-name: packaging
+    dependency-type: direct:production
+    update-type: version-update:semver-major
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump the python-packages group with 2 updates.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 2 updates: [pkginfo](https://code.launchpad.net/~tseaver/pkginfo/trunk) and [rich](https://github.com/Textualize/rich).
+
+
+  Updates `pkginfo` from 1.9.6 to 1.10.0
+
+  Updates `rich` from 13.7.0 to 13.7.1
+  - [Release notes](https://github.com/Textualize/rich/releases)
+  - [Changelog](https://github.com/Textualize/rich/blob/master/CHANGELOG.md)
+  - [Commits](https://github.com/Textualize/rich/compare/v13.7.0...v13.7.1)
+
+  ---
+  updated-dependencies:
+  - dependency-name: pkginfo
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: rich
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump the python-packages group with 1 update.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [keyring](https://github.com/jaraco/keyring).
+
+
+  Updates `keyring` from 24.3.0 to 24.3.1
+  - [Release notes](https://github.com/jaraco/keyring/releases)
+  - [Changelog](https://github.com/jaraco/keyring/blob/main/NEWS.rst)
+  - [Commits](https://github.com/jaraco/keyring/compare/v24.3.0...v24.3.1)
+
+  ---
+  updated-dependencies:
+  - dependency-name: keyring
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump the python-packages group with 1 update.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [readme-renderer](https://github.com/pypa/readme_renderer).
+
+
+  Updates `readme-renderer` from 42.0 to 43.0
+  - [Release notes](https://github.com/pypa/readme_renderer/releases)
+  - [Changelog](https://github.com/pypa/readme_renderer/blob/main/CHANGES.rst)
+  - [Commits](https://github.com/pypa/readme_renderer/compare/42.0...43.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: readme-renderer
+    dependency-type: direct:production
+    update-type: version-update:semver-major
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump the python-packages group with 1 update.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [urllib3](https://github.com/urllib3/urllib3).
+
+
+  Updates `urllib3` from 2.2.0 to 2.2.1
+  - [Release notes](https://github.com/urllib3/urllib3/releases)
+  - [Changelog](https://github.com/urllib3/urllib3/blob/main/CHANGES.rst)
+  - [Commits](https://github.com/urllib3/urllib3/compare/2.2.0...2.2.1)
+
+  ---
+  updated-dependencies:
+  - dependency-name: urllib3
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump the python-packages group with 1 update.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [black](https://github.com/psf/black).
+
+
+  Updates `black` from 24.1.1 to 24.2.0
+  - [Release notes](https://github.com/psf/black/releases)
+  - [Changelog](https://github.com/psf/black/blob/main/CHANGES.md)
+  - [Commits](https://github.com/psf/black/compare/24.1.1...24.2.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: black
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump the python-packages group with 2 updates.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 2 updates: [tqdm](https://github.com/tqdm/tqdm) and [twine](https://github.com/pypa/twine).
+
+
+  Updates `tqdm` from 4.66.1 to 4.66.2
+  - [Release notes](https://github.com/tqdm/tqdm/releases)
+  - [Commits](https://github.com/tqdm/tqdm/compare/v4.66.1...v4.66.2)
+
+  Updates `twine` from 4.0.2 to 5.0.0
+  - [Release notes](https://github.com/pypa/twine/releases)
+  - [Changelog](https://github.com/pypa/twine/blob/main/docs/changelog.rst)
+  - [Commits](https://github.com/pypa/twine/compare/4.0.2...5.0.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: tqdm
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  - dependency-name: twine
+    dependency-type: direct:production
+    update-type: version-update:semver-major
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump the python-packages group with 1 update.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [jaraco-classes](https://github.com/jaraco/jaraco.classes).
+
+
+  Updates `jaraco-classes` from 3.3.0 to 3.3.1
+  - [Release notes](https://github.com/jaraco/jaraco.classes/releases)
+  - [Changelog](https://github.com/jaraco/jaraco.classes/blob/main/NEWS.rst)
+  - [Commits](https://github.com/jaraco/jaraco.classes/compare/v3.3.0...v3.3.1)
+
+  ---
+  updated-dependencies:
+  - dependency-name: jaraco-classes
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump the python-packages group with 1 update.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [certifi](https://github.com/certifi/python-certifi).
+
+
+  Updates `certifi` from 2023.11.17 to 2024.2.2
+  - [Commits](https://github.com/certifi/python-certifi/compare/2023.11.17...2024.02.02)
+
+  ---
+  updated-dependencies:
+  - dependency-name: certifi
+    dependency-type: direct:production
+    update-type: version-update:semver-major
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump the python-packages group with 2 updates.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 2 updates: [platformdirs](https://github.com/platformdirs/platformdirs) and [urllib3](https://github.com/urllib3/urllib3).
+
+
+  Updates `platformdirs` from 4.1.0 to 4.2.0
+  - [Release notes](https://github.com/platformdirs/platformdirs/releases)
+  - [Changelog](https://github.com/platformdirs/platformdirs/blob/main/CHANGES.rst)
+  - [Commits](https://github.com/platformdirs/platformdirs/compare/4.1.0...4.2.0)
+
+  Updates `urllib3` from 2.1.0 to 2.2.0
+  - [Release notes](https://github.com/urllib3/urllib3/releases)
+  - [Changelog](https://github.com/urllib3/urllib3/blob/main/CHANGES.rst)
+  - [Commits](https://github.com/urllib3/urllib3/compare/2.1.0...2.2.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: platformdirs
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: urllib3
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump the python-packages group with 1 update.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [black](https://github.com/psf/black).
+
+
+  Updates `black` from 24.1.0 to 24.1.1
+  - [Release notes](https://github.com/psf/black/releases)
+  - [Changelog](https://github.com/psf/black/blob/main/CHANGES.md)
+  - [Commits](https://github.com/psf/black/compare/24.1.0...24.1.1)
+
+  ---
+  updated-dependencies:
+  - dependency-name: black
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  ...
+
+
+0.45.0 (2024-01-29)
+-------------------
 
 Fix
 ~~~
