@@ -9,3 +9,7 @@ updates:
     python-packages:
       patterns:
         - "*"
+- package-ecosystem: "github-actions"
+  directory: "/"
+  schedule:
+    interval: "weekly"
