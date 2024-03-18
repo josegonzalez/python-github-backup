@@ -212,6 +212,13 @@ When you use the ``--lfs`` option, you will need to make sure you have Git LFS i
 Instructions on how to do this can be found on https://git-lfs.github.com.
 
 
+Run in Docker container
+-----------------------
+
+To run the tool in a Docker container use the following command:
+
+    sudo docker run --rm -v /path/to/backup:/data --name github-backup ghcr.io/josegonzalez/python-github-backup -o /data $OPTIONS $USER
+
 Gotchas / Known-issues
 ======================
 
