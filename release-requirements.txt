@@ -5,10 +5,10 @@ certifi==2024.2.2
 charset-normalizer==3.3.2
 click==8.1.7
 colorama==0.4.6
-docutils==0.20.1
+docutils==0.21.1
 flake8==7.0.0
 gitchangelog==3.0.4
-idna==3.6
+idna==3.7
 importlib-metadata==7.1.0
 jaraco.classes==3.4.0
 keyring==25.1.0
