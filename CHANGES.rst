@@ -1,9 +1,139 @@
 Changelog
 =========
 
-0.45.1 (2024-03-17)
+0.45.2 (2024-05-04)
 -------------------
 ------------------------
+- Chore(deps): bump idna from 3.6 to 3.7. [dependabot[bot]]
+
+  Bumps [idna](https://github.com/kjd/idna) from 3.6 to 3.7.
+  - [Release notes](https://github.com/kjd/idna/releases)
+  - [Changelog](https://github.com/kjd/idna/blob/master/HISTORY.rst)
+  - [Commits](https://github.com/kjd/idna/compare/v3.6...v3.7)
+
+  ---
+  updated-dependencies:
+  - dependency-name: idna
+    dependency-type: direct:production
+  ...
+- Chore(deps): bump the python-packages group with 1 update.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [keyring](https://github.com/jaraco/keyring).
+
+
+  Updates `keyring` from 25.0.0 to 25.1.0
+  - [Release notes](https://github.com/jaraco/keyring/releases)
+  - [Changelog](https://github.com/jaraco/keyring/blob/main/NEWS.rst)
+  - [Commits](https://github.com/jaraco/keyring/compare/v25.0.0...v25.1.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: keyring
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump the python-packages group with 1 update.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [jaraco-classes](https://github.com/jaraco/jaraco.classes).
+
+
+  Updates `jaraco-classes` from 3.3.1 to 3.4.0
+  - [Release notes](https://github.com/jaraco/jaraco.classes/releases)
+  - [Changelog](https://github.com/jaraco/jaraco.classes/blob/main/NEWS.rst)
+  - [Commits](https://github.com/jaraco/jaraco.classes/compare/v3.3.1...v3.4.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: jaraco-classes
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump the python-packages group with 1 update.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [keyring](https://github.com/jaraco/keyring).
+
+
+  Updates `keyring` from 24.3.1 to 25.0.0
+  - [Release notes](https://github.com/jaraco/keyring/releases)
+  - [Changelog](https://github.com/jaraco/keyring/blob/main/NEWS.rst)
+  - [Commits](https://github.com/jaraco/keyring/compare/v24.3.1...v25.0.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: keyring
+    dependency-type: direct:production
+    update-type: version-update:semver-major
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump the python-packages group with 1 update.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [importlib-metadata](https://github.com/python/importlib_metadata).
+
+
+  Updates `importlib-metadata` from 7.0.2 to 7.1.0
+  - [Release notes](https://github.com/python/importlib_metadata/releases)
+  - [Changelog](https://github.com/python/importlib_metadata/blob/main/NEWS.rst)
+  - [Commits](https://github.com/python/importlib_metadata/compare/v7.0.2...v7.1.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: importlib-metadata
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump actions/setup-python from 4 to 5. [dependabot[bot]]
+
+  Bumps [actions/setup-python](https://github.com/actions/setup-python) from 4 to 5.
+  - [Release notes](https://github.com/actions/setup-python/releases)
+  - [Commits](https://github.com/actions/setup-python/compare/v4...v5)
+
+  ---
+  updated-dependencies:
+  - dependency-name: actions/setup-python
+    dependency-type: direct:production
+    update-type: version-update:semver-major
+  ...
+- Scheduled dependabot for GitHub Actions. [paranerd]
+- Chore(deps): bump the python-packages group with 2 updates.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 2 updates: [autopep8](https://github.com/hhatto/autopep8) and [black](https://github.com/psf/black).
+
+
+  Updates `autopep8` from 2.0.4 to 2.1.0
+  - [Release notes](https://github.com/hhatto/autopep8/releases)
+  - [Commits](https://github.com/hhatto/autopep8/compare/v2.0.4...v2.1.0)
+
+  Updates `black` from 24.2.0 to 24.3.0
+  - [Release notes](https://github.com/psf/black/releases)
+  - [Changelog](https://github.com/psf/black/blob/main/CHANGES.md)
+  - [Commits](https://github.com/psf/black/compare/24.2.0...24.3.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: autopep8
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: black
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+- Added Docker info to README. [paranerd]
+- Disable credential persistance on checkout. [paranerd]
+- Bumped actions versions to latest. [paranerd]
+
+
+0.45.1 (2024-03-17)
+-------------------
 - Remove trailing whitespaces. [dale-primer-e]
 
   That are triggering flake.
