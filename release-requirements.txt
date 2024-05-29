@@ -1,4 +1,4 @@
-autopep8==2.1.1
+autopep8==2.1.2
 black==24.4.2
 bleach==6.1.0
 certifi==2024.2.2
@@ -36,4 +36,4 @@ tqdm==4.66.4
 twine==5.1.0
 urllib3==2.2.1
 webencodings==0.5.1
-zipp==3.18.2
+zipp==3.19.0
