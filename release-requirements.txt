@@ -30,7 +30,7 @@ requests-toolbelt==1.0.0
 restructuredtext-lint==1.4.0
 rfc3986==2.0.0
 rich==13.7.1
-setuptools==70.0.0
+setuptools==70.1.0
 six==1.16.0
 tqdm==4.66.4
 twine==5.1.0
