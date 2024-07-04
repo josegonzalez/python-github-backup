@@ -1,7 +1,7 @@
 autopep8==2.3.1
 black==24.4.2
 bleach==6.1.0
-certifi==2024.6.2
+certifi==2024.7.4
 charset-normalizer==3.3.2
 click==8.1.7
 colorama==0.4.6
@@ -9,7 +9,7 @@ docutils==0.21.2
 flake8==7.1.0
 gitchangelog==3.0.4
 idna==3.7
-importlib-metadata==7.2.1
+importlib-metadata==8.0.0
 jaraco.classes==3.4.0
 keyring==25.2.1
 markdown-it-py==3.0.0
@@ -30,10 +30,10 @@ requests-toolbelt==1.0.0
 restructuredtext-lint==1.4.0
 rfc3986==2.0.0
 rich==13.7.1
-setuptools==70.1.1
+setuptools==70.2.0
 six==1.16.0
 tqdm==4.66.4
-twine==5.1.0
+twine==5.1.1
 urllib3==2.2.2
 webencodings==0.5.1
 zipp==3.19.2
