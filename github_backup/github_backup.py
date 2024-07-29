@@ -1259,7 +1259,7 @@ def backup_releases(args, repo_cwd, repository, repos_template, include_assets=F
                     download_file(
                         asset["url"],
                         os.path.join(release_assets_cwd, asset["name"]),
-                        get_auth(args),
+                        get_auth(args, encode=not args.as_app),
                         as_app=args.as_app,
                         fine=True if args.token_fine is not None else False
                     )
