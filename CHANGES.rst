@@ -1,9 +1,270 @@
 Changelog
 =========
 
-0.45.2 (2024-05-04)
+0.46.0 (2024-09-11)
 -------------------
 ------------------------
+
+Fix
+~~~
+- Do not double encode auth when retrieving release assets. [Jarl
+  Totland]
+- Add now missing setuptools. [Jose Diaz-Gonzalez]
+
+Other
+~~~~~
+- Git fetch is required even when using lfs. [Louis Parisot]
+- Upgrade github workflow ubuntu containers to newest LTS. [Albert Wang]
+- Chore(deps): bump certifi from 2024.6.2 to 2024.7.4. [dependabot[bot]]
+
+  Bumps [certifi](https://github.com/certifi/python-certifi) from 2024.6.2 to 2024.7.4.
+  - [Commits](https://github.com/certifi/python-certifi/compare/2024.06.02...2024.07.04)
+
+  ---
+  updated-dependencies:
+  - dependency-name: certifi
+    dependency-type: direct:production
+  ...
+- Chore(deps): bump docker/build-push-action from 5 to 6.
+  [dependabot[bot]]
+
+  Bumps [docker/build-push-action](https://github.com/docker/build-push-action) from 5 to 6.
+  - [Release notes](https://github.com/docker/build-push-action/releases)
+  - [Commits](https://github.com/docker/build-push-action/compare/v5...v6)
+
+  ---
+  updated-dependencies:
+  - dependency-name: docker/build-push-action
+    dependency-type: direct:production
+    update-type: version-update:semver-major
+  ...
+- Chore(deps): bump the python-packages group across 1 directory with 3
+  updates. [dependabot[bot]]
+
+  Bumps the python-packages group with 3 updates in the / directory: [autopep8](https://github.com/hhatto/autopep8), [importlib-metadata](https://github.com/python/importlib_metadata) and [setuptools](https://github.com/pypa/setuptools).
+
+
+  Updates `autopep8` from 2.3.0 to 2.3.1
+  - [Release notes](https://github.com/hhatto/autopep8/releases)
+  - [Commits](https://github.com/hhatto/autopep8/compare/v2.3.0...v2.3.1)
+
+  Updates `importlib-metadata` from 7.2.0 to 7.2.1
+  - [Release notes](https://github.com/python/importlib_metadata/releases)
+  - [Changelog](https://github.com/python/importlib_metadata/blob/main/NEWS.rst)
+  - [Commits](https://github.com/python/importlib_metadata/compare/v7.2.0...v7.2.1)
+
+  Updates `setuptools` from 70.1.0 to 70.1.1
+  - [Release notes](https://github.com/pypa/setuptools/releases)
+  - [Changelog](https://github.com/pypa/setuptools/blob/main/NEWS.rst)
+  - [Commits](https://github.com/pypa/setuptools/compare/v70.1.0...v70.1.1)
+
+  ---
+  updated-dependencies:
+  - dependency-name: autopep8
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  - dependency-name: importlib-metadata
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  - dependency-name: setuptools
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump the python-packages group across 1 directory with 2
+  updates. [dependabot[bot]]
+
+  Bumps the python-packages group with 2 updates in the / directory: [importlib-metadata](https://github.com/python/importlib_metadata) and [setuptools](https://github.com/pypa/setuptools).
+
+
+  Updates `importlib-metadata` from 7.1.0 to 7.2.0
+  - [Release notes](https://github.com/python/importlib_metadata/releases)
+  - [Changelog](https://github.com/python/importlib_metadata/blob/main/NEWS.rst)
+  - [Commits](https://github.com/python/importlib_metadata/compare/v7.1.0...v7.2.0)
+
+  Updates `setuptools` from 70.0.0 to 70.1.0
+  - [Release notes](https://github.com/pypa/setuptools/releases)
+  - [Changelog](https://github.com/pypa/setuptools/blob/main/NEWS.rst)
+  - [Commits](https://github.com/pypa/setuptools/compare/v70.0.0...v70.1.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: importlib-metadata
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: setuptools
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump the python-packages group with 3 updates.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 3 updates: [autopep8](https://github.com/hhatto/autopep8), [flake8](https://github.com/pycqa/flake8) and [pycodestyle](https://github.com/PyCQA/pycodestyle).
+
+
+  Updates `autopep8` from 2.2.0 to 2.3.0
+  - [Release notes](https://github.com/hhatto/autopep8/releases)
+  - [Commits](https://github.com/hhatto/autopep8/compare/v2.2.0...v2.3.0)
+
+  Updates `flake8` from 7.0.0 to 7.1.0
+  - [Commits](https://github.com/pycqa/flake8/compare/7.0.0...7.1.0)
+
+  Updates `pycodestyle` from 2.11.1 to 2.12.0
+  - [Release notes](https://github.com/PyCQA/pycodestyle/releases)
+  - [Changelog](https://github.com/PyCQA/pycodestyle/blob/main/CHANGES.txt)
+  - [Commits](https://github.com/PyCQA/pycodestyle/compare/2.11.1...2.12.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: autopep8
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: flake8
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: pycodestyle
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump urllib3 from 2.2.1 to 2.2.2. [dependabot[bot]]
+
+  Bumps [urllib3](https://github.com/urllib3/urllib3) from 2.2.1 to 2.2.2.
+  - [Release notes](https://github.com/urllib3/urllib3/releases)
+  - [Changelog](https://github.com/urllib3/urllib3/blob/main/CHANGES.rst)
+  - [Commits](https://github.com/urllib3/urllib3/compare/2.2.1...2.2.2)
+
+  ---
+  updated-dependencies:
+  - dependency-name: urllib3
+    dependency-type: direct:production
+  ...
+- Chore(deps): bump the python-packages group across 1 directory with 7
+  updates. [dependabot[bot]]
+
+  Bumps the python-packages group with 7 updates in the / directory:
+
+  | Package | From | To |
+  | --- | --- | --- |
+  | [autopep8](https://github.com/hhatto/autopep8) | `2.1.1` | `2.2.0` |
+  | [certifi](https://github.com/certifi/python-certifi) | `2024.2.2` | `2024.6.2` |
+  | [more-itertools](https://github.com/more-itertools/more-itertools) | `10.2.0` | `10.3.0` |
+  | [packaging](https://github.com/pypa/packaging) | `24.0` | `24.1` |
+  | [pkginfo](https://code.launchpad.net/~tseaver/pkginfo/trunk) | `1.10.0` | `1.11.1` |
+  | [requests](https://github.com/psf/requests) | `2.32.2` | `2.32.3` |
+  | [zipp](https://github.com/jaraco/zipp) | `3.18.2` | `3.19.2` |
+
+
+
+  Updates `autopep8` from 2.1.1 to 2.2.0
+  - [Release notes](https://github.com/hhatto/autopep8/releases)
+  - [Commits](https://github.com/hhatto/autopep8/compare/v2.1.1...v2.2.0)
+
+  Updates `certifi` from 2024.2.2 to 2024.6.2
+  - [Commits](https://github.com/certifi/python-certifi/compare/2024.02.02...2024.06.02)
+
+  Updates `more-itertools` from 10.2.0 to 10.3.0
+  - [Release notes](https://github.com/more-itertools/more-itertools/releases)
+  - [Commits](https://github.com/more-itertools/more-itertools/compare/v10.2.0...v10.3.0)
+
+  Updates `packaging` from 24.0 to 24.1
+  - [Release notes](https://github.com/pypa/packaging/releases)
+  - [Changelog](https://github.com/pypa/packaging/blob/main/CHANGELOG.rst)
+  - [Commits](https://github.com/pypa/packaging/compare/24.0...24.1)
+
+  Updates `pkginfo` from 1.10.0 to 1.11.1
+
+  Updates `requests` from 2.32.2 to 2.32.3
+  - [Release notes](https://github.com/psf/requests/releases)
+  - [Changelog](https://github.com/psf/requests/blob/main/HISTORY.md)
+  - [Commits](https://github.com/psf/requests/compare/v2.32.2...v2.32.3)
+
+  Updates `zipp` from 3.18.2 to 3.19.2
+  - [Release notes](https://github.com/jaraco/zipp/releases)
+  - [Changelog](https://github.com/jaraco/zipp/blob/main/NEWS.rst)
+  - [Commits](https://github.com/jaraco/zipp/compare/v3.18.2...v3.19.2)
+
+  ---
+  updated-dependencies:
+  - dependency-name: autopep8
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: certifi
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: more-itertools
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: packaging
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: pkginfo
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: requests
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  - dependency-name: zipp
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+- --- updated-dependencies: - dependency-name: autopep8   dependency-
+  type: direct:production   update-type: version-update:semver-patch
+  dependency-group: python-packages - dependency-name: black
+  dependency-type: direct:production   update-type: version-
+  update:semver-minor   dependency-group: python-packages - dependency-
+  name: docutils   dependency-type: direct:production   update-type:
+  version-update:semver-minor   dependency-group: python-packages -
+  dependency-name: keyring   dependency-type: direct:production
+  update-type: version-update:semver-minor   dependency-group: python-
+  packages - dependency-name: platformdirs   dependency-type:
+  direct:production   update-type: version-update:semver-patch
+  dependency-group: python-packages - dependency-name: pygments
+  dependency-type: direct:production   update-type: version-
+  update:semver-minor   dependency-group: python-packages - dependency-
+  name: requests   dependency-type: direct:production   update-type:
+  version-update:semver-minor   dependency-group: python-packages -
+  dependency-name: tqdm   dependency-type: direct:production   update-
+  type: version-update:semver-patch   dependency-group: python-packages
+  - dependency-name: twine   dependency-type: direct:production
+  update-type: version-update:semver-minor   dependency-group: python-
+  packages - dependency-name: zipp   dependency-type: direct:production
+  update-type: version-update:semver-patch   dependency-group: python-
+  packages ... [dependabot[bot]]
+- Chore: update python version in release workflow. [Jose Diaz-Gonzalez]
+- Chore: update python version used in linting. [Jose Diaz-Gonzalez]
+- Chore: drop unsupported python versions and add supported ones. [Jose
+  Diaz-Gonzalez]
+- --- updated-dependencies: - dependency-name: requests   dependency-
+  type: direct:production ... [dependabot[bot]]
+- Chore(deps): bump tqdm from 4.66.2 to 4.66.3. [dependabot[bot]]
+
+  Bumps [tqdm](https://github.com/tqdm/tqdm) from 4.66.2 to 4.66.3.
+  - [Release notes](https://github.com/tqdm/tqdm/releases)
+  - [Commits](https://github.com/tqdm/tqdm/compare/v4.66.2...v4.66.3)
+
+  ---
+  updated-dependencies:
+  - dependency-name: tqdm
+    dependency-type: direct:production
+  ...
+
+
+0.45.2 (2024-05-04)
+-------------------
 - Chore(deps): bump idna from 3.6 to 3.7. [dependabot[bot]]
 
   Bumps [idna](https://github.com/kjd/idna) from 3.6 to 3.7.
