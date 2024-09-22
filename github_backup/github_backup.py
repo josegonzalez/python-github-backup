@@ -931,11 +931,11 @@ def filter_repositories(args, unfiltered_repositories):
             if r.get("language") and r.get("language").lower() in languages
         ]  # noqa
     if name_regex:
-        repositories = [r for r in repositories if name_regex.match(r["name"])]
+        repositories = [r for r in repositories if "name" not in r or name_regex.match(r["name"])]
     if args.skip_archived:
         repositories = [r for r in repositories if not r.get("archived")]
     if args.exclude:
-        repositories = [r for r in repositories if r["name"] not in args.exclude]
+        repositories = [r for r in repositories if "name" not in r or r["name"] not in args.exclude]
 
     return repositories
 
