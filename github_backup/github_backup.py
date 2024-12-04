@@ -15,6 +15,7 @@ import platform
 import re
 import select
 import socket
+import ssl
 import subprocess
 import sys
 import time
@@ -36,6 +37,18 @@ FNULL = open(os.devnull, "w")
 FILE_URI_PREFIX = "file://"
 logger = logging.getLogger(__name__)
 
+https_ctx = ssl.create_default_context()
+if not https_ctx.get_ca_certs():
+    import warnings
+    warnings.warn('\n\nYOUR DEFAULT CA CERTS ARE EMPTY.\n' +
+                  'PLEASE POPULATE ANY OF:' +
+                  ''.join([
+                    '\n - ' + x
+                    for x in ssl.get_default_verify_paths()
+                    if type(x) is str
+                  ]) + '\n', stacklevel=2)
+    import certifi
+    https_ctx = ssl.create_default_context(cafile=certifi.where())
 
 def logging_subprocess(
     popenargs, stdout_log_level=logging.DEBUG, stderr_log_level=logging.ERROR, **kwargs
@@ -666,7 +679,7 @@ def _get_response(request, auth, template):
     while True:
         should_continue = False
         try:
-            r = urlopen(request)
+            r = urlopen(request, context=https_ctx)
         except HTTPError as exc:
             errors, should_continue = _request_http_error(exc, auth, errors)  # noqa
             r = exc
