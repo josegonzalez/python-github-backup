@@ -1,9 +1,242 @@
 Changelog
 =========
 
-0.46.0 (2024-09-11)
+0.47.0 (2024-12-09)
 -------------------
 ------------------------
+- Detect empty HTTPS contexts. [John Doe]
+
+  Some users are relying solely on the certifi package to provide their CA certs, as requests does this by default.
+
+  This patch detects this situation and emits a clear warning as well as importing certifi to work around the situation..
+
+  Fixes #162 .
+- Chore(deps): bump six from 1.16.0 to 1.17.0 in the python-packages
+  group. [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [six](https://github.com/benjaminp/six).
+
+
+  Updates `six` from 1.16.0 to 1.17.0
+  - [Changelog](https://github.com/benjaminp/six/blob/main/CHANGES)
+  - [Commits](https://github.com/benjaminp/six/compare/1.16.0...1.17.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: six
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump the python-packages group across 1 directory with 20
+  updates. [dependabot[bot]]
+
+  Bumps the python-packages group with 20 updates in the / directory:
+
+  | Package | From | To |
+  | --- | --- | --- |
+  | [black](https://github.com/psf/black) | `24.4.2` | `24.10.0` |
+  | [bleach](https://github.com/mozilla/bleach) | `6.1.0` | `6.2.0` |
+  | [certifi](https://github.com/certifi/python-certifi) | `2024.7.4` | `2024.8.30` |
+  | [charset-normalizer](https://github.com/Ousret/charset_normalizer) | `3.3.2` | `3.4.0` |
+  | [flake8](https://github.com/pycqa/flake8) | `7.1.0` | `7.1.1` |
+  | [idna](https://github.com/kjd/idna) | `3.7` | `3.10` |
+  | [importlib-metadata](https://github.com/python/importlib_metadata) | `7.2.1` | `8.5.0` |
+  | [keyring](https://github.com/jaraco/keyring) | `25.2.1` | `25.5.0` |
+  | [more-itertools](https://github.com/more-itertools/more-itertools) | `10.3.0` | `10.5.0` |
+  | [packaging](https://github.com/pypa/packaging) | `24.1` | `24.2` |
+  | [pkginfo](https://code.launchpad.net/~tseaver/pkginfo/trunk) | `1.11.1` | `1.12.0` |
+  | [platformdirs](https://github.com/tox-dev/platformdirs) | `4.2.2` | `4.3.6` |
+  | [pycodestyle](https://github.com/PyCQA/pycodestyle) | `2.12.0` | `2.12.1` |
+  | [readme-renderer](https://github.com/pypa/readme_renderer) | `43.0` | `44.0` |
+  | [rich](https://github.com/Textualize/rich) | `13.7.1` | `13.9.4` |
+  | [setuptools](https://github.com/pypa/setuptools) | `70.1.1` | `75.6.0` |
+  | [tqdm](https://github.com/tqdm/tqdm) | `4.66.4` | `4.67.1` |
+  | [twine](https://github.com/pypa/twine) | `5.1.0` | `6.0.1` |
+  | [urllib3](https://github.com/urllib3/urllib3) | `2.2.2` | `2.2.3` |
+  | [zipp](https://github.com/jaraco/zipp) | `3.19.2` | `3.21.0` |
+
+
+
+  Updates `black` from 24.4.2 to 24.10.0
+  - [Release notes](https://github.com/psf/black/releases)
+  - [Changelog](https://github.com/psf/black/blob/main/CHANGES.md)
+  - [Commits](https://github.com/psf/black/compare/24.4.2...24.10.0)
+
+  Updates `bleach` from 6.1.0 to 6.2.0
+  - [Changelog](https://github.com/mozilla/bleach/blob/main/CHANGES)
+  - [Commits](https://github.com/mozilla/bleach/compare/v6.1.0...v6.2.0)
+
+  Updates `certifi` from 2024.7.4 to 2024.8.30
+  - [Commits](https://github.com/certifi/python-certifi/compare/2024.07.04...2024.08.30)
+
+  Updates `charset-normalizer` from 3.3.2 to 3.4.0
+  - [Release notes](https://github.com/Ousret/charset_normalizer/releases)
+  - [Changelog](https://github.com/jawah/charset_normalizer/blob/master/CHANGELOG.md)
+  - [Commits](https://github.com/Ousret/charset_normalizer/compare/3.3.2...3.4.0)
+
+  Updates `flake8` from 7.1.0 to 7.1.1
+  - [Commits](https://github.com/pycqa/flake8/compare/7.1.0...7.1.1)
+
+  Updates `idna` from 3.7 to 3.10
+  - [Release notes](https://github.com/kjd/idna/releases)
+  - [Changelog](https://github.com/kjd/idna/blob/master/HISTORY.rst)
+  - [Commits](https://github.com/kjd/idna/compare/v3.7...v3.10)
+
+  Updates `importlib-metadata` from 7.2.1 to 8.5.0
+  - [Release notes](https://github.com/python/importlib_metadata/releases)
+  - [Changelog](https://github.com/python/importlib_metadata/blob/main/NEWS.rst)
+  - [Commits](https://github.com/python/importlib_metadata/compare/v7.2.1...v8.5.0)
+
+  Updates `keyring` from 25.2.1 to 25.5.0
+  - [Release notes](https://github.com/jaraco/keyring/releases)
+  - [Changelog](https://github.com/jaraco/keyring/blob/main/NEWS.rst)
+  - [Commits](https://github.com/jaraco/keyring/compare/v25.2.1...v25.5.0)
+
+  Updates `more-itertools` from 10.3.0 to 10.5.0
+  - [Release notes](https://github.com/more-itertools/more-itertools/releases)
+  - [Commits](https://github.com/more-itertools/more-itertools/compare/v10.3.0...v10.5.0)
+
+  Updates `packaging` from 24.1 to 24.2
+  - [Release notes](https://github.com/pypa/packaging/releases)
+  - [Changelog](https://github.com/pypa/packaging/blob/main/CHANGELOG.rst)
+  - [Commits](https://github.com/pypa/packaging/compare/24.1...24.2)
+
+  Updates `pkginfo` from 1.11.1 to 1.12.0
+
+  Updates `platformdirs` from 4.2.2 to 4.3.6
+  - [Release notes](https://github.com/tox-dev/platformdirs/releases)
+  - [Changelog](https://github.com/tox-dev/platformdirs/blob/main/CHANGES.rst)
+  - [Commits](https://github.com/tox-dev/platformdirs/compare/4.2.2...4.3.6)
+
+  Updates `pycodestyle` from 2.12.0 to 2.12.1
+  - [Release notes](https://github.com/PyCQA/pycodestyle/releases)
+  - [Changelog](https://github.com/PyCQA/pycodestyle/blob/main/CHANGES.txt)
+  - [Commits](https://github.com/PyCQA/pycodestyle/compare/2.12.0...2.12.1)
+
+  Updates `readme-renderer` from 43.0 to 44.0
+  - [Release notes](https://github.com/pypa/readme_renderer/releases)
+  - [Changelog](https://github.com/pypa/readme_renderer/blob/main/CHANGES.rst)
+  - [Commits](https://github.com/pypa/readme_renderer/compare/43.0...44.0)
+
+  Updates `rich` from 13.7.1 to 13.9.4
+  - [Release notes](https://github.com/Textualize/rich/releases)
+  - [Changelog](https://github.com/Textualize/rich/blob/master/CHANGELOG.md)
+  - [Commits](https://github.com/Textualize/rich/compare/v13.7.1...v13.9.4)
+
+  Updates `setuptools` from 70.1.1 to 75.6.0
+  - [Release notes](https://github.com/pypa/setuptools/releases)
+  - [Changelog](https://github.com/pypa/setuptools/blob/main/NEWS.rst)
+  - [Commits](https://github.com/pypa/setuptools/compare/v70.1.1...v75.6.0)
+
+  Updates `tqdm` from 4.66.4 to 4.67.1
+  - [Release notes](https://github.com/tqdm/tqdm/releases)
+  - [Commits](https://github.com/tqdm/tqdm/compare/v4.66.4...v4.67.1)
+
+  Updates `twine` from 5.1.0 to 6.0.1
+  - [Release notes](https://github.com/pypa/twine/releases)
+  - [Changelog](https://github.com/pypa/twine/blob/main/docs/changelog.rst)
+  - [Commits](https://github.com/pypa/twine/compare/5.1.0...6.0.1)
+
+  Updates `urllib3` from 2.2.2 to 2.2.3
+  - [Release notes](https://github.com/urllib3/urllib3/releases)
+  - [Changelog](https://github.com/urllib3/urllib3/blob/main/CHANGES.rst)
+  - [Commits](https://github.com/urllib3/urllib3/compare/2.2.2...2.2.3)
+
+  Updates `zipp` from 3.19.2 to 3.21.0
+  - [Release notes](https://github.com/jaraco/zipp/releases)
+  - [Changelog](https://github.com/jaraco/zipp/blob/main/NEWS.rst)
+  - [Commits](https://github.com/jaraco/zipp/compare/v3.19.2...v3.21.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: black
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: bleach
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: certifi
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: charset-normalizer
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: flake8
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  - dependency-name: idna
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: importlib-metadata
+    dependency-type: direct:production
+    update-type: version-update:semver-major
+    dependency-group: python-packages
+  - dependency-name: keyring
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: more-itertools
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: packaging
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: pkginfo
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: platformdirs
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: pycodestyle
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  - dependency-name: readme-renderer
+    dependency-type: direct:production
+    update-type: version-update:semver-major
+    dependency-group: python-packages
+  - dependency-name: rich
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: setuptools
+    dependency-type: direct:production
+    update-type: version-update:semver-major
+    dependency-group: python-packages
+  - dependency-name: tqdm
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: twine
+    dependency-type: direct:production
+    update-type: version-update:semver-major
+    dependency-group: python-packages
+  - dependency-name: urllib3
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  - dependency-name: zipp
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+- KeyError fix with gists. [John Doe]
+- Fix punctuation in README. [Jakub Wilk]
+
+
+0.46.0 (2024-09-11)
+-------------------
 
 Fix
 ~~~
