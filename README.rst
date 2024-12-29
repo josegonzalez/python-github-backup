@@ -254,12 +254,6 @@ It's therefore recommended to only use the incremental argument if the output/re
 
    This is due to needing the correct permission for ``--hooks`` on public repos.
 
-2. **Releases blocking**
-
-   A known ``--releases`` (required for ``--assets``) error will sometimes block the backup. 
-
-   If you're backing up a lot of repositories with releases e.g. an organisation or ``--all-starred``. You may need to remove ``--releases`` (and therefore ``--assets``) to complete a backup. Documented in `issue 209 <https://github.com/josegonzalez/python-github-backup/issues/209>`_.
-
 
 "bare" is actually "mirror"
 ---------------------------
