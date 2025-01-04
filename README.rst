@@ -167,7 +167,7 @@ Customise the permissions for your use case, but for a personal account full bac
 
 **User permissions**: Read access to followers, starring, and watching.
 
-**Repository permissions**: Read access to code, commit statuses, issues, metadata, pages, pull requests, and repository hooks.
+**Repository permissions**: Read access to contents, issues, metadata, pull requests, and webhooks.
 
 
 Prefer SSH
