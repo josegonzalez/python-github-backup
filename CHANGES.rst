@@ -1,9 +1,82 @@
 Changelog
 =========
 
-0.47.0 (2024-12-09)
+0.48.0 (2025-01-04)
 -------------------
 ------------------------
+- Chore: reformat file to fix lint issues. [Jose Diaz-Gonzalez]
+- Chore(deps): bump the python-packages group across 1 directory with 4
+  updates. [dependabot[bot]]
+
+  Bumps the python-packages group with 4 updates in the / directory: [charset-normalizer](https://github.com/jawah/charset_normalizer), [click](https://github.com/pallets/click), [keyring](https://github.com/jaraco/keyring) and [urllib3](https://github.com/urllib3/urllib3).
+
+
+  Updates `charset-normalizer` from 3.4.0 to 3.4.1
+  - [Release notes](https://github.com/jawah/charset_normalizer/releases)
+  - [Changelog](https://github.com/jawah/charset_normalizer/blob/master/CHANGELOG.md)
+  - [Commits](https://github.com/jawah/charset_normalizer/compare/3.4.0...3.4.1)
+
+  Updates `click` from 8.1.7 to 8.1.8
+  - [Release notes](https://github.com/pallets/click/releases)
+  - [Changelog](https://github.com/pallets/click/blob/main/CHANGES.rst)
+  - [Commits](https://github.com/pallets/click/compare/8.1.7...8.1.8)
+
+  Updates `keyring` from 25.5.0 to 25.6.0
+  - [Release notes](https://github.com/jaraco/keyring/releases)
+  - [Changelog](https://github.com/jaraco/keyring/blob/main/NEWS.rst)
+  - [Commits](https://github.com/jaraco/keyring/compare/v25.5.0...v25.6.0)
+
+  Updates `urllib3` from 2.2.3 to 2.3.0
+  - [Release notes](https://github.com/urllib3/urllib3/releases)
+  - [Changelog](https://github.com/urllib3/urllib3/blob/main/CHANGES.rst)
+  - [Commits](https://github.com/urllib3/urllib3/compare/2.2.3...2.3.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: charset-normalizer
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  - dependency-name: click
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  - dependency-name: keyring
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: urllib3
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+- Fix typo README.rst: --starred-gists that should be --gists. [Michael
+  D. Adams]
+- Remove fixed release issue from known blocking errors. [Ethan White]
+
+  The issue with --release producing errors documented in #209 (the linked issue) and #234 appears to have been fixed in #257.
+
+  This change removes the associated warning from the README.
+- Chore(deps): bump certifi in the python-packages group.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [certifi](https://github.com/certifi/python-certifi).
+
+
+  Updates `certifi` from 2024.8.30 to 2024.12.14
+  - [Commits](https://github.com/certifi/python-certifi/compare/2024.08.30...2024.12.14)
+
+  ---
+  updated-dependencies:
+  - dependency-name: certifi
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+
+
+0.47.0 (2024-12-09)
+-------------------
 - Detect empty HTTPS contexts. [John Doe]
 
   Some users are relying solely on the certifi package to provide their CA certs, as requests does this by default.
