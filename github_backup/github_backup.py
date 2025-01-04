@@ -19,12 +19,12 @@ import ssl
 import subprocess
 import sys
 import time
+from datetime import datetime
 from http.client import IncompleteRead
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote as urlquote
 from urllib.parse import urlencode, urlparse
 from urllib.request import HTTPRedirectHandler, Request, build_opener, urlopen
-from datetime import datetime
 
 try:
     from . import __version__
@@ -40,15 +40,20 @@ logger = logging.getLogger(__name__)
 https_ctx = ssl.create_default_context()
 if not https_ctx.get_ca_certs():
     import warnings
-    warnings.warn('\n\nYOUR DEFAULT CA CERTS ARE EMPTY.\n' +
-                  'PLEASE POPULATE ANY OF:' +
-                  ''.join([
-                    '\n - ' + x
-                    for x in ssl.get_default_verify_paths()
-                    if type(x) is str
-                  ]) + '\n', stacklevel=2)
+
+    warnings.warn(
+        "\n\nYOUR DEFAULT CA CERTS ARE EMPTY.\n"
+        + "PLEASE POPULATE ANY OF:"
+        + "".join(
+            ["\n - " + x for x in ssl.get_default_verify_paths() if type(x) is str]
+        )
+        + "\n",
+        stacklevel=2,
+    )
     import certifi
+
     https_ctx = ssl.create_default_context(cafile=certifi.where())
+
 
 def logging_subprocess(
     popenargs, stdout_log_level=logging.DEBUG, stderr_log_level=logging.ERROR, **kwargs
@@ -524,7 +529,7 @@ def get_github_host(args):
 
 
 def read_file_contents(file_uri):
-    return open(file_uri[len(FILE_URI_PREFIX):], "rt").readline().strip()
+    return open(file_uri[len(FILE_URI_PREFIX) :], "rt").readline().strip()
 
 
 def get_github_repo_url(args, repository):
@@ -795,13 +800,15 @@ def download_file(url, path, auth, as_app=False, fine=False):
     if os.path.exists(path):
         return
 
-    request = _construct_request(per_page=100,
-                                 page=1,
-                                 query_args={},
-                                 template=url,
-                                 auth=auth,
-                                 as_app=as_app,
-                                 fine=fine)
+    request = _construct_request(
+        per_page=100,
+        page=1,
+        query_args={},
+        template=url,
+        auth=auth,
+        as_app=as_app,
+        fine=fine,
+    )
     request.add_header("Accept", "application/octet-stream")
     opener = build_opener(S3HTTPRedirectHandler)
 
@@ -944,11 +951,15 @@ def filter_repositories(args, unfiltered_repositories):
             if r.get("language") and r.get("language").lower() in languages
         ]  # noqa
     if name_regex:
-        repositories = [r for r in repositories if "name" not in r or name_regex.match(r["name"])]
+        repositories = [
+            r for r in repositories if "name" not in r or name_regex.match(r["name"])
+        ]
     if args.skip_archived:
         repositories = [r for r in repositories if not r.get("archived")]
     if args.exclude:
-        repositories = [r for r in repositories if "name" not in r or r["name"] not in args.exclude]
+        repositories = [
+            r for r in repositories if "name" not in r or r["name"] not in args.exclude
+        ]
 
     return repositories
 
@@ -1244,10 +1255,16 @@ def backup_releases(args, repo_cwd, repository, repos_template, include_assets=F
     if args.skip_prerelease:
         releases = [r for r in releases if not r["prerelease"] and not r["draft"]]
 
-    if args.number_of_latest_releases and args.number_of_latest_releases < len(releases):
-        releases.sort(key=lambda item: datetime.strptime(item["created_at"], "%Y-%m-%dT%H:%M:%SZ"),
-                      reverse=True)
-        releases = releases[:args.number_of_latest_releases]
+    if args.number_of_latest_releases and args.number_of_latest_releases < len(
+        releases
+    ):
+        releases.sort(
+            key=lambda item: datetime.strptime(
+                item["created_at"], "%Y-%m-%dT%H:%M:%SZ"
+            ),
+            reverse=True,
+        )
+        releases = releases[: args.number_of_latest_releases]
         logger.info("Saving the latest {0} releases to disk".format(len(releases)))
     else:
         logger.info("Saving {0} releases to disk".format(len(releases)))
@@ -1274,7 +1291,7 @@ def backup_releases(args, repo_cwd, repository, repos_template, include_assets=F
                         os.path.join(release_assets_cwd, asset["name"]),
                         get_auth(args, encode=not args.as_app),
                         as_app=args.as_app,
-                        fine=True if args.token_fine is not None else False
+                        fine=True if args.token_fine is not None else False,
                     )
 
 
