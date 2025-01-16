@@ -80,6 +80,7 @@ CLI Help output::
                             log level to use (default: info, possible levels:
                             debug, info, warning, error, critical)
       -i, --incremental     incremental backup
+      --incremental-by-files incremental backup using modified time of files
       --starred             include JSON output of starred repositories in backup
       --all-starred         include starred repositories in backup [*]
       --watched             include JSON output of watched repositories in backup
@@ -238,6 +239,12 @@ Incremental Backup
 Using (``-i, --incremental``) will only request new data from the API **since the last run (successful or not)**. e.g. only request issues from the API since the last run. 
 
 This means any blocking errors on previous runs can cause a large amount of missing data in backups.
+
+Using (``--incremental-by-files``) will request new data from the API **based on when the file was modified on filesystem**. e.g. if you modify the file yourself you may miss something.
+
+Still saver than the previous version.
+
+Specifically, issues and pull requests are handled like this.
 
 Known blocking errors
 ---------------------
