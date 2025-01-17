@@ -1123,7 +1123,8 @@ def backup_issues(args, repo_cwd, repository, repos_template):
         issue_file = "{0}/{1}.json".format(issue_cwd, number)
         if args.incremental_by_files and os.path.isfile(issue_file):
             modified = os.path.getmtime(issue_file)
-            if modified > issue["updated_at"]
+            modified = datetime.fromtimestamp(modified).strftime("%Y-%m-%dT%H:%M:%SZ")
+            if modified > issue["updated_at"]:
                 logger.info("Skipping issue {0} because it wasn't modified since last backup".format(number))
                 continue
 
@@ -1192,7 +1193,8 @@ def backup_pulls(args, repo_cwd, repository, repos_template):
         pull_file = "{0}/{1}.json".format(pulls_cwd, number)
         if args.incremental_by_files and os.path.isfile(pull_file):
             modified = os.path.getmtime(pull_file)
-            if modified > pull["updated_at"]
+            modified = datetime.fromtimestamp(modified).strftime("%Y-%m-%dT%H:%M:%SZ")
+            if modified > pull["updated_at"]:
                 logger.info("Skipping pull request {0} because it wasn't modified since last backup".format(number))
                 continue
         if args.include_pull_comments or args.include_everything:
