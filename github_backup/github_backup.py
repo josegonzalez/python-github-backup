@@ -182,6 +182,12 @@ def parse_args(args=None):
         help="incremental backup",
     )
     parser.add_argument(
+        "--incremental-by-files",
+        action="store_true",
+        dest="incremental_by_files",
+        help="incremental backup based on modification date of files",
+    )
+    parser.add_argument(
         "--starred",
         action="store_true",
         dest="include_starred",
@@ -1114,6 +1120,14 @@ def backup_issues(args, repo_cwd, repository, repos_template):
     comments_template = _issue_template + "/{0}/comments"
     events_template = _issue_template + "/{0}/events"
     for number, issue in list(issues.items()):
+        issue_file = "{0}/{1}.json".format(issue_cwd, number)
+        if args.incremental_by_files and os.path.isfile(issue_file):
+            modified = os.path.getmtime(issue_file)
+            modified = datetime.fromtimestamp(modified).strftime("%Y-%m-%dT%H:%M:%SZ")
+            if modified > issue["updated_at"]:
+                logger.info("Skipping issue {0} because it wasn't modified since last backup".format(number))
+                continue
+
         if args.include_issue_comments or args.include_everything:
             template = comments_template.format(number)
             issues[number]["comment_data"] = retrieve_data(args, template)
@@ -1121,9 +1135,9 @@ def backup_issues(args, repo_cwd, repository, repos_template):
             template = events_template.format(number)
             issues[number]["event_data"] = retrieve_data(args, template)
 
-        issue_file = "{0}/{1}.json".format(issue_cwd, number)
-        with codecs.open(issue_file, "w", encoding="utf-8") as f:
+        with codecs.open(issue_file + ".temp", "w", encoding="utf-8") as f:
             json_dump(issue, f)
+            os.rename(issue_file + ".temp", issue_file) # Unlike json_dump, this is atomic
 
 
 def backup_pulls(args, repo_cwd, repository, repos_template):
@@ -1176,6 +1190,13 @@ def backup_pulls(args, repo_cwd, repository, repos_template):
     comments_template = _pulls_template + "/{0}/comments"
     commits_template = _pulls_template + "/{0}/commits"
     for number, pull in list(pulls.items()):
+        pull_file = "{0}/{1}.json".format(pulls_cwd, number)
+        if args.incremental_by_files and os.path.isfile(pull_file):
+            modified = os.path.getmtime(pull_file)
+            modified = datetime.fromtimestamp(modified).strftime("%Y-%m-%dT%H:%M:%SZ")
+            if modified > pull["updated_at"]:
+                logger.info("Skipping pull request {0} because it wasn't modified since last backup".format(number))
+                continue
         if args.include_pull_comments or args.include_everything:
             template = comments_regular_template.format(number)
             pulls[number]["comment_regular_data"] = retrieve_data(args, template)
@@ -1185,9 +1206,9 @@ def backup_pulls(args, repo_cwd, repository, repos_template):
             template = commits_template.format(number)
             pulls[number]["commit_data"] = retrieve_data(args, template)
 
-        pull_file = "{0}/{1}.json".format(pulls_cwd, number)
-        with codecs.open(pull_file, "w", encoding="utf-8") as f:
+        with codecs.open(pull_file + ".temp", "w", encoding="utf-8") as f:
             json_dump(pull, f)
+            os.rename(pull_file + ".temp", pull_file) # Unlike json_dump, this is atomic
 
 
 def backup_milestones(args, repo_cwd, repository, repos_template):
