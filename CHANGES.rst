@@ -1,9 +1,123 @@
 Changelog
 =========
 
-0.48.0 (2025-01-04)
+0.49.0 (2025-02-01)
 -------------------
 ------------------------
+- Convert timestamp to string, although maybe the other way around would
+  be better ... [Honza Maly]
+- Implementing incremental by files, safer version of incremental
+  backup. [Honza Maly]
+- Chore(deps): bump the python-packages group across 1 directory with 7
+  updates. [dependabot[bot]]
+
+  Bumps the python-packages group with 7 updates in the / directory:
+
+  | Package | From | To |
+  | --- | --- | --- |
+  | [autopep8](https://github.com/hhatto/autopep8) | `2.3.1` | `2.3.2` |
+  | [black](https://github.com/psf/black) | `24.10.0` | `25.1.0` |
+  | [certifi](https://github.com/certifi/python-certifi) | `2024.12.14` | `2025.1.31` |
+  | [importlib-metadata](https://github.com/python/importlib_metadata) | `8.5.0` | `8.6.1` |
+  | [more-itertools](https://github.com/more-itertools/more-itertools) | `10.5.0` | `10.6.0` |
+  | [setuptools](https://github.com/pypa/setuptools) | `75.7.0` | `75.8.0` |
+  | [twine](https://github.com/pypa/twine) | `6.0.1` | `6.1.0` |
+
+
+
+  Updates `autopep8` from 2.3.1 to 2.3.2
+  - [Release notes](https://github.com/hhatto/autopep8/releases)
+  - [Commits](https://github.com/hhatto/autopep8/compare/v2.3.1...v2.3.2)
+
+  Updates `black` from 24.10.0 to 25.1.0
+  - [Release notes](https://github.com/psf/black/releases)
+  - [Changelog](https://github.com/psf/black/blob/main/CHANGES.md)
+  - [Commits](https://github.com/psf/black/compare/24.10.0...25.1.0)
+
+  Updates `certifi` from 2024.12.14 to 2025.1.31
+  - [Commits](https://github.com/certifi/python-certifi/compare/2024.12.14...2025.01.31)
+
+  Updates `importlib-metadata` from 8.5.0 to 8.6.1
+  - [Release notes](https://github.com/python/importlib_metadata/releases)
+  - [Changelog](https://github.com/python/importlib_metadata/blob/main/NEWS.rst)
+  - [Commits](https://github.com/python/importlib_metadata/compare/v8.5.0...v8.6.1)
+
+  Updates `more-itertools` from 10.5.0 to 10.6.0
+  - [Release notes](https://github.com/more-itertools/more-itertools/releases)
+  - [Commits](https://github.com/more-itertools/more-itertools/compare/v10.5.0...v10.6.0)
+
+  Updates `setuptools` from 75.7.0 to 75.8.0
+  - [Release notes](https://github.com/pypa/setuptools/releases)
+  - [Changelog](https://github.com/pypa/setuptools/blob/main/NEWS.rst)
+  - [Commits](https://github.com/pypa/setuptools/compare/v75.7.0...v75.8.0)
+
+  Updates `twine` from 6.0.1 to 6.1.0
+  - [Release notes](https://github.com/pypa/twine/releases)
+  - [Changelog](https://github.com/pypa/twine/blob/main/docs/changelog.rst)
+  - [Commits](https://github.com/pypa/twine/compare/6.0.1...6.1.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: autopep8
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  - dependency-name: black
+    dependency-type: direct:production
+    update-type: version-update:semver-major
+    dependency-group: python-packages
+  - dependency-name: certifi
+    dependency-type: direct:production
+    update-type: version-update:semver-major
+    dependency-group: python-packages
+  - dependency-name: importlib-metadata
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: more-itertools
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: setuptools
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: twine
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump the python-packages group across 1 directory with 2
+  updates. [dependabot[bot]]
+
+  Bumps the python-packages group with 2 updates in the / directory: [pygments](https://github.com/pygments/pygments) and [setuptools](https://github.com/pypa/setuptools).
+
+
+  Updates `pygments` from 2.18.0 to 2.19.1
+  - [Release notes](https://github.com/pygments/pygments/releases)
+  - [Changelog](https://github.com/pygments/pygments/blob/master/CHANGES)
+  - [Commits](https://github.com/pygments/pygments/compare/2.18.0...2.19.1)
+
+  Updates `setuptools` from 75.6.0 to 75.7.0
+  - [Release notes](https://github.com/pypa/setuptools/releases)
+  - [Changelog](https://github.com/pypa/setuptools/blob/main/NEWS.rst)
+  - [Commits](https://github.com/pypa/setuptools/compare/v75.6.0...v75.7.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: pygments
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: setuptools
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+
+
+0.48.0 (2025-01-04)
+-------------------
 - Chore: reformat file to fix lint issues. [Jose Diaz-Gonzalez]
 - Chore(deps): bump the python-packages group across 1 directory with 4
   updates. [dependabot[bot]]
