@@ -6,7 +6,7 @@ charset-normalizer==3.4.1
 click==8.1.8
 colorama==0.4.6
 docutils==0.21.2
-flake8==7.1.1
+flake8==7.1.2
 gitchangelog==3.0.4
 idna==3.10
 importlib-metadata==8.6.1
