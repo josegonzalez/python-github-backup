@@ -1137,7 +1137,7 @@ def backup_issues(args, repo_cwd, repository, repos_template):
 
         with codecs.open(issue_file + ".temp", "w", encoding="utf-8") as f:
             json_dump(issue, f)
-            os.rename(issue_file + ".temp", issue_file) # Unlike json_dump, this is atomic
+            os.rename(issue_file + ".temp", issue_file)  # Unlike json_dump, this is atomic
 
 
 def backup_pulls(args, repo_cwd, repository, repos_template):
@@ -1208,7 +1208,7 @@ def backup_pulls(args, repo_cwd, repository, repos_template):
 
         with codecs.open(pull_file + ".temp", "w", encoding="utf-8") as f:
             json_dump(pull, f)
-            os.rename(pull_file + ".temp", pull_file) # Unlike json_dump, this is atomic
+            os.rename(pull_file + ".temp", pull_file)  # Unlike json_dump, this is atomic
 
 
 def backup_milestones(args, repo_cwd, repository, repos_template):
