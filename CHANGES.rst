@@ -1,9 +1,36 @@
 Changelog
 =========
 
-0.49.0 (2025-02-01)
+0.50.0 (2025-02-22)
 -------------------
 ------------------------
+- Chore: fix inline comments. [Jose Diaz-Gonzalez]
+- Chore(deps): bump the python-packages group across 1 directory with 2
+  updates. [dependabot[bot]]
+
+  Bumps the python-packages group with 2 updates in the / directory: [flake8](https://github.com/pycqa/flake8) and [pkginfo](https://code.launchpad.net/~tseaver/pkginfo/trunk).
+
+
+  Updates `flake8` from 7.1.1 to 7.1.2
+  - [Commits](https://github.com/pycqa/flake8/compare/7.1.1...7.1.2)
+
+  Updates `pkginfo` from 1.12.0 to 1.12.1.2
+
+  ---
+  updated-dependencies:
+  - dependency-name: flake8
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  - dependency-name: pkginfo
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  ...
+
+
+0.49.0 (2025-02-01)
+-------------------
 - Convert timestamp to string, although maybe the other way around would
   be better ... [Honza Maly]
 - Implementing incremental by files, safer version of incremental
