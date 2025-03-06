@@ -1,9 +1,49 @@
 Changelog
 =========
 
-0.50.0 (2025-02-22)
+0.50.1 (2025-03-06)
 -------------------
 ------------------------
+- Chore(deps): bump setuptools in the python-packages group.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [setuptools](https://github.com/pypa/setuptools).
+
+
+  Updates `setuptools` from 75.8.1 to 75.8.2
+  - [Release notes](https://github.com/pypa/setuptools/releases)
+  - [Changelog](https://github.com/pypa/setuptools/blob/main/NEWS.rst)
+  - [Commits](https://github.com/pypa/setuptools/compare/v75.8.1...v75.8.2)
+
+  ---
+  updated-dependencies:
+  - dependency-name: setuptools
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump setuptools in the python-packages group.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [setuptools](https://github.com/pypa/setuptools).
+
+
+  Updates `setuptools` from 75.8.0 to 75.8.1
+  - [Release notes](https://github.com/pypa/setuptools/releases)
+  - [Changelog](https://github.com/pypa/setuptools/blob/main/NEWS.rst)
+  - [Commits](https://github.com/pypa/setuptools/compare/v75.8.0...v75.8.1)
+
+  ---
+  updated-dependencies:
+  - dependency-name: setuptools
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  ...
+
+
+0.50.0 (2025-02-22)
+-------------------
 - Chore: fix inline comments. [Jose Diaz-Gonzalez]
 - Chore(deps): bump the python-packages group across 1 directory with 2
   updates. [dependabot[bot]]
