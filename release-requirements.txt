@@ -20,7 +20,7 @@ mypy-extensions==1.0.0
 packaging==24.2
 pathspec==0.12.1
 pkginfo==1.12.1.2
-platformdirs==4.3.6
+platformdirs==4.3.7
 pycodestyle==2.12.1
 pyflakes==3.2.0
 Pygments==2.19.1
@@ -30,7 +30,7 @@ requests-toolbelt==1.0.0
 restructuredtext-lint==1.4.0
 rfc3986==2.0.0
 rich==13.9.4
-setuptools==76.0.0
+setuptools==77.0.1
 six==1.17.0
 tqdm==4.67.1
 twine==6.1.0
