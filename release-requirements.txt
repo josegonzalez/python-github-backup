@@ -34,6 +34,6 @@ setuptools==78.1.0
 six==1.17.0
 tqdm==4.67.1
 twine==6.1.0
-urllib3==2.3.0
+urllib3==2.4.0
 webencodings==0.5.1
 zipp==3.21.0
