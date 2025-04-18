@@ -10,7 +10,7 @@ on:
 jobs:
   tagged-release:
     name: tagged-release
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: "marvinpinto/action-automatic-releases@v1.2.1"
