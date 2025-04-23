@@ -15,9 +15,9 @@ keyring==25.6.0
 markdown-it-py==3.0.0
 mccabe==0.7.0
 mdurl==0.1.2
-more-itertools==10.6.0
-mypy-extensions==1.0.0
-packaging==24.2
+more-itertools==10.7.0
+mypy-extensions==1.1.0
+packaging==25.0
 pathspec==0.12.1
 pkginfo==1.12.1.2
 platformdirs==4.3.7
@@ -30,7 +30,7 @@ requests-toolbelt==1.0.0
 restructuredtext-lint==1.4.0
 rfc3986==2.0.0
 rich==14.0.0
-setuptools==78.1.0
+setuptools==79.0.0
 six==1.17.0
 tqdm==4.67.1
 twine==6.1.0
