@@ -2,7 +2,7 @@ autopep8==2.3.2
 black==25.1.0
 bleach==6.2.0
 certifi==2025.4.26
-charset-normalizer==3.4.1
+charset-normalizer==3.4.2
 click==8.1.8
 colorama==0.4.6
 docutils==0.21.2
@@ -30,7 +30,7 @@ requests-toolbelt==1.0.0
 restructuredtext-lint==1.4.0
 rfc3986==2.0.0
 rich==14.0.0
-setuptools==80.0.0
+setuptools==80.1.0
 six==1.17.0
 tqdm==4.67.1
 twine==6.1.0
