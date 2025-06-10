@@ -25,7 +25,7 @@ pycodestyle==2.13.0
 pyflakes==3.3.2
 Pygments==2.19.1
 readme-renderer==44.0
-requests==2.32.3
+requests==2.32.4
 requests-toolbelt==1.0.0
 restructuredtext-lint==1.4.0
 rfc3986==2.0.0
@@ -36,4 +36,4 @@ tqdm==4.67.1
 twine==6.1.0
 urllib3==2.4.0
 webencodings==0.5.1
-zipp==3.22.0
+zipp==3.23.0
