@@ -1,9 +1,395 @@
 Changelog
 =========
 
-0.50.1 (2025-03-06)
+0.50.2 (2025-06-16)
 -------------------
 ------------------------
+- Chore(deps): bump certifi in the python-packages group.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [certifi](https://github.com/certifi/python-certifi).
+
+
+  Updates `certifi` from 2025.4.26 to 2025.6.15
+  - [Commits](https://github.com/certifi/python-certifi/compare/2025.04.26...2025.06.15)
+
+  ---
+  updated-dependencies:
+  - dependency-name: certifi
+    dependency-version: 2025.6.15
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump requests from 2.32.3 to 2.32.4. [dependabot[bot]]
+
+  Bumps [requests](https://github.com/psf/requests) from 2.32.3 to 2.32.4.
+  - [Release notes](https://github.com/psf/requests/releases)
+  - [Changelog](https://github.com/psf/requests/blob/main/HISTORY.md)
+  - [Commits](https://github.com/psf/requests/compare/v2.32.3...v2.32.4)
+
+  ---
+  updated-dependencies:
+  - dependency-name: requests
+    dependency-version: 2.32.4
+    dependency-type: direct:production
+  ...
+- Chore(deps): bump the python-packages group across 1 directory with 2
+  updates. [dependabot[bot]]
+
+  Bumps the python-packages group with 2 updates in the / directory: [requests](https://github.com/psf/requests) and [zipp](https://github.com/jaraco/zipp).
+
+
+  Updates `requests` from 2.32.3 to 2.32.4
+  - [Release notes](https://github.com/psf/requests/releases)
+  - [Changelog](https://github.com/psf/requests/blob/main/HISTORY.md)
+  - [Commits](https://github.com/psf/requests/compare/v2.32.3...v2.32.4)
+
+  Updates `zipp` from 3.22.0 to 3.23.0
+  - [Release notes](https://github.com/jaraco/zipp/releases)
+  - [Changelog](https://github.com/jaraco/zipp/blob/main/NEWS.rst)
+  - [Commits](https://github.com/jaraco/zipp/compare/v3.22.0...v3.23.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: requests
+    dependency-version: 2.32.4
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  - dependency-name: zipp
+    dependency-version: 3.23.0
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump the python-packages group with 2 updates.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 2 updates: [setuptools](https://github.com/pypa/setuptools) and [zipp](https://github.com/jaraco/zipp).
+
+
+  Updates `setuptools` from 80.8.0 to 80.9.0
+  - [Release notes](https://github.com/pypa/setuptools/releases)
+  - [Changelog](https://github.com/pypa/setuptools/blob/main/NEWS.rst)
+  - [Commits](https://github.com/pypa/setuptools/compare/v80.8.0...v80.9.0)
+
+  Updates `zipp` from 3.21.0 to 3.22.0
+  - [Release notes](https://github.com/jaraco/zipp/releases)
+  - [Changelog](https://github.com/jaraco/zipp/blob/main/NEWS.rst)
+  - [Commits](https://github.com/jaraco/zipp/compare/v3.21.0...v3.22.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: setuptools
+    dependency-version: 80.9.0
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: zipp
+    dependency-version: 3.22.0
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump setuptools in the python-packages group.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [setuptools](https://github.com/pypa/setuptools).
+
+
+  Updates `setuptools` from 80.4.0 to 80.8.0
+  - [Release notes](https://github.com/pypa/setuptools/releases)
+  - [Changelog](https://github.com/pypa/setuptools/blob/main/NEWS.rst)
+  - [Commits](https://github.com/pypa/setuptools/compare/v80.4.0...v80.8.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: setuptools
+    dependency-version: 80.8.0
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump setuptools in the python-packages group.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [setuptools](https://github.com/pypa/setuptools).
+
+
+  Updates `setuptools` from 80.3.1 to 80.4.0
+  - [Release notes](https://github.com/pypa/setuptools/releases)
+  - [Changelog](https://github.com/pypa/setuptools/blob/main/NEWS.rst)
+  - [Commits](https://github.com/pypa/setuptools/compare/v80.3.1...v80.4.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: setuptools
+    dependency-version: 80.4.0
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump the python-packages group across 1 directory with 3
+  updates. [dependabot[bot]]
+
+  Bumps the python-packages group with 3 updates in the / directory: [charset-normalizer](https://github.com/jawah/charset_normalizer), [platformdirs](https://github.com/tox-dev/platformdirs) and [setuptools](https://github.com/pypa/setuptools).
+
+
+  Updates `charset-normalizer` from 3.4.1 to 3.4.2
+  - [Release notes](https://github.com/jawah/charset_normalizer/releases)
+  - [Changelog](https://github.com/jawah/charset_normalizer/blob/master/CHANGELOG.md)
+  - [Commits](https://github.com/jawah/charset_normalizer/compare/3.4.1...3.4.2)
+
+  Updates `platformdirs` from 4.3.7 to 4.3.8
+  - [Release notes](https://github.com/tox-dev/platformdirs/releases)
+  - [Changelog](https://github.com/tox-dev/platformdirs/blob/main/CHANGES.rst)
+  - [Commits](https://github.com/tox-dev/platformdirs/compare/4.3.7...4.3.8)
+
+  Updates `setuptools` from 80.0.0 to 80.3.1
+  - [Release notes](https://github.com/pypa/setuptools/releases)
+  - [Changelog](https://github.com/pypa/setuptools/blob/main/NEWS.rst)
+  - [Commits](https://github.com/pypa/setuptools/compare/v80.0.0...v80.3.1)
+
+  ---
+  updated-dependencies:
+  - dependency-name: charset-normalizer
+    dependency-version: 3.4.2
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  - dependency-name: platformdirs
+    dependency-version: 4.3.8
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  - dependency-name: setuptools
+    dependency-version: 80.3.1
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump the python-packages group across 1 directory with 6
+  updates. [dependabot[bot]]
+
+  Bumps the python-packages group with 6 updates in the / directory:
+
+  | Package | From | To |
+  | --- | --- | --- |
+  | [certifi](https://github.com/certifi/python-certifi) | `2025.1.31` | `2025.4.26` |
+  | [importlib-metadata](https://github.com/python/importlib_metadata) | `8.6.1` | `8.7.0` |
+  | [more-itertools](https://github.com/more-itertools/more-itertools) | `10.6.0` | `10.7.0` |
+  | [mypy-extensions](https://github.com/python/mypy_extensions) | `1.0.0` | `1.1.0` |
+  | [packaging](https://github.com/pypa/packaging) | `24.2` | `25.0` |
+  | [setuptools](https://github.com/pypa/setuptools) | `78.1.0` | `80.0.0` |
+
+
+
+  Updates `certifi` from 2025.1.31 to 2025.4.26
+  - [Commits](https://github.com/certifi/python-certifi/compare/2025.01.31...2025.04.26)
+
+  Updates `importlib-metadata` from 8.6.1 to 8.7.0
+  - [Release notes](https://github.com/python/importlib_metadata/releases)
+  - [Changelog](https://github.com/python/importlib_metadata/blob/main/NEWS.rst)
+  - [Commits](https://github.com/python/importlib_metadata/compare/v8.6.1...v8.7.0)
+
+  Updates `more-itertools` from 10.6.0 to 10.7.0
+  - [Release notes](https://github.com/more-itertools/more-itertools/releases)
+  - [Commits](https://github.com/more-itertools/more-itertools/compare/v10.6.0...v10.7.0)
+
+  Updates `mypy-extensions` from 1.0.0 to 1.1.0
+  - [Commits](https://github.com/python/mypy_extensions/compare/1.0.0...1.1.0)
+
+  Updates `packaging` from 24.2 to 25.0
+  - [Release notes](https://github.com/pypa/packaging/releases)
+  - [Changelog](https://github.com/pypa/packaging/blob/main/CHANGELOG.rst)
+  - [Commits](https://github.com/pypa/packaging/compare/24.2...25.0)
+
+  Updates `setuptools` from 78.1.0 to 80.0.0
+  - [Release notes](https://github.com/pypa/setuptools/releases)
+  - [Changelog](https://github.com/pypa/setuptools/blob/main/NEWS.rst)
+  - [Commits](https://github.com/pypa/setuptools/compare/v78.1.0...v80.0.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: certifi
+    dependency-version: 2025.4.26
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: importlib-metadata
+    dependency-version: 8.7.0
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: more-itertools
+    dependency-version: 10.7.0
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: mypy-extensions
+    dependency-version: 1.1.0
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: packaging
+    dependency-version: '25.0'
+    dependency-type: direct:production
+    update-type: version-update:semver-major
+    dependency-group: python-packages
+  - dependency-name: setuptools
+    dependency-version: 80.0.0
+    dependency-type: direct:production
+    update-type: version-update:semver-major
+    dependency-group: python-packages
+  ...
+- Chore: bump runs-on image from ubuntu-20.04 to ubuntu-24.04. [Jose
+  Diaz-Gonzalez]
+- Chore(deps): bump urllib3 in the python-packages group.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [urllib3](https://github.com/urllib3/urllib3).
+
+
+  Updates `urllib3` from 2.3.0 to 2.4.0
+  - [Release notes](https://github.com/urllib3/urllib3/releases)
+  - [Changelog](https://github.com/urllib3/urllib3/blob/main/CHANGES.rst)
+  - [Commits](https://github.com/urllib3/urllib3/compare/2.3.0...2.4.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: urllib3
+    dependency-version: 2.4.0
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump the python-packages group with 5 updates.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 5 updates:
+
+  | Package | From | To |
+  | --- | --- | --- |
+  | [flake8](https://github.com/pycqa/flake8) | `7.1.2` | `7.2.0` |
+  | [pycodestyle](https://github.com/PyCQA/pycodestyle) | `2.12.1` | `2.13.0` |
+  | [pyflakes](https://github.com/PyCQA/pyflakes) | `3.2.0` | `3.3.2` |
+  | [rich](https://github.com/Textualize/rich) | `13.9.4` | `14.0.0` |
+  | [setuptools](https://github.com/pypa/setuptools) | `77.0.3` | `78.1.0` |
+
+
+  Updates `flake8` from 7.1.2 to 7.2.0
+  - [Commits](https://github.com/pycqa/flake8/compare/7.1.2...7.2.0)
+
+  Updates `pycodestyle` from 2.12.1 to 2.13.0
+  - [Release notes](https://github.com/PyCQA/pycodestyle/releases)
+  - [Changelog](https://github.com/PyCQA/pycodestyle/blob/main/CHANGES.txt)
+  - [Commits](https://github.com/PyCQA/pycodestyle/compare/2.12.1...2.13.0)
+
+  Updates `pyflakes` from 3.2.0 to 3.3.2
+  - [Changelog](https://github.com/PyCQA/pyflakes/blob/main/NEWS.rst)
+  - [Commits](https://github.com/PyCQA/pyflakes/compare/3.2.0...3.3.2)
+
+  Updates `rich` from 13.9.4 to 14.0.0
+  - [Release notes](https://github.com/Textualize/rich/releases)
+  - [Changelog](https://github.com/Textualize/rich/blob/master/CHANGELOG.md)
+  - [Commits](https://github.com/Textualize/rich/compare/v13.9.4...v14.0.0)
+
+  Updates `setuptools` from 77.0.3 to 78.1.0
+  - [Release notes](https://github.com/pypa/setuptools/releases)
+  - [Changelog](https://github.com/pypa/setuptools/blob/main/NEWS.rst)
+  - [Commits](https://github.com/pypa/setuptools/compare/v77.0.3...v78.1.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: flake8
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: pycodestyle
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: pyflakes
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: rich
+    dependency-type: direct:production
+    update-type: version-update:semver-major
+    dependency-group: python-packages
+  - dependency-name: setuptools
+    dependency-type: direct:production
+    update-type: version-update:semver-major
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump setuptools in the python-packages group.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [setuptools](https://github.com/pypa/setuptools).
+
+
+  Updates `setuptools` from 77.0.1 to 77.0.3
+  - [Release notes](https://github.com/pypa/setuptools/releases)
+  - [Changelog](https://github.com/pypa/setuptools/blob/main/NEWS.rst)
+  - [Commits](https://github.com/pypa/setuptools/compare/v77.0.1...v77.0.3)
+
+  ---
+  updated-dependencies:
+  - dependency-name: setuptools
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump the python-packages group across 1 directory with 2
+  updates. [dependabot[bot]]
+
+  Bumps the python-packages group with 2 updates in the / directory: [platformdirs](https://github.com/tox-dev/platformdirs) and [setuptools](https://github.com/pypa/setuptools).
+
+
+  Updates `platformdirs` from 4.3.6 to 4.3.7
+  - [Release notes](https://github.com/tox-dev/platformdirs/releases)
+  - [Changelog](https://github.com/tox-dev/platformdirs/blob/main/CHANGES.rst)
+  - [Commits](https://github.com/tox-dev/platformdirs/compare/4.3.6...4.3.7)
+
+  Updates `setuptools` from 76.0.0 to 77.0.1
+  - [Release notes](https://github.com/pypa/setuptools/releases)
+  - [Changelog](https://github.com/pypa/setuptools/blob/main/NEWS.rst)
+  - [Commits](https://github.com/pypa/setuptools/compare/v76.0.0...v77.0.1)
+
+  ---
+  updated-dependencies:
+  - dependency-name: platformdirs
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  - dependency-name: setuptools
+    dependency-type: direct:production
+    update-type: version-update:semver-major
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump setuptools in the python-packages group.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [setuptools](https://github.com/pypa/setuptools).
+
+
+  Updates `setuptools` from 75.8.2 to 76.0.0
+  - [Release notes](https://github.com/pypa/setuptools/releases)
+  - [Changelog](https://github.com/pypa/setuptools/blob/main/NEWS.rst)
+  - [Commits](https://github.com/pypa/setuptools/compare/v75.8.2...v76.0.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: setuptools
+    dependency-type: direct:production
+    update-type: version-update:semver-major
+    dependency-group: python-packages
+  ...
+
+
+0.50.1 (2025-03-06)
+-------------------
 - Chore(deps): bump setuptools in the python-packages group.
   [dependabot[bot]]
 
