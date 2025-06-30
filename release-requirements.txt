@@ -6,7 +6,7 @@ charset-normalizer==3.4.2
 click==8.1.8
 colorama==0.4.6
 docutils==0.21.2
-flake8==7.2.0
+flake8==7.3.0
 gitchangelog==3.0.4
 idna==3.10
 importlib-metadata==8.7.0
@@ -21,9 +21,9 @@ packaging==25.0
 pathspec==0.12.1
 pkginfo==1.12.1.2
 platformdirs==4.3.8
-pycodestyle==2.13.0
-pyflakes==3.3.2
-Pygments==2.19.1
+pycodestyle==2.14.0
+pyflakes==3.4.0
+Pygments==2.19.2
 readme-renderer==44.0
 requests==2.32.4
 requests-toolbelt==1.0.0
@@ -34,6 +34,6 @@ setuptools==80.9.0
 six==1.17.0
 tqdm==4.67.1
 twine==6.1.0
-urllib3==2.4.0
+urllib3==2.5.0
 webencodings==0.5.1
 zipp==3.23.0
