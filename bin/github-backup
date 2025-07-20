@@ -4,6 +4,15 @@ import logging
 import os
 import sys
 
+
+# If we are running from a git-checkout, we can run against the development
+# tree without installing.
+if os.path.exists(os.path.join(os.path.dirname(__file__), "..", ".git")):
+    sys.path.insert(
+        0, os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    )
+
+
 from github_backup.github_backup import (
     backup_account,
     backup_repositories,
