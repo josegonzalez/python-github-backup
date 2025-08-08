@@ -578,10 +578,15 @@ def retrieve_data_gen(args, template, query_args=None, single_request=False):
     page = 0
 
     while True:
-        page = page + 1
+        if single_request:
+            request_page, request_per_page = None, None
+        else:
+            page = page + 1
+            request_page, request_per_page = page, per_page
+
         request = _construct_request(
-            per_page,
-            page,
+            request_per_page,
+            request_page,
             query_args,
             template,
             auth,
@@ -715,14 +720,22 @@ def _get_response(request, auth, template):
 def _construct_request(
     per_page, page, query_args, template, auth, as_app=None, fine=False
 ):
-    querystring = urlencode(
-        dict(
-            list({"per_page": per_page, "page": page}.items())
-            + list(query_args.items())
-        )
-    )
+    all_query_args = {}
+    if per_page:
+        all_query_args["per_page"] = per_page
+    if page:
+        all_query_args["page"] = page
+    if query_args:
+        all_query_args.update(query_args)
 
-    request = Request(template + "?" + querystring)
+    request_url = template
+    if all_query_args:
+        querystring = urlencode(all_query_args)
+        request_url = template + "?" + querystring
+    else:
+        querystring = ""
+
+    request = Request(request_url)
     if auth is not None:
         if not as_app:
             if fine:
@@ -735,7 +748,11 @@ def _construct_request(
             request.add_header(
                 "Accept", "application/vnd.github.machine-man-preview+json"
             )
-    logger.info("Requesting {}?{}".format(template, querystring))
+
+    log_url = template
+    if querystring:
+        log_url += "?" + querystring
+    logger.info("Requesting {}".format(log_url))
     return request
 
 
@@ -885,9 +902,13 @@ def retrieve_repositories(args, authenticated_user):
         )
 
     if args.repository:
+        if "/" in args.repository:
+            repo_path = args.repository
+        else:
+            repo_path = "{0}/{1}".format(args.user, args.repository)
         single_request = True
-        template = "https://{0}/repos/{1}/{2}".format(
-            get_github_api_host(args), args.user, args.repository
+        template = "https://{0}/repos/{1}".format(
+            get_github_api_host(args), repo_path
         )
 
     repos = retrieve_data(args, template, single_request=single_request)
@@ -928,6 +949,8 @@ def retrieve_repositories(args, authenticated_user):
 
 
 def filter_repositories(args, unfiltered_repositories):
+    if args.repository:
+        return unfiltered_repositories
     logger.info("Filtering repositories")
 
     repositories = []
