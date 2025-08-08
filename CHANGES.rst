@@ -1,9 +1,167 @@
 Changelog
 =========
 
-0.50.2 (2025-06-16)
+0.50.3 (2025-08-08)
 -------------------
 ------------------------
+- Revert "Add conditional check for git checkout in development path"
+  [Eric Wheeler]
+
+  This reverts commit 1bad563e3f23d3d8b9f98721d857a660692f4847.
+- Fix -R flag to allow backups of repositories not owned by user. [Eric
+  Wheeler]
+
+  Previously, using -R flag would show zero issues/PRs for repositories
+  not owned by the primary user due to incorrect pagination parameters
+  being added to single repository API calls.
+
+  - Remove pagination parameters for single repository requests
+  - Support owner/repo format in -R flag (e.g., -R owner/repo-name)
+  - Skip filtering when specific repository is requested
+  - Fix URL construction for requests without query parameters
+
+  This enables backing up any repository, not just those owned by the
+  primary user specified in -u flag.
+- Add conditional check for git checkout in development path. [Eric
+  Wheeler]
+
+  Only insert development path into sys.path when running from a git checkout
+  (when ../.git exists). This makes the script more robust by only using the
+  development tree when available and falling back to installed package otherwise.
+- Chore(deps): bump the python-packages group across 1 directory with 3
+  updates. [dependabot[bot]]
+
+  Bumps the python-packages group with 3 updates in the / directory: [certifi](https://github.com/certifi/python-certifi), [docutils](https://github.com/rtfd/recommonmark) and [rich](https://github.com/Textualize/rich).
+
+
+  Updates `certifi` from 2025.7.9 to 2025.7.14
+  - [Commits](https://github.com/certifi/python-certifi/compare/2025.07.09...2025.07.14)
+
+  Updates `docutils` from 0.21.2 to 0.22
+  - [Changelog](https://github.com/readthedocs/recommonmark/blob/master/CHANGELOG.md)
+  - [Commits](https://github.com/rtfd/recommonmark/commits)
+
+  Updates `rich` from 14.0.0 to 14.1.0
+  - [Release notes](https://github.com/Textualize/rich/releases)
+  - [Changelog](https://github.com/Textualize/rich/blob/master/CHANGELOG.md)
+  - [Commits](https://github.com/Textualize/rich/compare/v14.0.0...v14.1.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: certifi
+    dependency-version: 2025.7.14
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  - dependency-name: docutils
+    dependency-version: '0.22'
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: rich
+    dependency-version: 14.1.0
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump certifi in the python-packages group.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [certifi](https://github.com/certifi/python-certifi).
+
+
+  Updates `certifi` from 2025.6.15 to 2025.7.9
+  - [Commits](https://github.com/certifi/python-certifi/compare/2025.06.15...2025.07.09)
+
+  ---
+  updated-dependencies:
+  - dependency-name: certifi
+    dependency-version: 2025.7.9
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump urllib3 from 2.4.0 to 2.5.0. [dependabot[bot]]
+
+  Bumps [urllib3](https://github.com/urllib3/urllib3) from 2.4.0 to 2.5.0.
+  - [Release notes](https://github.com/urllib3/urllib3/releases)
+  - [Changelog](https://github.com/urllib3/urllib3/blob/main/CHANGES.rst)
+  - [Commits](https://github.com/urllib3/urllib3/compare/2.4.0...2.5.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: urllib3
+    dependency-version: 2.5.0
+    dependency-type: direct:production
+  ...
+- Chore(deps): bump the python-packages group with 5 updates.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 5 updates:
+
+  | Package | From | To |
+  | --- | --- | --- |
+  | [flake8](https://github.com/pycqa/flake8) | `7.2.0` | `7.3.0` |
+  | [pycodestyle](https://github.com/PyCQA/pycodestyle) | `2.13.0` | `2.14.0` |
+  | [pyflakes](https://github.com/PyCQA/pyflakes) | `3.3.2` | `3.4.0` |
+  | [pygments](https://github.com/pygments/pygments) | `2.19.1` | `2.19.2` |
+  | [urllib3](https://github.com/urllib3/urllib3) | `2.4.0` | `2.5.0` |
+
+
+  Updates `flake8` from 7.2.0 to 7.3.0
+  - [Commits](https://github.com/pycqa/flake8/compare/7.2.0...7.3.0)
+
+  Updates `pycodestyle` from 2.13.0 to 2.14.0
+  - [Release notes](https://github.com/PyCQA/pycodestyle/releases)
+  - [Changelog](https://github.com/PyCQA/pycodestyle/blob/main/CHANGES.txt)
+  - [Commits](https://github.com/PyCQA/pycodestyle/compare/2.13.0...2.14.0)
+
+  Updates `pyflakes` from 3.3.2 to 3.4.0
+  - [Changelog](https://github.com/PyCQA/pyflakes/blob/main/NEWS.rst)
+  - [Commits](https://github.com/PyCQA/pyflakes/compare/3.3.2...3.4.0)
+
+  Updates `pygments` from 2.19.1 to 2.19.2
+  - [Release notes](https://github.com/pygments/pygments/releases)
+  - [Changelog](https://github.com/pygments/pygments/blob/master/CHANGES)
+  - [Commits](https://github.com/pygments/pygments/compare/2.19.1...2.19.2)
+
+  Updates `urllib3` from 2.4.0 to 2.5.0
+  - [Release notes](https://github.com/urllib3/urllib3/releases)
+  - [Changelog](https://github.com/urllib3/urllib3/blob/main/CHANGES.rst)
+  - [Commits](https://github.com/urllib3/urllib3/compare/2.4.0...2.5.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: flake8
+    dependency-version: 7.3.0
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: pycodestyle
+    dependency-version: 2.14.0
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: pyflakes
+    dependency-version: 3.4.0
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: pygments
+    dependency-version: 2.19.2
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  - dependency-name: urllib3
+    dependency-version: 2.5.0
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+
+
+0.50.2 (2025-06-16)
+-------------------
 - Chore(deps): bump certifi in the python-packages group.
   [dependabot[bot]]
 
