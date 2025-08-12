@@ -1,4 +1,4 @@
-*.py[cod]
+# Docker ignore file to reduce build context size
 
 # Temp files
 *~
@@ -34,8 +34,7 @@ doc/github_backup.1
 .vscode
 .atom
 .idea
-
-README
+*.code-workspace
 
 # RSA
 id_rsa
@@ -44,3 +43,33 @@ id_rsa.pub
 # Virtual env
 venv
 .venv
+
+# Git
+.git
+.gitignore
+.gitchangelog.rc
+.github
+
+# Documentation
+*.md
+!README.md
+
+# Environment variables files
+.env
+.env.*
+!.env.example
+*.log
+
+# Cache files
+**/__pycache__/
+*.py[cod]
+
+# Docker files
+docker-compose.yml
+Dockerfile*
+
+# Other files
+release
+*.tar
+*.zip
+*.gzip
