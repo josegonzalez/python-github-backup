@@ -1,11 +1,11 @@
 autopep8==2.3.2
-black==25.1.0
+black==25.9.0
 bleach==6.2.0
 certifi==2025.8.3
 charset-normalizer==3.4.3
 click==8.1.8
 colorama==0.4.6
-docutils==0.22
+docutils==0.22.1
 flake8==7.3.0
 gitchangelog==3.0.4
 idna==3.10
