@@ -20,7 +20,7 @@ mypy-extensions==1.1.0
 packaging==25.0
 pathspec==0.12.1
 pkginfo==1.12.1.2
-platformdirs==4.4.0
+platformdirs==4.5.0
 pycodestyle==2.14.0
 pyflakes==3.4.0
 Pygments==2.19.2
