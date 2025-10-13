@@ -8,7 +8,7 @@ colorama==0.4.6
 docutils==0.22.2
 flake8==7.3.0
 gitchangelog==3.0.4
-idna==3.10
+idna==3.11
 importlib-metadata==8.7.0
 jaraco.classes==3.4.0
 keyring==25.6.0
