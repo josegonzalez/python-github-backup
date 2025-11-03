@@ -948,6 +948,8 @@ def download_attachment_file(url, path, auth, as_app=False, fine=False):
     # Reuse S3HTTPRedirectHandler from download_file()
     opener = build_opener(S3HTTPRedirectHandler)
 
+    temp_path = path + ".temp"
+
     try:
         response = opener.open(request)
         metadata["http_status"] = response.getcode()
@@ -986,16 +988,19 @@ def download_attachment_file(url, path, auth, as_app=False, fine=False):
                 if "." in filename_from_url:
                     metadata["original_filename"] = filename_from_url
 
-        # Download file
+        # Download file to temporary location
         chunk_size = 16 * 1024
         bytes_downloaded = 0
-        with open(path, "wb") as f:
+        with open(temp_path, "wb") as f:
             while True:
                 chunk = response.read(chunk_size)
                 if not chunk:
                     break
                 f.write(chunk)
                 bytes_downloaded += len(chunk)
+
+        # Atomic rename to final location
+        os.rename(temp_path, path)
 
         metadata["size_bytes"] = bytes_downloaded
         metadata["success"] = True
@@ -1027,6 +1032,12 @@ def download_attachment_file(url, path, auth, as_app=False, fine=False):
         logger.warning(
             "Skipping download of attachment {0} due to error: {1}".format(url, str(e))
         )
+        # Clean up temp file if it was partially created
+        if os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+            except Exception:
+                pass
 
     return metadata
 
@@ -1222,40 +1233,6 @@ def extract_attachment_urls(item_data, issue_number=None, repository_full_name=N
     return regex_urls
 
 
-def extract_and_apply_extension(filepath, original_filename):
-    """Extract extension from original filename and rename file if needed.
-
-    Args:
-        filepath: Current file path (may have no extension)
-        original_filename: Original filename from Content-Disposition (has extension)
-
-    Returns:
-        Final filepath with extension applied
-    """
-    if not original_filename or not os.path.exists(filepath):
-        return filepath
-
-    # Get extension from original filename
-    original_ext = os.path.splitext(original_filename)[1]
-    if not original_ext:
-        return filepath
-
-    # Check if current file already has this extension
-    current_ext = os.path.splitext(filepath)[1]
-    if current_ext == original_ext:
-        return filepath
-
-    # Rename file to add extension
-    new_filepath = filepath + original_ext
-    try:
-        os.rename(filepath, new_filepath)
-        logger.debug("Renamed {0} to {1}".format(filepath, new_filepath))
-        return new_filepath
-    except Exception as e:
-        logger.warning("Could not rename {0}: {1}".format(filepath, str(e)))
-        return filepath
-
-
 def get_attachment_filename(url):
     """Get filename from attachment URL, handling all GitHub formats.
 
@@ -1333,7 +1310,9 @@ def resolve_filename_collision(filepath):
         counter += 1
 
 
-def download_attachments(args, item_cwd, item_data, number, repository, item_type="issue"):
+def download_attachments(
+    args, item_cwd, item_data, number, repository, item_type="issue"
+):
     """Download user-attachments from issue/PR body and comments with manifest.
 
     Args:
@@ -1428,20 +1407,36 @@ def download_attachments(args, item_cwd, item_data, number, repository, item_typ
             fine=args.token_fine is not None,
         )
 
-        # Apply extension from Content-Disposition if available
+        # If download succeeded but we got an extension from Content-Disposition,
+        # we may need to rename the file to add the extension
         if metadata["success"] and metadata.get("original_filename"):
-            final_filepath = extract_and_apply_extension(
-                filepath, metadata["original_filename"]
-            )
-            # Check for collision again ONLY if filename changed (extension was added)
-            if final_filepath != filepath:
+            original_ext = os.path.splitext(metadata["original_filename"])[1]
+            current_ext = os.path.splitext(filepath)[1]
+
+            # Add extension if not present
+            if original_ext and current_ext != original_ext:
+                final_filepath = filepath + original_ext
+                # Check for collision again with new extension
                 final_filepath = resolve_filename_collision(final_filepath)
-            # Update saved_as to reflect actual filename
-            metadata["saved_as"] = os.path.basename(final_filepath)
+                logger.debug(
+                    "Adding extension {0} to {1}".format(original_ext, filepath)
+                )
+
+                # Rename to add extension (already atomic from download)
+                try:
+                    os.rename(filepath, final_filepath)
+                    metadata["saved_as"] = os.path.basename(final_filepath)
+                except Exception as e:
+                    logger.warning(
+                        "Could not add extension to {0}: {1}".format(filepath, str(e))
+                    )
+                    metadata["saved_as"] = os.path.basename(filepath)
+            else:
+                metadata["saved_as"] = os.path.basename(filepath)
+        elif metadata["success"]:
+            metadata["saved_as"] = os.path.basename(filepath)
         else:
-            metadata["saved_as"] = (
-                os.path.basename(filepath) if metadata["success"] else None
-            )
+            metadata["saved_as"] = None
 
         attachment_metadata_list.append(metadata)
 
@@ -1458,8 +1453,9 @@ def download_attachments(args, item_cwd, item_data, number, repository, item_typ
         }
 
         manifest_path = os.path.join(attachments_dir, "manifest.json")
-        with open(manifest_path, "w") as f:
+        with open(manifest_path + ".temp", "w") as f:
             json.dump(manifest, f, indent=2)
+            os.rename(manifest_path + ".temp", manifest_path)  # Atomic write
         logger.debug(
             "Wrote manifest for {0} #{1}: {2} attachments".format(
                 item_type_display, number, len(attachment_metadata_list)
