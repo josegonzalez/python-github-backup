@@ -50,5 +50,6 @@ setup(
     long_description=open_file("README.rst").read(),
     long_description_content_type="text/x-rst",
     install_requires=open_file("requirements.txt").readlines(),
+    python_requires=">=3.8",
     zip_safe=True,
 )
