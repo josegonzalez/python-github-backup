@@ -421,6 +421,12 @@ def parse_args(args=None):
         help="include assets alongside release information; only applies if including releases",
     )
     parser.add_argument(
+        "--attachments",
+        action="store_true",
+        dest="include_attachments",
+        help="download user-attachments from issues and pull requests",
+    )
+    parser.add_argument(
         "--throttle-limit",
         dest="throttle_limit",
         type=int,
@@ -814,7 +820,9 @@ class S3HTTPRedirectHandler(HTTPRedirectHandler):
         request = super(S3HTTPRedirectHandler, self).redirect_request(
             req, fp, code, msg, headers, newurl
         )
-        del request.headers["Authorization"]
+        # Only delete Authorization header if it exists (attachments may not have it)
+        if "Authorization" in request.headers:
+            del request.headers["Authorization"]
         return request
 
 
@@ -863,6 +871,594 @@ def download_file(url, path, auth, as_app=False, fine=False):
         logger.warning(
             "Skipping download of asset {0} due to socker error: {1}".format(
                 url, e.strerror
+            )
+        )
+
+
+def download_attachment_file(url, path, auth, as_app=False, fine=False):
+    """Download attachment file directly (not via GitHub API).
+
+    Similar to download_file() but for direct file URLs, not API endpoints.
+    Attachment URLs (user-images, user-attachments) are direct downloads,
+    not API endpoints, so we skip _construct_request() which adds API params.
+
+    URL Format Support & Authentication Requirements:
+
+    | URL Format                                   | Auth Required | Notes                    |
+    |----------------------------------------------|---------------|--------------------------|
+    | github.com/user-attachments/assets/*         | Private only  | Modern format (2024+)    |
+    | github.com/user-attachments/files/*          | Private only  | Modern format (2024+)    |
+    | user-images.githubusercontent.com/*          | No (public)   | Legacy CDN, all eras     |
+    | private-user-images.githubusercontent.com/*  | JWT in URL    | Legacy private (5min)    |
+    | github.com/{owner}/{repo}/files/*            | Repo filter   | Old repo files           |
+
+    - Modern user-attachments: Requires GitHub token auth for private repos
+    - Legacy public CDN: No auth needed/accepted (returns 400 with auth header)
+    - Legacy private CDN: Uses JWT token embedded in URL, no GitHub token needed
+    - Repo files: Filtered to current repository only during extraction
+
+    Returns dict with metadata:
+        - success: bool
+        - http_status: int (200, 404, etc.)
+        - content_type: str or None
+        - original_filename: str or None (from Content-Disposition)
+        - size_bytes: int or None
+        - error: str or None
+    """
+    import re
+    from datetime import datetime, timezone
+
+    metadata = {
+        "url": url,
+        "success": False,
+        "http_status": None,
+        "content_type": None,
+        "original_filename": None,
+        "size_bytes": None,
+        "downloaded_at": datetime.now(timezone.utc).isoformat(),
+        "error": None,
+    }
+
+    if os.path.exists(path):
+        metadata["success"] = True
+        metadata["http_status"] = 200  # Assume success if already exists
+        metadata["size_bytes"] = os.path.getsize(path)
+        return metadata
+
+    # Create simple request (no API query params)
+    request = Request(url)
+    request.add_header("Accept", "application/octet-stream")
+
+    # Add authentication header only for modern github.com/user-attachments URLs
+    # Legacy CDN URLs (user-images.githubusercontent.com) are public and don't need/accept auth
+    # Private CDN URLs (private-user-images) use JWT tokens embedded in the URL
+    if auth is not None and "github.com/user-attachments/" in url:
+        if not as_app:
+            if fine:
+                # Fine-grained token: plain token with "token " prefix
+                request.add_header("Authorization", "token " + auth)
+            else:
+                # Classic token: base64-encoded with "Basic " prefix
+                request.add_header("Authorization", "Basic ".encode("ascii") + auth)
+        else:
+            # App authentication
+            auth = auth.encode("ascii")
+            request.add_header("Authorization", "token ".encode("ascii") + auth)
+
+    # Reuse S3HTTPRedirectHandler from download_file()
+    opener = build_opener(S3HTTPRedirectHandler)
+
+    temp_path = path + ".temp"
+
+    try:
+        response = opener.open(request)
+        metadata["http_status"] = response.getcode()
+
+        # Extract Content-Type
+        content_type = response.headers.get("Content-Type", "").split(";")[0].strip()
+        if content_type:
+            metadata["content_type"] = content_type
+
+        # Extract original filename from Content-Disposition header
+        # Format: attachment; filename=example.mov or attachment;filename="example.mov"
+        content_disposition = response.headers.get("Content-Disposition", "")
+        if content_disposition:
+            # Match: filename=something or filename="something" or filename*=UTF-8''something
+            match = re.search(r'filename\*?=["\']?([^"\';\r\n]+)', content_disposition)
+            if match:
+                original_filename = match.group(1).strip()
+                # Handle RFC 5987 encoding: filename*=UTF-8''example.mov
+                if "UTF-8''" in original_filename:
+                    original_filename = original_filename.split("UTF-8''")[1]
+                metadata["original_filename"] = original_filename
+
+        # Fallback: Extract filename from final URL after redirects
+        # This handles user-attachments/assets URLs which redirect to S3 with filename.ext
+        if not metadata["original_filename"]:
+            from urllib.parse import urlparse, unquote
+
+            final_url = response.geturl()
+            parsed = urlparse(final_url)
+            # Get filename from path (last component before query string)
+            path_parts = parsed.path.split("/")
+            if path_parts:
+                # URL might be encoded, decode it
+                filename_from_url = unquote(path_parts[-1])
+                # Only use if it has an extension
+                if "." in filename_from_url:
+                    metadata["original_filename"] = filename_from_url
+
+        # Download file to temporary location
+        chunk_size = 16 * 1024
+        bytes_downloaded = 0
+        with open(temp_path, "wb") as f:
+            while True:
+                chunk = response.read(chunk_size)
+                if not chunk:
+                    break
+                f.write(chunk)
+                bytes_downloaded += len(chunk)
+
+        # Atomic rename to final location
+        os.rename(temp_path, path)
+
+        metadata["size_bytes"] = bytes_downloaded
+        metadata["success"] = True
+
+    except HTTPError as exc:
+        metadata["http_status"] = exc.code
+        metadata["error"] = str(exc.reason)
+        logger.warning(
+            "Skipping download of attachment {0} due to HTTPError: {1}".format(
+                url, exc.reason
+            )
+        )
+    except URLError as e:
+        metadata["error"] = str(e.reason)
+        logger.warning(
+            "Skipping download of attachment {0} due to URLError: {1}".format(
+                url, e.reason
+            )
+        )
+    except socket.error as e:
+        metadata["error"] = str(e.strerror) if hasattr(e, "strerror") else str(e)
+        logger.warning(
+            "Skipping download of attachment {0} due to socket error: {1}".format(
+                url, e.strerror if hasattr(e, "strerror") else str(e)
+            )
+        )
+    except Exception as e:
+        metadata["error"] = str(e)
+        logger.warning(
+            "Skipping download of attachment {0} due to error: {1}".format(url, str(e))
+        )
+        # Clean up temp file if it was partially created
+        if os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+            except Exception:
+                pass
+
+    return metadata
+
+
+def extract_attachment_urls(item_data, issue_number=None, repository_full_name=None):
+    """Extract GitHub-hosted attachment URLs from issue/PR body and comments.
+
+    What qualifies as an attachment?
+    There is no "attachment" concept in the GitHub API - it's a user behavior pattern
+    we've identified through analysis of real-world repositories. We define attachments as:
+
+    - User-uploaded files hosted on GitHub's CDN domains
+    - Found outside of code blocks (not examples/documentation)
+    - Matches known GitHub attachment URL patterns
+
+    This intentionally captures bare URLs pasted by users, not just markdown/HTML syntax.
+    Some false positives (example URLs in documentation) may occur - these fail gracefully
+    with HTTP 404 and are logged in the manifest.
+
+    Supported URL formats:
+    - Modern: github.com/user-attachments/{assets,files}/*
+    - Legacy: user-images.githubusercontent.com/* (including private-user-images)
+    - Repo files: github.com/{owner}/{repo}/files/* (filtered to current repo)
+    - Repo assets: github.com/{owner}/{repo}/assets/* (filtered to current repo)
+
+    Repository filtering (repo files/assets only):
+    - Direct match: URL is for current repository → included
+    - Redirect match: URL redirects to current repository → included (handles renames/transfers)
+    - Different repo: URL is for different repository → excluded
+
+    Code block filtering:
+    - Removes fenced code blocks (```) and inline code (`) before extraction
+    - Prevents extracting URLs from code examples and documentation snippets
+
+    Args:
+        item_data: Issue or PR data dict
+        issue_number: Issue/PR number for logging
+        repository_full_name: Full repository name (owner/repo) for filtering repo-scoped URLs
+    """
+    import re
+
+    urls = []
+
+    # Define all GitHub attachment patterns
+    # Stop at markdown punctuation: whitespace, ), `, ", >, <
+    # Trailing sentence punctuation (. ! ? , ; : ' ") is stripped in post-processing
+    patterns = [
+        r'https://github\.com/user-attachments/(?:assets|files)/[^\s\)`"<>]+',  # Modern
+        r'https://(?:private-)?user-images\.githubusercontent\.com/[^\s\)`"<>]+',  # Legacy CDN
+    ]
+
+    # Add repo-scoped patterns (will be filtered by repository later)
+    # These patterns match ANY repo, then we filter to current repo with redirect checking
+    repo_files_pattern = r'https://github\.com/[^/]+/[^/]+/files/\d+/[^\s\)`"<>]+'
+    repo_assets_pattern = r'https://github\.com/[^/]+/[^/]+/assets/\d+/[^\s\)`"<>]+'
+    patterns.append(repo_files_pattern)
+    patterns.append(repo_assets_pattern)
+
+    def clean_url(url):
+        """Remove trailing sentence and markdown punctuation that's not part of the URL."""
+        return url.rstrip(".!?,;:'\")")
+
+    def remove_code_blocks(text):
+        """Remove markdown code blocks (fenced and inline) from text.
+
+        This prevents extracting URLs from code examples like:
+        - Fenced code blocks: ```code```
+        - Inline code: `code`
+        """
+        # Remove fenced code blocks first (```...```)
+        # DOTALL flag makes . match newlines
+        text = re.sub(r"```.*?```", "", text, flags=re.DOTALL)
+
+        # Remove inline code (`...`)
+        # Non-greedy match between backticks
+        text = re.sub(r"`[^`]*`", "", text)
+
+        return text
+
+    def is_repo_scoped_url(url):
+        """Check if URL is a repo-scoped attachment (files or assets)."""
+        return bool(
+            re.match(r"https://github\.com/[^/]+/[^/]+/(?:files|assets)/\d+/", url)
+        )
+
+    def check_redirect_to_current_repo(url, current_repo):
+        """Check if URL redirects to current repository.
+
+        Returns True if:
+        - URL is already for current repo
+        - URL redirects (301/302) to current repo (handles renames/transfers)
+
+        Returns False otherwise (URL is for a different repo).
+        """
+        # Extract owner/repo from URL
+        match = re.match(r"https://github\.com/([^/]+)/([^/]+)/", url)
+        if not match:
+            return False
+
+        url_owner, url_repo = match.groups()
+        url_repo_full = f"{url_owner}/{url_repo}"
+
+        # Direct match - no need to check redirect
+        if url_repo_full.lower() == current_repo.lower():
+            return True
+
+        # Different repo - check if it redirects to current repo
+        # This handles repository transfers and renames
+        try:
+            import urllib.request
+            import urllib.error
+
+            # Make HEAD request with redirect following disabled
+            # We need to manually handle redirects to see the Location header
+            request = urllib.request.Request(url, method="HEAD")
+            request.add_header("User-Agent", "python-github-backup")
+
+            # Create opener that does NOT follow redirects
+            class NoRedirectHandler(urllib.request.HTTPRedirectHandler):
+                def redirect_request(self, req, fp, code, msg, headers, newurl):
+                    return None  # Don't follow redirects
+
+            opener = urllib.request.build_opener(NoRedirectHandler)
+
+            try:
+                _ = opener.open(request, timeout=10)
+                # Got 200 - URL works as-is but for different repo
+                return False
+            except urllib.error.HTTPError as e:
+                # Check if it's a redirect (301, 302, 307, 308)
+                if e.code in (301, 302, 307, 308):
+                    location = e.headers.get("Location", "")
+                    # Check if redirect points to current repo
+                    if location:
+                        redirect_match = re.match(
+                            r"https://github\.com/([^/]+)/([^/]+)/", location
+                        )
+                        if redirect_match:
+                            redirect_owner, redirect_repo = redirect_match.groups()
+                            redirect_repo_full = f"{redirect_owner}/{redirect_repo}"
+                            return redirect_repo_full.lower() == current_repo.lower()
+                return False
+        except Exception:
+            # On any error (timeout, network issue, etc.), be conservative
+            # and exclude the URL to avoid downloading from wrong repos
+            return False
+
+    # Extract from body
+    body = item_data.get("body") or ""
+    # Remove code blocks before searching for URLs
+    body_cleaned = remove_code_blocks(body)
+    for pattern in patterns:
+        found_urls = re.findall(pattern, body_cleaned)
+        urls.extend([clean_url(url) for url in found_urls])
+
+    # Extract from issue comments
+    if "comment_data" in item_data:
+        for comment in item_data["comment_data"]:
+            comment_body = comment.get("body") or ""
+            # Remove code blocks before searching for URLs
+            comment_cleaned = remove_code_blocks(comment_body)
+            for pattern in patterns:
+                found_urls = re.findall(pattern, comment_cleaned)
+                urls.extend([clean_url(url) for url in found_urls])
+
+    # Extract from PR regular comments
+    if "comment_regular_data" in item_data:
+        for comment in item_data["comment_regular_data"]:
+            comment_body = comment.get("body") or ""
+            # Remove code blocks before searching for URLs
+            comment_cleaned = remove_code_blocks(comment_body)
+            for pattern in patterns:
+                found_urls = re.findall(pattern, comment_cleaned)
+                urls.extend([clean_url(url) for url in found_urls])
+
+    regex_urls = list(set(urls))  # dedupe
+
+    # Filter repo-scoped URLs to current repository only
+    # This handles repository transfers/renames via redirect checking
+    if repository_full_name:
+        filtered_urls = []
+        for url in regex_urls:
+            if is_repo_scoped_url(url):
+                # Check if URL belongs to current repo (or redirects to it)
+                if check_redirect_to_current_repo(url, repository_full_name):
+                    filtered_urls.append(url)
+                # else: skip URLs from other repositories
+            else:
+                # Non-repo-scoped URLs (user-attachments, CDN) - always include
+                filtered_urls.append(url)
+        regex_urls = filtered_urls
+
+    return regex_urls
+
+
+def get_attachment_filename(url):
+    """Get filename from attachment URL, handling all GitHub formats.
+
+    Formats:
+    - github.com/user-attachments/assets/{uuid} → uuid (add extension later)
+    - github.com/user-attachments/files/{id}/{filename} → filename
+    - github.com/{owner}/{repo}/files/{id}/{filename} → filename
+    - user-images.githubusercontent.com/{user}/{hash}.{ext} → hash.ext
+    - private-user-images.githubusercontent.com/...?jwt=... → extract from path
+    """
+    from urllib.parse import urlparse
+
+    parsed = urlparse(url)
+    path_parts = parsed.path.split("/")
+
+    # Modern: /user-attachments/files/{id}/{filename}
+    if "user-attachments/files" in parsed.path:
+        return path_parts[-1]
+
+    # Modern: /user-attachments/assets/{uuid}
+    elif "user-attachments/assets" in parsed.path:
+        return path_parts[-1]  # extension added later via detect_and_add_extension
+
+    # Repo files: /{owner}/{repo}/files/{id}/{filename}
+    elif "/files/" in parsed.path and len(path_parts) >= 2:
+        return path_parts[-1]
+
+    # Legacy: user-images.githubusercontent.com/{user}/{hash-with-ext}
+    elif "githubusercontent.com" in parsed.netloc:
+        return path_parts[-1]  # Already has extension usually
+
+    # Fallback: use last path component
+    return path_parts[-1] if path_parts[-1] else "unknown_attachment"
+
+
+def resolve_filename_collision(filepath):
+    """Resolve filename collisions using counter suffix pattern.
+
+    If filepath exists, returns a new filepath with counter suffix.
+    Pattern: report.pdf → report_1.pdf → report_2.pdf
+
+    Also protects against manifest.json collisions by treating it as reserved.
+
+    Args:
+        filepath: Full path to file that might exist
+
+    Returns:
+        filepath that doesn't collide (may be same as input if no collision)
+    """
+    directory = os.path.dirname(filepath)
+    filename = os.path.basename(filepath)
+
+    # Protect manifest.json - it's a reserved filename
+    if filename == "manifest.json":
+        name, ext = os.path.splitext(filename)
+        counter = 1
+        while True:
+            new_filename = f"{name}_{counter}{ext}"
+            new_filepath = os.path.join(directory, new_filename)
+            if not os.path.exists(new_filepath):
+                return new_filepath
+            counter += 1
+
+    if not os.path.exists(filepath):
+        return filepath
+
+    name, ext = os.path.splitext(filename)
+
+    counter = 1
+    while True:
+        new_filename = f"{name}_{counter}{ext}"
+        new_filepath = os.path.join(directory, new_filename)
+        if not os.path.exists(new_filepath):
+            return new_filepath
+        counter += 1
+
+
+def download_attachments(
+    args, item_cwd, item_data, number, repository, item_type="issue"
+):
+    """Download user-attachments from issue/PR body and comments with manifest.
+
+    Args:
+        args: Command line arguments
+        item_cwd: Working directory (issue_cwd or pulls_cwd)
+        item_data: Issue or PR data dict
+        number: Issue or PR number
+        repository: Repository dict
+        item_type: "issue" or "pull" for logging/manifest
+    """
+    import json
+    from datetime import datetime, timezone
+
+    item_type_display = "issue" if item_type == "issue" else "pull request"
+
+    urls = extract_attachment_urls(
+        item_data, issue_number=number, repository_full_name=repository["full_name"]
+    )
+    if not urls:
+        return
+
+    attachments_dir = os.path.join(item_cwd, "attachments", str(number))
+    manifest_path = os.path.join(attachments_dir, "manifest.json")
+
+    # Load existing manifest if skip_existing is enabled
+    existing_urls = set()
+    existing_metadata = []
+    if args.skip_existing and os.path.exists(manifest_path):
+        try:
+            with open(manifest_path, "r") as f:
+                existing_manifest = json.load(f)
+                all_metadata = existing_manifest.get("attachments", [])
+                # Only skip URLs that were successfully downloaded OR failed with permanent errors
+                # Retry transient failures (5xx, timeouts, network errors)
+                for item in all_metadata:
+                    if item.get("success"):
+                        existing_urls.add(item["url"])
+                    else:
+                        # Check if this is a permanent failure (don't retry) or transient (retry)
+                        http_status = item.get("http_status")
+                        if http_status in [404, 410, 451]:
+                            # Permanent failures - don't retry
+                            existing_urls.add(item["url"])
+                # Transient failures (5xx, auth errors, timeouts) will be retried
+                existing_metadata = all_metadata
+        except (json.JSONDecodeError, IOError):
+            # If manifest is corrupted, re-download everything
+            logger.warning(
+                "Corrupted manifest for {0} #{1}, will re-download".format(
+                    item_type_display, number
+                )
+            )
+            existing_urls = set()
+            existing_metadata = []
+
+    # Filter to only new URLs
+    new_urls = [url for url in urls if url not in existing_urls]
+
+    if not new_urls and existing_urls:
+        logger.debug(
+            "Skipping attachments for {0} #{1} (all {2} already downloaded)".format(
+                item_type_display, number, len(urls)
+            )
+        )
+        return
+
+    if new_urls:
+        logger.info(
+            "Downloading {0} new attachment(s) for {1} #{2}".format(
+                len(new_urls), item_type_display, number
+            )
+        )
+
+    mkdir_p(item_cwd, attachments_dir)
+
+    # Collect metadata for manifest (start with existing)
+    attachment_metadata_list = existing_metadata[:]
+
+    for url in new_urls:
+        filename = get_attachment_filename(url)
+        filepath = os.path.join(attachments_dir, filename)
+
+        # Check for collision BEFORE downloading
+        filepath = resolve_filename_collision(filepath)
+
+        # Download and get metadata
+        metadata = download_attachment_file(
+            url,
+            filepath,
+            get_auth(args, encode=not args.as_app),
+            as_app=args.as_app,
+            fine=args.token_fine is not None,
+        )
+
+        # If download succeeded but we got an extension from Content-Disposition,
+        # we may need to rename the file to add the extension
+        if metadata["success"] and metadata.get("original_filename"):
+            original_ext = os.path.splitext(metadata["original_filename"])[1]
+            current_ext = os.path.splitext(filepath)[1]
+
+            # Add extension if not present
+            if original_ext and current_ext != original_ext:
+                final_filepath = filepath + original_ext
+                # Check for collision again with new extension
+                final_filepath = resolve_filename_collision(final_filepath)
+                logger.debug(
+                    "Adding extension {0} to {1}".format(original_ext, filepath)
+                )
+
+                # Rename to add extension (already atomic from download)
+                try:
+                    os.rename(filepath, final_filepath)
+                    metadata["saved_as"] = os.path.basename(final_filepath)
+                except Exception as e:
+                    logger.warning(
+                        "Could not add extension to {0}: {1}".format(filepath, str(e))
+                    )
+                    metadata["saved_as"] = os.path.basename(filepath)
+            else:
+                metadata["saved_as"] = os.path.basename(filepath)
+        elif metadata["success"]:
+            metadata["saved_as"] = os.path.basename(filepath)
+        else:
+            metadata["saved_as"] = None
+
+        attachment_metadata_list.append(metadata)
+
+    # Write manifest
+    if attachment_metadata_list:
+        manifest = {
+            "issue_number": number,
+            "issue_type": item_type,
+            "repository": f"{args.user}/{args.repository}"
+            if hasattr(args, "repository") and args.repository
+            else args.user,
+            "manifest_updated_at": datetime.now(timezone.utc).isoformat(),
+            "attachments": attachment_metadata_list,
+        }
+
+        manifest_path = os.path.join(attachments_dir, "manifest.json")
+        with open(manifest_path + ".temp", "w") as f:
+            json.dump(manifest, f, indent=2)
+            os.rename(manifest_path + ".temp", manifest_path)  # Atomic write
+        logger.debug(
+            "Wrote manifest for {0} #{1}: {2} attachments".format(
+                item_type_display, number, len(attachment_metadata_list)
             )
         )
 
@@ -1157,6 +1753,10 @@ def backup_issues(args, repo_cwd, repository, repos_template):
         if args.include_issue_events or args.include_everything:
             template = events_template.format(number)
             issues[number]["event_data"] = retrieve_data(args, template)
+        if args.include_attachments:
+            download_attachments(
+                args, issue_cwd, issues[number], number, repository, item_type="issue"
+            )
 
         with codecs.open(issue_file + ".temp", "w", encoding="utf-8") as f:
             json_dump(issue, f)
@@ -1228,6 +1828,10 @@ def backup_pulls(args, repo_cwd, repository, repos_template):
         if args.include_pull_commits or args.include_everything:
             template = commits_template.format(number)
             pulls[number]["commit_data"] = retrieve_data(args, template)
+        if args.include_attachments:
+            download_attachments(
+                args, pulls_cwd, pulls[number], number, repository, item_type="pull"
+            )
 
         with codecs.open(pull_file + ".temp", "w", encoding="utf-8") as f:
             json_dump(pull, f)
