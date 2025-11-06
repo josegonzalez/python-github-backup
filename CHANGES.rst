@@ -1,9 +1,373 @@
 Changelog
 =========
 
-0.50.3 (2025-08-08)
+0.51.0 (2025-11-06)
 -------------------
 ------------------------
+
+Fix
+~~~
+- Remove Python 3.8 and 3.9 from CI matrix. [Rodos]
+
+  3.8 and 3.9 are failing because the pinned dependencies don't support them:
+  - autopep8==2.3.2 needs Python 3.9+
+  - bleach==6.3.0 needs Python 3.10+
+
+  Both are EOL now anyway (3.8 in Oct 2024, 3.9 in Oct 2025).
+
+  Just fixing CI to test 3.10-3.14 for now. Will do a separate PR to formally
+  drop 3.8/3.9 support with python_requires and README updates.
+
+Other
+~~~~~
+- Refactor: Add atomic writes for attachment files and manifests.
+  [Rodos]
+- Feat: Add attachment download support for issues and pull requests.
+  [Rodos]
+
+  Adds new --attachments flag that downloads user-uploaded files from
+  issue and PR bodies and comments. Key features:
+
+  - Determines attachment URLs
+  - Tracks downloads in manifest.json with metadata
+  - Supports --skip-existing to avoid re-downloading
+  - Handles filename collisions with counter suffix
+  - Smart retry logic for transient vs permanent failures
+  - Uses Content-Disposition for correct file extensions
+- Feat: Drop support for Python 3.8 and 3.9 (EOL) [Rodos]
+
+  Both Python 3.8 and 3.9 have reached end-of-life:
+  - Python 3.8: EOL October 7, 2024
+  - Python 3.9: EOL October 31, 2025
+
+  Changes:
+  - Add python_requires=">=3.10" to setup.py
+  - Remove Python 3.8 and 3.9 from classifiers
+  - Add Python 3.13 and 3.14 to classifiers
+  - Update README to document Python 3.10+ requirement
+- Feat: Enforce Python 3.8+ requirement and add multi-version CI
+  testing. [Rodos]
+
+  - Add python_requires=">=3.8" to setup.py to enforce minimum version at install time
+  - Update README to explicitly document Python 3.8+ requirement
+  - Add CI matrix to test lint/build on Python 3.8-3.14 (7 versions)
+  - Aligns with actual usage patterns (~99% of downloads on Python 3.8+)
+  - Prevents future PRs from inadvertently using incompatible syntax
+
+  This change protects users by preventing installation on unsupported Python
+  versions and ensures contributors can see version requirements clearly.
+- Chore(deps): bump bleach in the python-packages group.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [bleach](https://github.com/mozilla/bleach).
+
+
+  Updates `bleach` from 6.2.0 to 6.3.0
+  - [Changelog](https://github.com/mozilla/bleach/blob/main/CHANGES)
+  - [Commits](https://github.com/mozilla/bleach/compare/v6.2.0...v6.3.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: bleach
+    dependency-version: 6.3.0
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump charset-normalizer in the python-packages group.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [charset-normalizer](https://github.com/jawah/charset_normalizer).
+
+
+  Updates `charset-normalizer` from 3.4.3 to 3.4.4
+  - [Release notes](https://github.com/jawah/charset_normalizer/releases)
+  - [Changelog](https://github.com/jawah/charset_normalizer/blob/master/CHANGELOG.md)
+  - [Commits](https://github.com/jawah/charset_normalizer/compare/3.4.3...3.4.4)
+
+  ---
+  updated-dependencies:
+  - dependency-name: charset-normalizer
+    dependency-version: 3.4.4
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump idna from 3.10 to 3.11 in the python-packages group.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [idna](https://github.com/kjd/idna).
+
+
+  Updates `idna` from 3.10 to 3.11
+  - [Release notes](https://github.com/kjd/idna/releases)
+  - [Changelog](https://github.com/kjd/idna/blob/master/HISTORY.rst)
+  - [Commits](https://github.com/kjd/idna/compare/v3.10...v3.11)
+
+  ---
+  updated-dependencies:
+  - dependency-name: idna
+    dependency-version: '3.11'
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump the python-packages group across 1 directory with 2
+  updates. [dependabot[bot]]
+
+  Bumps the python-packages group with 2 updates in the / directory: [platformdirs](https://github.com/tox-dev/platformdirs) and [rich](https://github.com/Textualize/rich).
+
+
+  Updates `platformdirs` from 4.4.0 to 4.5.0
+  - [Release notes](https://github.com/tox-dev/platformdirs/releases)
+  - [Changelog](https://github.com/tox-dev/platformdirs/blob/main/CHANGES.rst)
+  - [Commits](https://github.com/tox-dev/platformdirs/compare/4.4.0...4.5.0)
+
+  Updates `rich` from 14.1.0 to 14.2.0
+  - [Release notes](https://github.com/Textualize/rich/releases)
+  - [Changelog](https://github.com/Textualize/rich/blob/master/CHANGELOG.md)
+  - [Commits](https://github.com/Textualize/rich/compare/v14.1.0...v14.2.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: platformdirs
+    dependency-version: 4.5.0
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: rich
+    dependency-version: 14.2.0
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump the python-packages group with 3 updates.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 3 updates: [certifi](https://github.com/certifi/python-certifi), [click](https://github.com/pallets/click) and [markdown-it-py](https://github.com/executablebooks/markdown-it-py).
+
+
+  Updates `certifi` from 2025.8.3 to 2025.10.5
+  - [Commits](https://github.com/certifi/python-certifi/compare/2025.08.03...2025.10.05)
+
+  Updates `click` from 8.1.8 to 8.3.0
+  - [Release notes](https://github.com/pallets/click/releases)
+  - [Changelog](https://github.com/pallets/click/blob/main/CHANGES.rst)
+  - [Commits](https://github.com/pallets/click/compare/8.1.8...8.3.0)
+
+  Updates `markdown-it-py` from 3.0.0 to 4.0.0
+  - [Release notes](https://github.com/executablebooks/markdown-it-py/releases)
+  - [Changelog](https://github.com/executablebooks/markdown-it-py/blob/master/CHANGELOG.md)
+  - [Commits](https://github.com/executablebooks/markdown-it-py/compare/v3.0.0...v4.0.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: certifi
+    dependency-version: 2025.10.5
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: click
+    dependency-version: 8.3.0
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: markdown-it-py
+    dependency-version: 4.0.0
+    dependency-type: direct:production
+    update-type: version-update:semver-major
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump docutils in the python-packages group.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [docutils](https://github.com/rtfd/recommonmark).
+
+
+  Updates `docutils` from 0.22.1 to 0.22.2
+  - [Changelog](https://github.com/readthedocs/recommonmark/blob/master/CHANGELOG.md)
+  - [Commits](https://github.com/rtfd/recommonmark/commits)
+
+  ---
+  updated-dependencies:
+  - dependency-name: docutils
+    dependency-version: 0.22.2
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump the python-packages group across 1 directory with 2
+  updates. [dependabot[bot]]
+
+  Bumps the python-packages group with 2 updates in the / directory: [black](https://github.com/psf/black) and [docutils](https://github.com/rtfd/recommonmark).
+
+
+  Updates `black` from 25.1.0 to 25.9.0
+  - [Release notes](https://github.com/psf/black/releases)
+  - [Changelog](https://github.com/psf/black/blob/main/CHANGES.md)
+  - [Commits](https://github.com/psf/black/compare/25.1.0...25.9.0)
+
+  Updates `docutils` from 0.22 to 0.22.1
+  - [Changelog](https://github.com/readthedocs/recommonmark/blob/master/CHANGELOG.md)
+  - [Commits](https://github.com/rtfd/recommonmark/commits)
+
+  ---
+  updated-dependencies:
+  - dependency-name: black
+    dependency-version: 25.9.0
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: docutils
+    dependency-version: 0.22.1
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  ...
+- Delete .github/ISSUE_TEMPLATE.md. [Jose Diaz-Gonzalez]
+- Create feature.yaml. [Jose Diaz-Gonzalez]
+- Delete .github/ISSUE_TEMPLATE/bug_report.md. [Jose Diaz-Gonzalez]
+- Rename bug.md to bug.yaml. [Jose Diaz-Gonzalez]
+- Chore: create bug template. [Jose Diaz-Gonzalez]
+- Chore: Rename PULL_REQUEST.md to .github/PULL_REQUEST.md. [Jose Diaz-
+  Gonzalez]
+- Chore: Rename ISSUE_TEMPLATE.md to .github/ISSUE_TEMPLATE.md. [Jose
+  Diaz-Gonzalez]
+- Chore(deps): bump actions/setup-python from 5 to 6. [dependabot[bot]]
+
+  Bumps [actions/setup-python](https://github.com/actions/setup-python) from 5 to 6.
+  - [Release notes](https://github.com/actions/setup-python/releases)
+  - [Commits](https://github.com/actions/setup-python/compare/v5...v6)
+
+  ---
+  updated-dependencies:
+  - dependency-name: actions/setup-python
+    dependency-version: '6'
+    dependency-type: direct:production
+    update-type: version-update:semver-major
+  ...
+- Chore(deps): bump twine from 6.1.0 to 6.2.0 in the python-packages
+  group. [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [twine](https://github.com/pypa/twine).
+
+
+  Updates `twine` from 6.1.0 to 6.2.0
+  - [Release notes](https://github.com/pypa/twine/releases)
+  - [Changelog](https://github.com/pypa/twine/blob/main/docs/changelog.rst)
+  - [Commits](https://github.com/pypa/twine/compare/6.1.0...6.2.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: twine
+    dependency-version: 6.2.0
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump more-itertools in the python-packages group.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [more-itertools](https://github.com/more-itertools/more-itertools).
+
+
+  Updates `more-itertools` from 10.7.0 to 10.8.0
+  - [Release notes](https://github.com/more-itertools/more-itertools/releases)
+  - [Commits](https://github.com/more-itertools/more-itertools/compare/v10.7.0...v10.8.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: more-itertools
+    dependency-version: 10.8.0
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump platformdirs in the python-packages group.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [platformdirs](https://github.com/tox-dev/platformdirs).
+
+
+  Updates `platformdirs` from 4.3.8 to 4.4.0
+  - [Release notes](https://github.com/tox-dev/platformdirs/releases)
+  - [Changelog](https://github.com/tox-dev/platformdirs/blob/main/CHANGES.rst)
+  - [Commits](https://github.com/tox-dev/platformdirs/compare/4.3.8...4.4.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: platformdirs
+    dependency-version: 4.4.0
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump actions/checkout from 4 to 5. [dependabot[bot]]
+
+  Bumps [actions/checkout](https://github.com/actions/checkout) from 4 to 5.
+  - [Release notes](https://github.com/actions/checkout/releases)
+  - [Changelog](https://github.com/actions/checkout/blob/main/CHANGELOG.md)
+  - [Commits](https://github.com/actions/checkout/compare/v4...v5)
+
+  ---
+  updated-dependencies:
+  - dependency-name: actions/checkout
+    dependency-version: '5'
+    dependency-type: direct:production
+    update-type: version-update:semver-major
+  ...
+- Chore(deps): bump requests in the python-packages group.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [requests](https://github.com/psf/requests).
+
+
+  Updates `requests` from 2.32.4 to 2.32.5
+  - [Release notes](https://github.com/psf/requests/releases)
+  - [Changelog](https://github.com/psf/requests/blob/main/HISTORY.md)
+  - [Commits](https://github.com/psf/requests/compare/v2.32.4...v2.32.5)
+
+  ---
+  updated-dependencies:
+  - dependency-name: requests
+    dependency-version: 2.32.5
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  ...
+- Chore: update Dockerfile to use Python 3.12 and improve dependency
+  installation. [Mateusz Hajder]
+- Chore(deps): bump the python-packages group with 2 updates.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 2 updates: [certifi](https://github.com/certifi/python-certifi) and [charset-normalizer](https://github.com/jawah/charset_normalizer).
+
+
+  Updates `certifi` from 2025.7.14 to 2025.8.3
+  - [Commits](https://github.com/certifi/python-certifi/compare/2025.07.14...2025.08.03)
+
+  Updates `charset-normalizer` from 3.4.2 to 3.4.3
+  - [Release notes](https://github.com/jawah/charset_normalizer/releases)
+  - [Changelog](https://github.com/jawah/charset_normalizer/blob/master/CHANGELOG.md)
+  - [Commits](https://github.com/jawah/charset_normalizer/compare/3.4.2...3.4.3)
+
+  ---
+  updated-dependencies:
+  - dependency-name: certifi
+    dependency-version: 2025.8.3
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: charset-normalizer
+    dependency-version: 3.4.3
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  ...
+
+
+0.50.3 (2025-08-08)
+-------------------
 - Revert "Add conditional check for git checkout in development path"
   [Eric Wheeler]
 
