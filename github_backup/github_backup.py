@@ -37,22 +37,33 @@ FNULL = open(os.devnull, "w")
 FILE_URI_PREFIX = "file://"
 logger = logging.getLogger(__name__)
 
+# Setup SSL context with fallback chain
 https_ctx = ssl.create_default_context()
-if not https_ctx.get_ca_certs():
-    import warnings
+if https_ctx.get_ca_certs():
+    # Layer 1: Certificates pre-loaded from system (file-based)
+    pass
+else:
+    paths = ssl.get_default_verify_paths()
+    if (paths.cafile and os.path.exists(paths.cafile)) or (
+        paths.capath and os.path.exists(paths.capath)
+    ):
+        # Layer 2: Cert paths exist, will be lazy-loaded on first use (directory-based)
+        pass
+    else:
+        # Layer 3: Try certifi package as optional fallback
+        try:
+            import certifi
 
-    warnings.warn(
-        "\n\nYOUR DEFAULT CA CERTS ARE EMPTY.\n"
-        + "PLEASE POPULATE ANY OF:"
-        + "".join(
-            ["\n - " + x for x in ssl.get_default_verify_paths() if type(x) is str]
-        )
-        + "\n",
-        stacklevel=2,
-    )
-    import certifi
-
-    https_ctx = ssl.create_default_context(cafile=certifi.where())
+            https_ctx = ssl.create_default_context(cafile=certifi.where())
+        except ImportError:
+            # All layers failed - no certificates available anywhere
+            sys.exit(
+                "\nERROR: No CA certificates found. Cannot connect to GitHub over SSL.\n\n"
+                "Solutions you can explore:\n"
+                "  1. pip install certifi\n"
+                "  2. Alpine: apk add ca-certificates\n"
+                "  3. Debian/Ubuntu: apt-get install ca-certificates\n\n"
+            )
 
 
 def logging_subprocess(
