@@ -1,9 +1,37 @@
 Changelog
 =========
 
-0.51.1 (2025-11-16)
+0.51.2 (2025-11-16)
 -------------------
 ------------------------
+
+Fix
+~~~
+- Improve CA certificate detection with fallback chain. [Rodos]
+
+  The previous implementation incorrectly assumed empty get_ca_certs()
+  meant broken SSL, causing false failures in GitHub Codespaces and other
+  directory-based cert systems where certificates exist but aren't pre-loaded.
+  It would then attempt to import certifi as a workaround, but certifi wasn't
+  listed in requirements.txt, causing the fallback to fail with ImportError
+  even though the system certificates would have worked fine.
+
+  This commit replaces the naive check with a layered fallback approach that
+  checks multiple certificate sources. First it checks for pre-loaded system
+  certs (file-based systems). Then it verifies system cert paths exist
+  (directory-based systems like Ubuntu/Debian/Codespaces). Finally it attempts
+  to use certifi as an optional fallback only if needed.
+
+  This approach eliminates hard dependencies (certifi is now optional), works
+  in GitHub Codespaces without any setup, and fails gracefully with clear hints
+  for resolution when SSL is actually broken rather than failing with
+  ModuleNotFoundError.
+
+  Fixes #444
+
+
+0.51.1 (2025-11-16)
+-------------------
 
 Fix
 ~~~
