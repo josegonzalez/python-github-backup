@@ -919,12 +919,6 @@ def download_attachment_file(url, path, auth, as_app=False, fine=False):
         "error": None,
     }
 
-    if os.path.exists(path):
-        metadata["success"] = True
-        metadata["http_status"] = 200  # Assume success if already exists
-        metadata["size_bytes"] = os.path.getsize(path)
-        return metadata
-
     # Create simple request (no API query params)
     request = Request(url)
     request.add_header("Accept", "application/octet-stream")
@@ -1337,10 +1331,10 @@ def download_attachments(
     attachments_dir = os.path.join(item_cwd, "attachments", str(number))
     manifest_path = os.path.join(attachments_dir, "manifest.json")
 
-    # Load existing manifest if skip_existing is enabled
+    # Load existing manifest to prevent duplicate downloads
     existing_urls = set()
     existing_metadata = []
-    if args.skip_existing and os.path.exists(manifest_path):
+    if os.path.exists(manifest_path):
         try:
             with open(manifest_path, "r") as f:
                 existing_manifest = json.load(f)
@@ -1394,9 +1388,6 @@ def download_attachments(
     for url in new_urls:
         filename = get_attachment_filename(url)
         filepath = os.path.join(attachments_dir, filename)
-
-        # Check for collision BEFORE downloading
-        filepath = resolve_filename_collision(filepath)
 
         # Download and get metadata
         metadata = download_attachment_file(
