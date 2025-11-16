@@ -1,9 +1,97 @@
 Changelog
 =========
 
-0.51.0 (2025-11-06)
+0.51.1 (2025-11-16)
 -------------------
 ------------------------
+
+Fix
+~~~
+- Prevent duplicate attachment downloads. [Rodos]
+
+  Fixes bug where attachments were downloaded multiple times with
+  incremented filenames (file.mov, file_1.mov, file_2.mov) when
+  running backups without --skip-existing flag.
+
+  I should not have used the --skip-existing flag for attachments,
+  it did not do what I thought it did.
+
+  The correct approach is to always use the manifest to guide what
+  has already been downloaded and what now needs to be done.
+
+Other
+~~~~~
+- Chore(deps): bump certifi in the python-packages group.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [certifi](https://github.com/certifi/python-certifi).
+
+
+  Updates `certifi` from 2025.10.5 to 2025.11.12
+  - [Commits](https://github.com/certifi/python-certifi/compare/2025.10.05...2025.11.12)
+
+  ---
+  updated-dependencies:
+  - dependency-name: certifi
+    dependency-version: 2025.11.12
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+- Test: Add pytest infrastructure and attachment tests. [Rodos]
+
+  In making my last fix to attachments, I found it challenging not
+  having tests to ensure there was no regression.
+
+  Added pytest with minimal setup and isolated configuration. Created
+  a separate test workflow to keep tests isolated from linting.
+
+  Tests cover the key elements of the attachment logic:
+  - URL extraction from issue bodies
+  - Filename extraction from different URL types
+  - Filename collision resolution
+  - Manifest duplicate prevention
+- Chore(deps): bump black in the python-packages group.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [black](https://github.com/psf/black).
+
+
+  Updates `black` from 25.9.0 to 25.11.0
+  - [Release notes](https://github.com/psf/black/releases)
+  - [Changelog](https://github.com/psf/black/blob/main/CHANGES.md)
+  - [Commits](https://github.com/psf/black/compare/25.9.0...25.11.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: black
+    dependency-version: 25.11.0
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump docutils in the python-packages group.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [docutils](https://github.com/rtfd/recommonmark).
+
+
+  Updates `docutils` from 0.22.2 to 0.22.3
+  - [Changelog](https://github.com/readthedocs/recommonmark/blob/master/CHANGELOG.md)
+  - [Commits](https://github.com/rtfd/recommonmark/commits)
+
+  ---
+  updated-dependencies:
+  - dependency-name: docutils
+    dependency-version: 0.22.3
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  ...
+
+
+0.51.0 (2025-11-06)
+-------------------
 
 Fix
 ~~~
