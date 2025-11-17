@@ -592,27 +592,26 @@ def retrieve_data_gen(args, template, query_args=None, single_request=False):
     auth = get_auth(args, encode=not args.as_app)
     query_args = get_query_args(query_args)
     per_page = 100
-    page = 0
+    next_url = None
 
     while True:
         if single_request:
-            request_page, request_per_page = None, None
+            request_per_page = None
         else:
-            page = page + 1
-            request_page, request_per_page = page, per_page
+            request_per_page = per_page
 
         request = _construct_request(
             request_per_page,
-            request_page,
             query_args,
-            template,
+            next_url or template,
             auth,
             as_app=args.as_app,
             fine=True if args.token_fine is not None else False,
         )  # noqa
-        r, errors = _get_response(request, auth, template)
+        r, errors = _get_response(request, auth, next_url or template)
 
         status_code = int(r.getcode())
+
         # Check if we got correct data
         try:
             response = json.loads(r.read().decode("utf-8"))
@@ -644,15 +643,14 @@ def retrieve_data_gen(args, template, query_args=None, single_request=False):
             retries += 1
             time.sleep(5)
             request = _construct_request(
-                per_page,
-                page,
+                request_per_page,
                 query_args,
-                template,
+                next_url or template,
                 auth,
                 as_app=args.as_app,
                 fine=True if args.token_fine is not None else False,
             )  # noqa
-            r, errors = _get_response(request, auth, template)
+            r, errors = _get_response(request, auth, next_url or template)
 
             status_code = int(r.getcode())
             try:
@@ -682,7 +680,16 @@ def retrieve_data_gen(args, template, query_args=None, single_request=False):
             if type(response) is list:
                 for resp in response:
                     yield resp
-                if len(response) < per_page:
+                # Parse Link header for next page URL (cursor-based pagination)
+                link_header = r.headers.get("Link", "")
+                next_url = None
+                if link_header:
+                    # Parse Link header: <https://api.github.com/...?per_page=100&after=cursor>; rel="next"
+                    for link in link_header.split(","):
+                        if 'rel="next"' in link:
+                            next_url = link[link.find("<") + 1:link.find(">")]
+                            break
+                if not next_url:
                     break
             elif type(response) is dict and single_request:
                 yield response
@@ -735,22 +742,27 @@ def _get_response(request, auth, template):
 
 
 def _construct_request(
-    per_page, page, query_args, template, auth, as_app=None, fine=False
+    per_page, query_args, template, auth, as_app=None, fine=False
 ):
-    all_query_args = {}
-    if per_page:
-        all_query_args["per_page"] = per_page
-    if page:
-        all_query_args["page"] = page
-    if query_args:
-        all_query_args.update(query_args)
-
-    request_url = template
-    if all_query_args:
-        querystring = urlencode(all_query_args)
-        request_url = template + "?" + querystring
+    # If template is already a full URL with query params (from Link header), use it directly
+    if "?" in template and template.startswith("http"):
+        request_url = template
+        # Extract query string for logging
+        querystring = template.split("?", 1)[1]
     else:
-        querystring = ""
+        # Build URL with query parameters
+        all_query_args = {}
+        if per_page:
+            all_query_args["per_page"] = per_page
+        if query_args:
+            all_query_args.update(query_args)
+
+        request_url = template
+        if all_query_args:
+            querystring = urlencode(all_query_args)
+            request_url = template + "?" + querystring
+        else:
+            querystring = ""
 
     request = Request(request_url)
     if auth is not None:
@@ -766,7 +778,7 @@ def _construct_request(
                 "Accept", "application/vnd.github.machine-man-preview+json"
             )
 
-    log_url = template
+    log_url = template if "?" not in template else template.split("?")[0]
     if querystring:
         log_url += "?" + querystring
     logger.info("Requesting {}".format(log_url))
@@ -843,8 +855,7 @@ def download_file(url, path, auth, as_app=False, fine=False):
         return
 
     request = _construct_request(
-        per_page=100,
-        page=1,
+        per_page=None,
         query_args={},
         template=url,
         auth=auth,
