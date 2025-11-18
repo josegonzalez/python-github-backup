@@ -1,9 +1,16 @@
 Changelog
 =========
 
-0.51.2 (2025-11-16)
+0.51.3 (2025-11-18)
 -------------------
 ------------------------
+- Test: Add pagination tests for cursor and page-based Link headers.
+  [Rodos]
+- Use cursor based pagination. [Helio Machado]
+
+
+0.51.2 (2025-11-16)
+-------------------
 
 Fix
 ~~~
