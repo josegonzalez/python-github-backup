@@ -37,6 +37,15 @@ FNULL = open(os.devnull, "w")
 FILE_URI_PREFIX = "file://"
 logger = logging.getLogger(__name__)
 
+
+class RepositoryUnavailableError(Exception):
+    """Raised when a repository is unavailable due to legal reasons (e.g., DMCA takedown)."""
+
+    def __init__(self, message, dmca_url=None):
+        super().__init__(message)
+        self.dmca_url = dmca_url
+
+
 # Setup SSL context with fallback chain
 https_ctx = ssl.create_default_context()
 if https_ctx.get_ca_certs():
@@ -611,6 +620,19 @@ def retrieve_data_gen(args, template, query_args=None, single_request=False):
         r, errors = _get_response(request, auth, next_url or template)
 
         status_code = int(r.getcode())
+
+        # Handle DMCA takedown (HTTP 451) - raise exception to skip entire repository
+        if status_code == 451:
+            dmca_url = None
+            try:
+                response_data = json.loads(r.read().decode("utf-8"))
+                dmca_url = response_data.get("block", {}).get("html_url")
+            except Exception:
+                pass
+            raise RepositoryUnavailableError(
+                "Repository unavailable due to legal reasons (HTTP 451)",
+                dmca_url=dmca_url
+            )
 
         # Check if we got correct data
         try:
@@ -1668,40 +1690,47 @@ def backup_repositories(args, output_directory, repositories):
 
                 continue  # don't try to back anything else for a gist; it doesn't exist
 
-        download_wiki = args.include_wiki or args.include_everything
-        if repository["has_wiki"] and download_wiki:
-            fetch_repository(
-                repository["name"],
-                repo_url.replace(".git", ".wiki.git"),
-                os.path.join(repo_cwd, "wiki"),
-                skip_existing=args.skip_existing,
-                bare_clone=args.bare_clone,
-                lfs_clone=args.lfs_clone,
-                no_prune=args.no_prune,
-            )
-        if args.include_issues or args.include_everything:
-            backup_issues(args, repo_cwd, repository, repos_template)
+        try:
+            download_wiki = args.include_wiki or args.include_everything
+            if repository["has_wiki"] and download_wiki:
+                fetch_repository(
+                    repository["name"],
+                    repo_url.replace(".git", ".wiki.git"),
+                    os.path.join(repo_cwd, "wiki"),
+                    skip_existing=args.skip_existing,
+                    bare_clone=args.bare_clone,
+                    lfs_clone=args.lfs_clone,
+                    no_prune=args.no_prune,
+                )
+            if args.include_issues or args.include_everything:
+                backup_issues(args, repo_cwd, repository, repos_template)
 
-        if args.include_pulls or args.include_everything:
-            backup_pulls(args, repo_cwd, repository, repos_template)
+            if args.include_pulls or args.include_everything:
+                backup_pulls(args, repo_cwd, repository, repos_template)
 
-        if args.include_milestones or args.include_everything:
-            backup_milestones(args, repo_cwd, repository, repos_template)
+            if args.include_milestones or args.include_everything:
+                backup_milestones(args, repo_cwd, repository, repos_template)
 
-        if args.include_labels or args.include_everything:
-            backup_labels(args, repo_cwd, repository, repos_template)
+            if args.include_labels or args.include_everything:
+                backup_labels(args, repo_cwd, repository, repos_template)
 
-        if args.include_hooks or args.include_everything:
-            backup_hooks(args, repo_cwd, repository, repos_template)
+            if args.include_hooks or args.include_everything:
+                backup_hooks(args, repo_cwd, repository, repos_template)
 
-        if args.include_releases or args.include_everything:
-            backup_releases(
-                args,
-                repo_cwd,
-                repository,
-                repos_template,
-                include_assets=args.include_assets or args.include_everything,
-            )
+            if args.include_releases or args.include_everything:
+                backup_releases(
+                    args,
+                    repo_cwd,
+                    repository,
+                    repos_template,
+                    include_assets=args.include_assets or args.include_everything,
+                )
+        except RepositoryUnavailableError as e:
+            logger.warning(f"Repository {repository['full_name']} is unavailable (HTTP 451)")
+            if e.dmca_url:
+                logger.warning(f"DMCA notice: {e.dmca_url}")
+            logger.info(f"Skipping remaining resources for {repository['full_name']}")
+            continue
 
     if args.incremental:
         if last_update == "0000-00-00T00:00:00Z":
