@@ -1,9 +1,90 @@
 Changelog
 =========
 
-0.51.3 (2025-11-18)
+0.52.0 (2025-11-28)
 -------------------
 ------------------------
+- Skip DMCA'd repos which return a 451 response. [Rodos]
+
+  Log a warning and the link to the DMCA notice. Continue backing up
+  other repositories instead of crashing.
+
+  Closes #163
+- Chore(deps): bump restructuredtext-lint in the python-packages group.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [restructuredtext-lint](https://github.com/twolfson/restructuredtext-lint).
+
+
+  Updates `restructuredtext-lint` from 1.4.0 to 2.0.2
+  - [Changelog](https://github.com/twolfson/restructuredtext-lint/blob/master/CHANGELOG.rst)
+  - [Commits](https://github.com/twolfson/restructuredtext-lint/compare/1.4.0...2.0.2)
+
+  ---
+  updated-dependencies:
+  - dependency-name: restructuredtext-lint
+    dependency-version: 2.0.2
+    dependency-type: direct:production
+    update-type: version-update:semver-major
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump actions/checkout from 5 to 6. [dependabot[bot]]
+
+  Bumps [actions/checkout](https://github.com/actions/checkout) from 5 to 6.
+  - [Release notes](https://github.com/actions/checkout/releases)
+  - [Changelog](https://github.com/actions/checkout/blob/main/CHANGELOG.md)
+  - [Commits](https://github.com/actions/checkout/compare/v5...v6)
+
+  ---
+  updated-dependencies:
+  - dependency-name: actions/checkout
+    dependency-version: '6'
+    dependency-type: direct:production
+    update-type: version-update:semver-major
+  ...
+- Chore(deps): bump the python-packages group with 3 updates.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 3 updates: [click](https://github.com/pallets/click), [pytest](https://github.com/pytest-dev/pytest) and [keyring](https://github.com/jaraco/keyring).
+
+
+  Updates `click` from 8.3.0 to 8.3.1
+  - [Release notes](https://github.com/pallets/click/releases)
+  - [Changelog](https://github.com/pallets/click/blob/main/CHANGES.rst)
+  - [Commits](https://github.com/pallets/click/compare/8.3.0...8.3.1)
+
+  Updates `pytest` from 8.3.3 to 9.0.1
+  - [Release notes](https://github.com/pytest-dev/pytest/releases)
+  - [Changelog](https://github.com/pytest-dev/pytest/blob/main/CHANGELOG.rst)
+  - [Commits](https://github.com/pytest-dev/pytest/compare/8.3.3...9.0.1)
+
+  Updates `keyring` from 25.6.0 to 25.7.0
+  - [Release notes](https://github.com/jaraco/keyring/releases)
+  - [Changelog](https://github.com/jaraco/keyring/blob/main/NEWS.rst)
+  - [Commits](https://github.com/jaraco/keyring/compare/v25.6.0...v25.7.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: click
+    dependency-version: 8.3.1
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  - dependency-name: pytest
+    dependency-version: 9.0.1
+    dependency-type: direct:production
+    update-type: version-update:semver-major
+    dependency-group: python-packages
+  - dependency-name: keyring
+    dependency-version: 25.7.0
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+
+
+0.51.3 (2025-11-18)
+-------------------
 - Test: Add pagination tests for cursor and page-based Link headers.
   [Rodos]
 - Use cursor based pagination. [Helio Machado]
