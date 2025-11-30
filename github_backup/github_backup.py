@@ -1898,11 +1898,21 @@ def backup_milestones(args, repo_cwd, repository, repos_template):
     for milestone in _milestones:
         milestones[milestone["number"]] = milestone
 
-    logger.info("Saving {0} milestones to disk".format(len(list(milestones.keys()))))
+    written_count = 0
     for number, milestone in list(milestones.items()):
         milestone_file = "{0}/{1}.json".format(milestone_cwd, number)
-        with codecs.open(milestone_file, "w", encoding="utf-8") as f:
-            json_dump(milestone, f)
+        if json_dump_if_changed(milestone, milestone_file):
+            written_count += 1
+
+    total = len(milestones)
+    if written_count == total:
+        logger.info("Saved {0} milestones to disk".format(total))
+    elif written_count == 0:
+        logger.info("{0} milestones unchanged, skipped write".format(total))
+    else:
+        logger.info("Saved {0} of {1} milestones to disk ({2} unchanged)".format(
+            written_count, total, total - written_count
+        ))
 
 
 def backup_labels(args, repo_cwd, repository, repos_template):
@@ -1955,19 +1965,17 @@ def backup_releases(args, repo_cwd, repository, repos_template, include_assets=F
             reverse=True,
         )
         releases = releases[: args.number_of_latest_releases]
-        logger.info("Saving the latest {0} releases to disk".format(len(releases)))
-    else:
-        logger.info("Saving {0} releases to disk".format(len(releases)))
 
     # for each release, store it
+    written_count = 0
     for release in releases:
         release_name = release["tag_name"]
         release_name_safe = release_name.replace("/", "__")
         output_filepath = os.path.join(
             release_cwd, "{0}.json".format(release_name_safe)
         )
-        with codecs.open(output_filepath, "w+", encoding="utf-8") as f:
-            json_dump(release, f)
+        if json_dump_if_changed(release, output_filepath):
+            written_count += 1
 
         if include_assets:
             assets = retrieve_data(args, release["assets_url"])
@@ -1983,6 +1991,17 @@ def backup_releases(args, repo_cwd, repository, repos_template, include_assets=F
                         as_app=args.as_app,
                         fine=True if args.token_fine is not None else False,
                     )
+
+    # Log the results
+    total = len(releases)
+    if written_count == total:
+        logger.info("Saved {0} releases to disk".format(total))
+    elif written_count == 0:
+        logger.info("{0} releases unchanged, skipped write".format(total))
+    else:
+        logger.info("Saved {0} of {1} releases to disk ({2} unchanged)".format(
+            written_count, total, total - written_count
+        ))
 
 
 def fetch_repository(
@@ -2108,9 +2127,10 @@ def _backup_data(args, name, template, output_file, output_directory):
         mkdir_p(output_directory)
         data = retrieve_data(args, template)
 
-        logger.info("Writing {0} {1} to disk".format(len(data), name))
-        with codecs.open(output_file, "w", encoding="utf-8") as f:
-            json_dump(data, f)
+        if json_dump_if_changed(data, output_file):
+            logger.info("Saved {0} {1} to disk".format(len(data), name))
+        else:
+            logger.info("{0} {1} unchanged, skipped write".format(len(data), name))
 
 
 def json_dump(data, output_file):
@@ -2122,3 +2142,57 @@ def json_dump(data, output_file):
         indent=4,
         separators=(",", ": "),
     )
+
+
+def json_dump_if_changed(data, output_file_path):
+    """
+    Write JSON data to file only if content has changed.
+
+    Compares the serialized JSON data with the existing file content
+    and only writes if different. This prevents unnecessary file
+    modification timestamp updates and disk writes.
+
+    Uses atomic writes (temp file + rename) to prevent corruption
+    if the process is interrupted during the write.
+
+    Args:
+        data: The data to serialize as JSON
+        output_file_path: The path to the output file
+
+    Returns:
+        True if file was written (content changed or new file)
+        False if write was skipped (content unchanged)
+    """
+    # Serialize new data with consistent formatting matching json_dump()
+    new_content = json.dumps(
+        data,
+        ensure_ascii=False,
+        sort_keys=True,
+        indent=4,
+        separators=(",", ": "),
+    )
+
+    # Check if file exists and compare content
+    if os.path.exists(output_file_path):
+        try:
+            with codecs.open(output_file_path, "r", encoding="utf-8") as f:
+                existing_content = f.read()
+            if existing_content == new_content:
+                logger.debug(
+                    "Content unchanged, skipping write: {0}".format(output_file_path)
+                )
+                return False
+        except (OSError, UnicodeDecodeError) as e:
+            # If we can't read the existing file, write the new one
+            logger.debug(
+                "Error reading existing file {0}, will overwrite: {1}".format(
+                    output_file_path, e
+                )
+            )
+
+    # Write the file atomically using temp file + rename
+    temp_file = output_file_path + ".temp"
+    with codecs.open(temp_file, "w", encoding="utf-8") as f:
+        f.write(new_content)
+    os.rename(temp_file, output_file_path)  # Atomic on POSIX systems
+    return True
