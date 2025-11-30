@@ -1587,7 +1587,9 @@ def filter_repositories(args, unfiltered_repositories):
     repositories = []
     for r in unfiltered_repositories:
         # gists can be anonymous, so need to safely check owner
-        if r.get("owner", {}).get("login") == args.user or r.get("is_starred"):
+        # Use case-insensitive comparison to match GitHub's case-insensitive username behavior
+        owner_login = r.get("owner", {}).get("login", "")
+        if owner_login.lower() == args.user.lower() or r.get("is_starred"):
             repositories.append(r)
 
     name_regex = None
