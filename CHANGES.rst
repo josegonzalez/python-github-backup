@@ -1,9 +1,44 @@
 Changelog
 =========
 
-0.52.0 (2025-11-28)
+0.53.0 (2025-11-30)
 -------------------
 ------------------------
+
+Fix
+~~~
+- Case-sensitive username filtering causing silent backup failures.
+  [Rodos]
+
+  GitHub's API accepts usernames in any case but returns canonical case.
+  The case-sensitive comparison in filter_repositories() filtered out all
+  repositories when user-provided case didn't match GitHub's canonical case.
+
+  Changed to case-insensitive comparison.
+
+  Fixes #198
+
+Other
+~~~~~
+- Avoid rewriting unchanged JSON files for labels, milestones, releases,
+  hooks, followers, and following. [Rodos]
+
+  This change reduces unnecessary writes when backing up metadata that changes
+  infrequently. The implementation compares existing file content before writing
+  and skips the write if the content is identical, preserving file timestamps.
+
+  Key changes:
+  - Added json_dump_if_changed() helper that compares content before writing
+  - Uses atomic writes (temp file + rename) for all metadata files
+  - NOT applied to issues/pulls (they use incremental_by_files logic)
+  - Made log messages consistent and past tense ("Saved" instead of "Saving")
+  - Added informative logging showing skip counts
+
+  Fixes #133
+
+
+0.52.0 (2025-11-28)
+-------------------
 - Skip DMCA'd repos which return a 451 response. [Rodos]
 
   Log a warning and the link to the DMCA notice. Continue backing up
