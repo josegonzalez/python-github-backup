@@ -16,11 +16,22 @@ from github_backup.github_backup import (
     retrieve_repositories,
 )
 
-logging.basicConfig(
-    format="%(asctime)s.%(msecs)03d: %(message)s",
+# INFO and DEBUG go to stdout, WARNING and above go to stderr
+log_format = logging.Formatter(
+    fmt="%(asctime)s.%(msecs)03d: %(message)s",
     datefmt="%Y-%m-%dT%H:%M:%S",
-    level=logging.INFO,
 )
+
+stdout_handler = logging.StreamHandler(sys.stdout)
+stdout_handler.setLevel(logging.DEBUG)
+stdout_handler.addFilter(lambda r: r.levelno < logging.WARNING)
+stdout_handler.setFormatter(log_format)
+
+stderr_handler = logging.StreamHandler(sys.stderr)
+stderr_handler.setLevel(logging.WARNING)
+stderr_handler.setFormatter(log_format)
+
+logging.basicConfig(level=logging.INFO, handlers=[stdout_handler, stderr_handler])
 
 
 def main():
