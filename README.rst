@@ -308,6 +308,25 @@ Skip existing on incomplete backups
 The ``--skip-existing`` argument will skip a backup if the directory already exists, even if the backup in that directory failed (perhaps due to a blocking error). This may result in unexpected missing data in a regular backup.
 
 
+Updates use fetch, not pull
+---------------------------
+
+When updating an existing repository backup, ``github-backup`` uses ``git fetch`` rather than ``git pull``. This is intentional - a backup tool should reliably download data without risk of failure. Using ``git pull`` would require handling merge conflicts, which adds complexity and could cause backups to fail unexpectedly.
+
+With fetch, **all branches and commits are downloaded** safely into remote-tracking branches. The working directory files won't change, but your backup is complete.
+
+If you look at files directly (e.g., ``cat README.md``), you'll see the old content. The new data is in the remote-tracking branches (confusingly named "remote" but stored locally). To view or use the latest files::
+
+    git show origin/main:README.md           # view a file
+    git merge origin/main                    # update working directory
+
+All branches are backed up as remote refs (``origin/main``, ``origin/feature-branch``, etc.).
+
+If you want to browse files directly without merging, consider using ``--bare`` which skips the working directory entirely - the backup is just the git data.
+
+See `#269 <https://github.com/josegonzalez/python-github-backup/issues/269>`_ for more discussion.
+
+
 Github Backup Examples
 ======================
 
@@ -357,7 +376,12 @@ A huge thanks to all the contibuters!
 Testing
 -------
 
-This project currently contains no unit tests.  To run linting::
+To run the test suite::
+
+    pip install pytest
+    pytest
+
+To run linting::
 
     pip install flake8
     flake8 --ignore=E501
