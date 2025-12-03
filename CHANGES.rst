@@ -1,9 +1,24 @@
 Changelog
 =========
 
-0.53.0 (2025-11-30)
+0.54.0 (2025-12-03)
 -------------------
 ------------------------
+
+Fix
+~~~
+- Send INFO/DEBUG to stdout, WARNING/ERROR to stderr. [Rodos]
+
+  Fixes #182
+
+Other
+~~~~~
+- Docs: update README testing section and add fetch vs pull explanation.
+  [Rodos]
+
+
+0.53.0 (2025-11-30)
+-------------------
 
 Fix
 ~~~
