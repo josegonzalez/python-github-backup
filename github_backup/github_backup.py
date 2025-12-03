@@ -1565,16 +1565,22 @@ def retrieve_repositories(args, authenticated_user):
         repos.extend(gists)
 
     if args.include_starred_gists:
-        starred_gists_template = "https://{0}/gists/starred".format(
-            get_github_api_host(args)
-        )
-        starred_gists = retrieve_data(
-            args, starred_gists_template, single_request=False
-        )
-        # flag each repo as a starred gist for downstream processing
-        for item in starred_gists:
-            item.update({"is_gist": True, "is_starred": True})
-        repos.extend(starred_gists)
+        if not authenticated_user.get("login") or args.user.lower() != authenticated_user["login"].lower():
+            logger.warning(
+                "Cannot retrieve starred gists for '%s'. GitHub only allows access to the authenticated user's starred gists.",
+                args.user,
+            )
+        else:
+            starred_gists_template = "https://{0}/gists/starred".format(
+                get_github_api_host(args)
+            )
+            starred_gists = retrieve_data(
+                args, starred_gists_template, single_request=False
+            )
+            # flag each repo as a starred gist for downstream processing
+            for item in starred_gists:
+                item.update({"is_gist": True, "is_starred": True})
+            repos.extend(starred_gists)
 
     return repos
 

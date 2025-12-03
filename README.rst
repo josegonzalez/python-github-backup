@@ -301,6 +301,8 @@ Starred gists vs starred repo behaviour
 
 The starred normal repo cloning (``--all-starred``) argument stores starred repos separately to the users own repositories. However, using ``--starred-gists`` will store starred gists within the same directory as the users own gists ``--gists``. Also, all gist repo directory names are IDs not the gist's name.
 
+Note: ``--starred-gists`` only retrieves starred gists for the authenticated user, not the target user, due to a GitHub API limitation.
+
 
 Skip existing on incomplete backups
 -----------------------------------
