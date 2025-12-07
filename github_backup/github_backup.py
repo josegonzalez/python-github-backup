@@ -2041,11 +2041,14 @@ def fetch_repository(
         "git ls-remote " + remote_url, stdout=FNULL, stderr=FNULL, shell=True
     )
     if initialized == 128:
-        logger.info(
-            "Skipping {0} ({1}) since it's not initialized".format(
-                name, masked_remote_url
+        if ".wiki.git" in remote_url:
+            logger.info(
+                "Skipping {0} wiki (wiki is enabled but has no content)".format(name)
             )
-        )
+        else:
+            logger.info(
+                "Skipping {0} (repository not accessible - may be empty, private, or credentials invalid)".format(name)
+            )
         return
 
     if clone_exists:
