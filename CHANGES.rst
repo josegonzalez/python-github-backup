@@ -1,9 +1,48 @@
 Changelog
 =========
 
-0.54.0 (2025-12-03)
+0.55.0 (2025-12-07)
 -------------------
 ------------------------
+
+Fix
+~~~
+- Improve error messages for inaccessible repos and empty wikis. [Rodos]
+- --all-starred now clones repos without --repositories. [Rodos]
+- Warn when --private used without authentication. [Rodos]
+- Warn and skip when --starred-gists used for different user. [Rodos]
+
+  GitHub's API only allows retrieving starred gists for the authenticated
+  user. Previously, using --starred-gists when backing up a different user
+  would silently return no relevant data.
+
+  Now warns and skips the retrieval entirely when the target user differs
+  from the authenticated user. Uses case-insensitive comparison to match
+  GitHub's username handling.
+
+  Fixes #93
+
+Other
+~~~~~
+- Test: add missing test coverage for case sensitivity fix. [Rodos]
+- Docs: fix RST formatting in Known blocking errors section. [Rodos]
+- Chore(deps): bump urllib3 from 2.5.0 to 2.6.0. [dependabot[bot]]
+
+  Bumps [urllib3](https://github.com/urllib3/urllib3) from 2.5.0 to 2.6.0.
+  - [Release notes](https://github.com/urllib3/urllib3/releases)
+  - [Changelog](https://github.com/urllib3/urllib3/blob/main/CHANGES.rst)
+  - [Commits](https://github.com/urllib3/urllib3/compare/2.5.0...2.6.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: urllib3
+    dependency-version: 2.6.0
+    dependency-type: direct:production
+  ...
+
+
+0.54.0 (2025-12-03)
+-------------------
 
 Fix
 ~~~
