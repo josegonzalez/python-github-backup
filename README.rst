@@ -281,11 +281,11 @@ If the incremental argument is used, this will result in the next backup only re
 
 It's therefore recommended to only use the incremental argument if the output/result is being actively monitored, or complimented with periodic full non-incremental runs, to avoid unexpected missing data in a regular backup runs.
 
-1. **Starred public repo hooks blocking**
+**Starred public repo hooks blocking**
 
-   Since the ``--all`` argument includes ``--hooks``, if you use ``--all`` and ``--all-starred`` together to clone a users starred public repositories, the backup will likely error and block the backup continuing. 
+Since the ``--all`` argument includes ``--hooks``, if you use ``--all`` and ``--all-starred`` together to clone a users starred public repositories, the backup will likely error and block the backup continuing.
 
-   This is due to needing the correct permission for ``--hooks`` on public repos.
+This is due to needing the correct permission for ``--hooks`` on public repos.
 
 
 "bare" is actually "mirror"
