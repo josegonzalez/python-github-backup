@@ -9,6 +9,7 @@ from github_backup.github_backup import (
     backup_repositories,
     check_git_lfs_install,
     filter_repositories,
+    get_auth,
     get_authenticated_user,
     logger,
     mkdir_p,
@@ -36,6 +37,12 @@ logging.basicConfig(level=logging.INFO, handlers=[stdout_handler, stderr_handler
 
 def main():
     args = parse_args()
+
+    if args.private and not get_auth(args):
+        logger.warning(
+            "The --private flag has no effect without authentication. "
+            "Use -t/--token, -f/--token-fine, or -u/--username to authenticate."
+        )
 
     if args.quiet:
         logger.setLevel(logging.WARNING)

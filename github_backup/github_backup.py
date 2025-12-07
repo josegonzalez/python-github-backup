@@ -561,7 +561,7 @@ def get_github_host(args):
 
 
 def read_file_contents(file_uri):
-    return open(file_uri[len(FILE_URI_PREFIX) :], "rt").readline().strip()
+    return open(file_uri[len(FILE_URI_PREFIX):], "rt").readline().strip()
 
 
 def get_github_repo_url(args, repository):
@@ -1672,9 +1672,10 @@ def backup_repositories(args, output_directory, repositories):
         repo_url = get_github_repo_url(args, repository)
 
         include_gists = args.include_gists or args.include_starred_gists
+        include_starred = args.all_starred and repository.get("is_starred")
         if (args.include_repository or args.include_everything) or (
             include_gists and repository.get("is_gist")
-        ):
+        ) or include_starred:
             repo_name = (
                 repository.get("name")
                 if not repository.get("is_gist")
@@ -2023,12 +2024,9 @@ def fetch_repository(
 ):
     if bare_clone:
         if os.path.exists(local_dir):
-            clone_exists = (
-                subprocess.check_output(
-                    ["git", "rev-parse", "--is-bare-repository"], cwd=local_dir
-                )
-                == b"true\n"
-            )
+            clone_exists = subprocess.check_output(
+                ["git", "rev-parse", "--is-bare-repository"], cwd=local_dir
+            ) == b"true\n"
         else:
             clone_exists = False
     else:
@@ -2043,11 +2041,14 @@ def fetch_repository(
         "git ls-remote " + remote_url, stdout=FNULL, stderr=FNULL, shell=True
     )
     if initialized == 128:
-        logger.info(
-            "Skipping {0} ({1}) since it's not initialized".format(
-                name, masked_remote_url
+        if ".wiki.git" in remote_url:
+            logger.info(
+                "Skipping {0} wiki (wiki is enabled but has no content)".format(name)
             )
-        )
+        else:
+            logger.info(
+                "Skipping {0} (repository not accessible - may be empty, private, or credentials invalid)".format(name)
+            )
         return
 
     if clone_exists:
