@@ -1,5 +1,5 @@
 autopep8==2.3.2
-black==25.11.0
+black==25.12.0
 bleach==6.3.0
 certifi==2025.11.12
 charset-normalizer==3.4.4
@@ -8,7 +8,7 @@ colorama==0.4.6
 docutils==0.22.3
 flake8==7.3.0
 gitchangelog==3.0.4
-pytest==9.0.1
+pytest==9.0.2
 idna==3.11
 importlib-metadata==8.7.0
 jaraco.classes==3.4.0
@@ -21,7 +21,7 @@ mypy-extensions==1.1.0
 packaging==25.0
 pathspec==0.12.1
 pkginfo==1.12.1.2
-platformdirs==4.5.0
+platformdirs==4.5.1
 pycodestyle==2.14.0
 pyflakes==3.4.0
 Pygments==2.19.2
