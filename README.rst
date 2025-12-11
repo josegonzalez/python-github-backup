@@ -360,6 +360,25 @@ Debug an error/block or incomplete backup into a temporary directory. Omit "incr
     github-backup -f $FINE_ACCESS_TOKEN -o /tmp/github-backup/ -l debug -P --all-starred --starred --watched --followers --following --issues --issue-comments --issue-events --pulls --pull-comments --pull-commits --labels --milestones --repositories --wikis --releases --assets --pull-details --gists --starred-gists $GH_USER
 
 
+Restoring from Backup
+=====================
+
+This tool creates backups only, there is no inbuilt restore command.
+
+**Git repositories, wikis, and gists** can be restored by pushing them back to GitHub as you would any git repository. For example, to restore a bare repository backup::
+
+    cd /tmp/white-house/repositories/petitions/repository
+    git push --mirror git@github.com:WhiteHouse/petitions.git
+
+**Issues, pull requests, comments, and other metadata** are saved as JSON files for archival purposes. The GitHub API does not support recreating this data faithfully, creating issues via the API has limitations:
+
+- New issue/PR numbers are assigned (original numbers cannot be set)
+- Timestamps reflect creation time (original dates cannot be set)
+- The API caller becomes the author (original authors cannot be set)
+- Cross-references between issues and PRs will break
+
+These are GitHub API limitations that affect all backup and migration tools, not just this one. Recreating issues with these limitations via the GitHub API is an exercise for the reader. The JSON backups remain useful for searching, auditing, or manual reference.
+
 
 Development
 ===========
