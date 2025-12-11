@@ -215,6 +215,8 @@ When you use the ``--lfs`` option, you will need to make sure you have Git LFS i
 
 Instructions on how to do this can be found on https://git-lfs.github.com.
 
+LFS objects are fetched for all refs, not just the current checkout, ensuring a complete backup of all LFS content across all branches and history.
+
 
 About Attachments
 -----------------
