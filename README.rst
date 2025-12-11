@@ -174,6 +174,37 @@ Customise the permissions for your use case, but for a personal account full bac
 **Repository permissions**: Read access to contents, issues, metadata, pull requests, and webhooks.
 
 
+GitHub Apps
+~~~~~~~~~~~
+
+GitHub Apps are ideal for organization backups in CI/CD. Tokens are scoped to specific repositories and expire after 1 hour.
+
+**One-time setup:**
+
+1. Create a GitHub App at *Settings -> Developer Settings -> GitHub Apps -> New GitHub App*
+2. Set a name and homepage URL (can be any URL)
+3. Uncheck "Webhook > Active" (not needed for backups)
+4. Set permissions (same as fine-grained tokens above)
+5. Click "Create GitHub App", then note the **App ID** shown on the next page
+6. Under "Private keys", click "Generate a private key" and save the downloaded file
+7. Go to *Install App* in your app's settings
+8. Select the account/organization and which repositories to back up
+
+**CI/CD usage with GitHub Actions:**
+
+Store the App ID as a repository variable and the private key contents as a secret, then use ``actions/create-github-app-token``::
+
+    - uses: actions/create-github-app-token@v1
+      id: app-token
+      with:
+        app-id: ${{ vars.APP_ID }}
+        private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+    - run: github-backup myorg -t ${{ steps.app-token.outputs.token }} --as-app -o ./backup --all
+
+Note: Installation tokens expire after 1 hour. For long-running backups, use a fine-grained personal access token instead.
+
+
 Prefer SSH
 ~~~~~~~~~~
 
