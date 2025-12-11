@@ -1038,7 +1038,7 @@ def download_attachment_file(url, path, auth, as_app=False, fine=False):
                 bytes_downloaded += len(chunk)
 
         # Atomic rename to final location
-        os.rename(temp_path, path)
+        os.replace(temp_path, path)
 
         metadata["size_bytes"] = bytes_downloaded
         metadata["success"] = True
@@ -1459,7 +1459,7 @@ def download_attachments(
 
                 # Rename to add extension (already atomic from download)
                 try:
-                    os.rename(filepath, final_filepath)
+                    os.replace(filepath, final_filepath)
                     metadata["saved_as"] = os.path.basename(final_filepath)
                 except Exception as e:
                     logger.warning(
@@ -1490,7 +1490,7 @@ def download_attachments(
         manifest_path = os.path.join(attachments_dir, "manifest.json")
         with open(manifest_path + ".temp", "w") as f:
             json.dump(manifest, f, indent=2)
-            os.rename(manifest_path + ".temp", manifest_path)  # Atomic write
+        os.replace(manifest_path + ".temp", manifest_path)  # Atomic write
         logger.debug(
             "Wrote manifest for {0} #{1}: {2} attachments".format(
                 item_type_display, number, len(attachment_metadata_list)
@@ -1811,7 +1811,7 @@ def backup_issues(args, repo_cwd, repository, repos_template):
 
         with codecs.open(issue_file + ".temp", "w", encoding="utf-8") as f:
             json_dump(issue, f)
-            os.rename(issue_file + ".temp", issue_file)  # Unlike json_dump, this is atomic
+        os.replace(issue_file + ".temp", issue_file)  # Atomic write
 
 
 def backup_pulls(args, repo_cwd, repository, repos_template):
@@ -1886,7 +1886,7 @@ def backup_pulls(args, repo_cwd, repository, repos_template):
 
         with codecs.open(pull_file + ".temp", "w", encoding="utf-8") as f:
             json_dump(pull, f)
-            os.rename(pull_file + ".temp", pull_file)  # Unlike json_dump, this is atomic
+        os.replace(pull_file + ".temp", pull_file)  # Atomic write
 
 
 def backup_milestones(args, repo_cwd, repository, repos_template):
@@ -2203,5 +2203,5 @@ def json_dump_if_changed(data, output_file_path):
     temp_file = output_file_path + ".temp"
     with codecs.open(temp_file, "w", encoding="utf-8") as f:
         f.write(new_content)
-    os.rename(temp_file, output_file_path)  # Atomic on POSIX systems
+    os.replace(temp_file, output_file_path)  # Atomic write
     return True
