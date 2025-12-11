@@ -1,9 +1,103 @@
 Changelog
 =========
 
-0.55.0 (2025-12-07)
+0.56.0 (2025-12-11)
 -------------------
 ------------------------
+
+Fix
+~~~
+- Replace deprecated git lfs clone with git clone + git lfs fetch --all.
+  [Rodos]
+
+  git lfs clone is deprecated - modern git clone handles LFS automatically.
+  Using git lfs fetch --all ensures all LFS objects across all refs are
+  backed up, matching the existing bare clone behavior and providing
+  complete LFS backups.
+
+  Closes #379
+- Add Windows support with entry_points and os.replace. [Rodos]
+
+  - Replace os.rename() with os.replace() for atomic file operations
+    on Windows (os.rename fails if destination exists on Windows)
+  - Add entry_points console_scripts for proper .exe generation on Windows
+  - Create github_backup/cli.py with main() entry point
+  - Add github_backup/__main__.py for python -m github_backup support
+  - Keep bin/github-backup as thin wrapper for backwards compatibility
+
+  Closes #112
+
+Other
+~~~~~
+- Docs: add "Restoring from Backup" section to README. [Rodos]
+
+  Clarifies that this tool is backup-only with no inbuilt restore.
+  Documents that git repos can be pushed back, but issues/PRs have
+  GitHub API limitations affecting all backup tools.
+
+  Closes #246
+- Chore(deps): bump urllib3 in the python-packages group.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [urllib3](https://github.com/urllib3/urllib3).
+
+
+  Updates `urllib3` from 2.6.0 to 2.6.1
+  - [Release notes](https://github.com/urllib3/urllib3/releases)
+  - [Changelog](https://github.com/urllib3/urllib3/blob/main/CHANGES.rst)
+  - [Commits](https://github.com/urllib3/urllib3/compare/2.6.0...2.6.1)
+
+  ---
+  updated-dependencies:
+  - dependency-name: urllib3
+    dependency-version: 2.6.1
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump the python-packages group with 3 updates.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 3 updates: [black](https://github.com/psf/black), [pytest](https://github.com/pytest-dev/pytest) and [platformdirs](https://github.com/tox-dev/platformdirs).
+
+
+  Updates `black` from 25.11.0 to 25.12.0
+  - [Release notes](https://github.com/psf/black/releases)
+  - [Changelog](https://github.com/psf/black/blob/main/CHANGES.md)
+  - [Commits](https://github.com/psf/black/compare/25.11.0...25.12.0)
+
+  Updates `pytest` from 9.0.1 to 9.0.2
+  - [Release notes](https://github.com/pytest-dev/pytest/releases)
+  - [Changelog](https://github.com/pytest-dev/pytest/blob/main/CHANGELOG.rst)
+  - [Commits](https://github.com/pytest-dev/pytest/compare/9.0.1...9.0.2)
+
+  Updates `platformdirs` from 4.5.0 to 4.5.1
+  - [Release notes](https://github.com/tox-dev/platformdirs/releases)
+  - [Changelog](https://github.com/tox-dev/platformdirs/blob/main/CHANGES.rst)
+  - [Commits](https://github.com/tox-dev/platformdirs/compare/4.5.0...4.5.1)
+
+  ---
+  updated-dependencies:
+  - dependency-name: black
+    dependency-version: 25.12.0
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  - dependency-name: pytest
+    dependency-version: 9.0.2
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  - dependency-name: platformdirs
+    dependency-version: 4.5.1
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  ...
+
+
+0.55.0 (2025-12-07)
+-------------------
 
 Fix
 ~~~
