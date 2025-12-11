@@ -359,6 +359,9 @@ Debug an error/block or incomplete backup into a temporary directory. Omit "incr
 
     github-backup -f $FINE_ACCESS_TOKEN -o /tmp/github-backup/ -l debug -P --all-starred --starred --watched --followers --following --issues --issue-comments --issue-events --pulls --pull-comments --pull-commits --labels --milestones --repositories --wikis --releases --assets --pull-details --gists --starred-gists $GH_USER
 
+Pipe a token from stdin to avoid storing it in environment variables or command history (Unix-like systems only)::
+
+    my-secret-manager get github-token | github-backup user -t file:///dev/stdin -o /backup --repositories
 
 
 Development
