@@ -33,7 +33,11 @@ setup(
     author="Jose Diaz-Gonzalez",
     author_email="github-backup@josediazgonzalez.com",
     packages=["github_backup"],
-    scripts=["bin/github-backup"],
+    entry_points={
+        "console_scripts": [
+            "github-backup=github_backup.cli:main",
+        ],
+    },
     url="http://github.com/josegonzalez/python-github-backup",
     license="MIT",
     classifiers=[
