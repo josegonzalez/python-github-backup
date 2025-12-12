@@ -1,9 +1,40 @@
 Changelog
 =========
 
-0.56.0 (2025-12-11)
+0.57.0 (2025-12-12)
 -------------------
 ------------------------
+- Add GitHub Apps documentation and remove outdated header. [Rodos]
+
+  - Add GitHub Apps authentication section with setup steps
+    and CI/CD workflow example using actions/create-github-app-token
+  - Remove outdated machine-man-preview header (graduated 2020)
+
+  Closes #189
+- Docs: add stdin token example to README. [Rodos]
+
+  Add example showing how to pipe a token from stdin using
+  file:///dev/stdin to avoid storing tokens in environment
+  variables or command history.
+
+  Closes #187
+- Add --skip-assets-on flag to skip release asset downloads (#135)
+  [Rodos]
+
+  Allow users to skip downloading release assets for specific repositories
+  while still backing up release metadata. Useful for starred repos with
+  large assets (e.g. syncthing with 27GB+).
+
+  Usage: --skip-assets-on repo1 repo2 owner/repo3
+
+  Features:
+  - Space-separated repos (consistent with --exclude)
+  - Case-insensitive matching
+  - Supports both repo name and owner/repo format
+
+
+0.56.0 (2025-12-11)
+-------------------
 
 Fix
 ~~~
