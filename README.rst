@@ -50,8 +50,8 @@ CLI Help output::
                   [--keychain-name OSX_KEYCHAIN_ITEM_NAME]
                   [--keychain-account OSX_KEYCHAIN_ITEM_ACCOUNT]
                   [--releases] [--latest-releases NUMBER_OF_LATEST_RELEASES]
-                  [--skip-prerelease] [--assets] [--attachments]
-                  [--exclude [REPOSITORY [REPOSITORY ...]]
+                  [--skip-prerelease] [--assets] [--skip-assets-on [REPO ...]]
+                  [--attachments] [--exclude [REPOSITORY [REPOSITORY ...]]
                   [--throttle-limit THROTTLE_LIMIT] [--throttle-pause THROTTLE_PAUSE]
                   USER
 
@@ -133,6 +133,9 @@ CLI Help output::
       --skip-prerelease     skip prerelease and draft versions; only applies if including releases
       --assets              include assets alongside release information; only
                             applies if including releases
+      --skip-assets-on [REPO ...]
+                            skip asset downloads for these repositories (e.g.
+                            --skip-assets-on repo1 owner/repo2)
       --attachments         download user-attachments from issues and pull requests
                             to issues/attachments/{issue_number}/ and
                             pulls/attachments/{pull_number}/ directories

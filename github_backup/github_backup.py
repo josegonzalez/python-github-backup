@@ -441,6 +441,12 @@ def parse_args(args=None):
         help="include assets alongside release information; only applies if including releases",
     )
     parser.add_argument(
+        "--skip-assets-on",
+        dest="skip_assets_on",
+        nargs="*",
+        help="skip asset downloads for these repositories",
+    )
+    parser.add_argument(
         "--attachments",
         action="store_true",
         dest="include_attachments",
@@ -561,7 +567,7 @@ def get_github_host(args):
 
 
 def read_file_contents(file_uri):
-    return open(file_uri[len(FILE_URI_PREFIX):], "rt").readline().strip()
+    return open(file_uri[len(FILE_URI_PREFIX) :], "rt").readline().strip()
 
 
 def get_github_repo_url(args, repository):
@@ -631,7 +637,7 @@ def retrieve_data_gen(args, template, query_args=None, single_request=False):
                 pass
             raise RepositoryUnavailableError(
                 "Repository unavailable due to legal reasons (HTTP 451)",
-                dmca_url=dmca_url
+                dmca_url=dmca_url,
             )
 
         # Check if we got correct data
@@ -709,7 +715,7 @@ def retrieve_data_gen(args, template, query_args=None, single_request=False):
                     # Parse Link header: <https://api.github.com/...?per_page=100&after=cursor>; rel="next"
                     for link in link_header.split(","):
                         if 'rel="next"' in link:
-                            next_url = link[link.find("<") + 1:link.find(">")]
+                            next_url = link[link.find("<") + 1 : link.find(">")]
                             break
                 if not next_url:
                     break
@@ -763,9 +769,7 @@ def _get_response(request, auth, template):
     return r, errors
 
 
-def _construct_request(
-    per_page, query_args, template, auth, as_app=None, fine=False
-):
+def _construct_request(per_page, query_args, template, auth, as_app=None, fine=False):
     # If template is already a full URL with query params (from Link header), use it directly
     if "?" in template and template.startswith("http"):
         request_url = template
@@ -1480,9 +1484,11 @@ def download_attachments(
         manifest = {
             "issue_number": number,
             "issue_type": item_type,
-            "repository": f"{args.user}/{args.repository}"
-            if hasattr(args, "repository") and args.repository
-            else args.user,
+            "repository": (
+                f"{args.user}/{args.repository}"
+                if hasattr(args, "repository") and args.repository
+                else args.user
+            ),
             "manifest_updated_at": datetime.now(timezone.utc).isoformat(),
             "attachments": attachment_metadata_list,
         }
@@ -1538,9 +1544,7 @@ def retrieve_repositories(args, authenticated_user):
         else:
             repo_path = "{0}/{1}".format(args.user, args.repository)
         single_request = True
-        template = "https://{0}/repos/{1}".format(
-            get_github_api_host(args), repo_path
-        )
+        template = "https://{0}/repos/{1}".format(get_github_api_host(args), repo_path)
 
     repos = retrieve_data(args, template, single_request=single_request)
 
@@ -1565,7 +1569,10 @@ def retrieve_repositories(args, authenticated_user):
         repos.extend(gists)
 
     if args.include_starred_gists:
-        if not authenticated_user.get("login") or args.user.lower() != authenticated_user["login"].lower():
+        if (
+            not authenticated_user.get("login")
+            or args.user.lower() != authenticated_user["login"].lower()
+        ):
             logger.warning(
                 "Cannot retrieve starred gists for '%s'. GitHub only allows access to the authenticated user's starred gists.",
                 args.user,
@@ -1673,9 +1680,11 @@ def backup_repositories(args, output_directory, repositories):
 
         include_gists = args.include_gists or args.include_starred_gists
         include_starred = args.all_starred and repository.get("is_starred")
-        if (args.include_repository or args.include_everything) or (
-            include_gists and repository.get("is_gist")
-        ) or include_starred:
+        if (
+            (args.include_repository or args.include_everything)
+            or (include_gists and repository.get("is_gist"))
+            or include_starred
+        ):
             repo_name = (
                 repository.get("name")
                 if not repository.get("is_gist")
@@ -1735,7 +1744,9 @@ def backup_repositories(args, output_directory, repositories):
                     include_assets=args.include_assets or args.include_everything,
                 )
         except RepositoryUnavailableError as e:
-            logger.warning(f"Repository {repository['full_name']} is unavailable (HTTP 451)")
+            logger.warning(
+                f"Repository {repository['full_name']} is unavailable (HTTP 451)"
+            )
             if e.dmca_url:
                 logger.warning(f"DMCA notice: {e.dmca_url}")
             logger.info(f"Skipping remaining resources for {repository['full_name']}")
@@ -1795,7 +1806,11 @@ def backup_issues(args, repo_cwd, repository, repos_template):
             modified = os.path.getmtime(issue_file)
             modified = datetime.fromtimestamp(modified).strftime("%Y-%m-%dT%H:%M:%SZ")
             if modified > issue["updated_at"]:
-                logger.info("Skipping issue {0} because it wasn't modified since last backup".format(number))
+                logger.info(
+                    "Skipping issue {0} because it wasn't modified since last backup".format(
+                        number
+                    )
+                )
                 continue
 
         if args.include_issue_comments or args.include_everything:
@@ -1869,7 +1884,11 @@ def backup_pulls(args, repo_cwd, repository, repos_template):
             modified = os.path.getmtime(pull_file)
             modified = datetime.fromtimestamp(modified).strftime("%Y-%m-%dT%H:%M:%SZ")
             if modified > pull["updated_at"]:
-                logger.info("Skipping pull request {0} because it wasn't modified since last backup".format(number))
+                logger.info(
+                    "Skipping pull request {0} because it wasn't modified since last backup".format(
+                        number
+                    )
+                )
                 continue
         if args.include_pull_comments or args.include_everything:
             template = comments_regular_template.format(number)
@@ -1919,9 +1938,11 @@ def backup_milestones(args, repo_cwd, repository, repos_template):
     elif written_count == 0:
         logger.info("{0} milestones unchanged, skipped write".format(total))
     else:
-        logger.info("Saved {0} of {1} milestones to disk ({2} unchanged)".format(
-            written_count, total, total - written_count
-        ))
+        logger.info(
+            "Saved {0} of {1} milestones to disk ({2} unchanged)".format(
+                written_count, total, total - written_count
+            )
+        )
 
 
 def backup_labels(args, repo_cwd, repository, repos_template):
@@ -1975,6 +1996,20 @@ def backup_releases(args, repo_cwd, repository, repos_template, include_assets=F
         )
         releases = releases[: args.number_of_latest_releases]
 
+    # Check if this repo should skip asset downloads (case-insensitive)
+    skip_assets = False
+    if include_assets:
+        repo_name = repository.get("name", "").lower()
+        repo_full_name = repository.get("full_name", "").lower()
+        skip_repos = [r.lower() for r in (args.skip_assets_on or [])]
+        skip_assets = repo_name in skip_repos or repo_full_name in skip_repos
+        if skip_assets:
+            logger.info(
+                "Skipping assets for {0} ({1} releases) due to --skip-assets-on".format(
+                    repository.get("name"), len(releases)
+                )
+            )
+
     # for each release, store it
     written_count = 0
     for release in releases:
@@ -1986,7 +2021,7 @@ def backup_releases(args, repo_cwd, repository, repos_template, include_assets=F
         if json_dump_if_changed(release, output_filepath):
             written_count += 1
 
-        if include_assets:
+        if include_assets and not skip_assets:
             assets = retrieve_data(args, release["assets_url"])
             if len(assets) > 0:
                 # give release asset files somewhere to live & download them (not including source archives)
@@ -2008,9 +2043,11 @@ def backup_releases(args, repo_cwd, repository, repos_template, include_assets=F
     elif written_count == 0:
         logger.info("{0} releases unchanged, skipped write".format(total))
     else:
-        logger.info("Saved {0} of {1} releases to disk ({2} unchanged)".format(
-            written_count, total, total - written_count
-        ))
+        logger.info(
+            "Saved {0} of {1} releases to disk ({2} unchanged)".format(
+                written_count, total, total - written_count
+            )
+        )
 
 
 def fetch_repository(
@@ -2024,9 +2061,12 @@ def fetch_repository(
 ):
     if bare_clone:
         if os.path.exists(local_dir):
-            clone_exists = subprocess.check_output(
-                ["git", "rev-parse", "--is-bare-repository"], cwd=local_dir
-            ) == b"true\n"
+            clone_exists = (
+                subprocess.check_output(
+                    ["git", "rev-parse", "--is-bare-repository"], cwd=local_dir
+                )
+                == b"true\n"
+            )
         else:
             clone_exists = False
     else:
@@ -2047,7 +2087,9 @@ def fetch_repository(
             )
         else:
             logger.info(
-                "Skipping {0} (repository not accessible - may be empty, private, or credentials invalid)".format(name)
+                "Skipping {0} (repository not accessible - may be empty, private, or credentials invalid)".format(
+                    name
+                )
             )
         return
 
