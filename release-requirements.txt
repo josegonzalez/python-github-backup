@@ -1,40 +1,15 @@
+# Linting & Formatting
 autopep8==2.3.2
 black==25.12.0
-bleach==6.3.0
-certifi==2025.11.12
-charset-normalizer==3.4.4
-click==8.3.1
-colorama==0.4.6
-docutils==0.22.3
 flake8==7.3.0
-gitchangelog==3.0.4
+
+# Testing
 pytest==9.0.2
-idna==3.11
-importlib-metadata==8.7.0
-jaraco.classes==3.4.0
-keyring==25.7.0
-markdown-it-py==4.0.0
-mccabe==0.7.0
-mdurl==0.1.2
-more-itertools==10.8.0
-mypy-extensions==1.1.0
-packaging==25.0
-pathspec==0.12.1
-pkginfo==1.12.1.2
-platformdirs==4.5.1
-pycodestyle==2.14.0
-pyflakes==3.4.0
-Pygments==2.19.2
-readme-renderer==44.0
-requests==2.32.5
-requests-toolbelt==1.0.0
-restructuredtext-lint==2.0.2
-rfc3986==2.0.0
-rich==14.2.0
-setuptools==80.9.0
-six==1.17.0
-tqdm==4.67.1
+
+# Release & Publishing
 twine==6.2.0
-urllib3==2.6.2
-webencodings==0.5.1
-zipp==3.23.0
+gitchangelog==3.0.4
+setuptools==80.9.0
+
+# Documentation
+restructuredtext-lint==2.0.2
