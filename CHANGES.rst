@@ -1,9 +1,38 @@
 Changelog
 =========
 
-0.57.0 (2025-12-12)
+0.58.0 (2025-12-16)
 -------------------
 ------------------------
+- Fix retry logic for HTTP 5xx errors and network failures. [Rodos]
+
+  Refactors error handling to retry all 5xx errors (not just 502), network errors (URLError, socket.error, IncompleteRead), and JSON parse errors with exponential backoff and jitter. Respects retry-after and rate limit headers per GitHub API requirements. Consolidates retry logic into make_request_with_retry() wrapper and adds clear logging for retry attempts and failures. Removes dead code from 2016 (errors list, _request_http_error, _request_url_error) that was intentionally disabled in commit 1e5a9048 to fix #29.
+
+  Fixes #140, #110, #138
+- Chore: remove transitive deps from release-requirements.txt. [Rodos]
+- Chore(deps): bump urllib3 in the python-packages group.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [urllib3](https://github.com/urllib3/urllib3).
+
+
+  Updates `urllib3` from 2.6.1 to 2.6.2
+  - [Release notes](https://github.com/urllib3/urllib3/releases)
+  - [Changelog](https://github.com/urllib3/urllib3/blob/main/CHANGES.rst)
+  - [Commits](https://github.com/urllib3/urllib3/compare/2.6.1...2.6.2)
+
+  ---
+  updated-dependencies:
+  - dependency-name: urllib3
+    dependency-version: 2.6.2
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  ...
+
+
+0.57.0 (2025-12-12)
+-------------------
 - Add GitHub Apps documentation and remove outdated header. [Rodos]
 
   - Add GitHub Apps authentication section with setup steps
