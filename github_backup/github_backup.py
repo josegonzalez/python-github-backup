@@ -12,6 +12,7 @@ import json
 import logging
 import os
 import platform
+import random
 import re
 import select
 import socket
@@ -19,6 +20,7 @@ import ssl
 import subprocess
 import sys
 import time
+from collections.abc import Generator
 from datetime import datetime
 from http.client import IncompleteRead
 from urllib.error import HTTPError, URLError
@@ -73,6 +75,9 @@ else:
                 "  2. Alpine: apk add ca-certificates\n"
                 "  3. Debian/Ubuntu: apt-get install ca-certificates\n\n"
             )
+
+# Retry configuration
+MAX_RETRIES = 5
 
 
 def logging_subprocess(
@@ -603,170 +608,178 @@ def get_github_repo_url(args, repository):
     return repo_url
 
 
-def retrieve_data_gen(args, template, query_args=None, single_request=False):
+def calculate_retry_delay(attempt, headers):
+    """Calculate delay before next retry with exponential backoff."""
+    # Respect retry-after header if present
+    if retry_after := headers.get("retry-after"):
+        return int(retry_after)
+
+    # Respect rate limit reset time
+    if int(headers.get("x-ratelimit-remaining", 1)) < 1:
+        reset_time = int(headers.get("x-ratelimit-reset", 0))
+        return max(10, reset_time - calendar.timegm(time.gmtime()))
+
+    # Exponential backoff with jitter for server errors (1s base, 120s max)
+    delay = min(1.0 * (2**attempt), 120.0)
+    return delay + random.uniform(0, delay * 0.1)
+
+
+def retrieve_data(args, template, query_args=None, paginated=True):
+    """
+    Fetch the data from GitHub API.
+
+    Handle both single requests and pagination with yield of individual dicts.
+    Handles throttling, retries, read errors, and DMCA takedowns.
+    """
+    query_args = query_args or {}
     auth = get_auth(args, encode=not args.as_app)
-    query_args = get_query_args(query_args)
     per_page = 100
-    next_url = None
 
-    while True:
-        if single_request:
-            request_per_page = None
-        else:
-            request_per_page = per_page
+    def _extract_next_page_url(link_header):
+        for link in link_header.split(","):
+            if 'rel="next"' in link:
+                return link[link.find("<") + 1:link.find(">")]
+        return None
 
-        request = _construct_request(
-            request_per_page,
-            query_args,
-            next_url or template,
-            auth,
-            as_app=args.as_app,
-            fine=True if args.token_fine is not None else False,
-        )  # noqa
-        r, errors = _get_response(request, auth, next_url or template)
+    def fetch_all() -> Generator[dict, None, None]:
+        next_url = None
 
-        status_code = int(r.getcode())
+        while True:
+            # FIRST: Fetch response
 
-        # Handle DMCA takedown (HTTP 451) - raise exception to skip entire repository
-        if status_code == 451:
-            dmca_url = None
-            try:
-                response_data = json.loads(r.read().decode("utf-8"))
-                dmca_url = response_data.get("block", {}).get("html_url")
-            except Exception:
-                pass
-            raise RepositoryUnavailableError(
-                "Repository unavailable due to legal reasons (HTTP 451)",
-                dmca_url=dmca_url,
-            )
-
-        # Check if we got correct data
-        try:
-            response = json.loads(r.read().decode("utf-8"))
-        except IncompleteRead:
-            logger.warning("Incomplete read error detected")
-            read_error = True
-        except json.decoder.JSONDecodeError:
-            logger.warning("JSON decode error detected")
-            read_error = True
-        except TimeoutError:
-            logger.warning("Tiemout error detected")
-            read_error = True
-        else:
-            read_error = False
-
-        # be gentle with API request limit and throttle requests if remaining requests getting low
-        limit_remaining = int(r.headers.get("x-ratelimit-remaining", 0))
-        if args.throttle_limit and limit_remaining <= args.throttle_limit:
-            logger.info(
-                "API request limit hit: {} requests left, pausing further requests for {}s".format(
-                    limit_remaining, args.throttle_pause
+            for attempt in range(MAX_RETRIES):
+                request = _construct_request(
+                    per_page=per_page if paginated else None,
+                    query_args=query_args,
+                    template=next_url or template,
+                    auth=auth,
+                    as_app=args.as_app,
+                    fine=args.token_fine is not None,
                 )
-            )
-            time.sleep(args.throttle_pause)
+                http_response = make_request_with_retry(request, auth)
 
-        retries = 0
-        while retries < 3 and (status_code == 502 or read_error):
-            logger.warning("API request failed. Retrying in 5 seconds")
-            retries += 1
-            time.sleep(5)
-            request = _construct_request(
-                request_per_page,
-                query_args,
-                next_url or template,
-                auth,
-                as_app=args.as_app,
-                fine=True if args.token_fine is not None else False,
-            )  # noqa
-            r, errors = _get_response(request, auth, next_url or template)
+                match http_response.getcode():
+                    case 200:
+                        # Success - Parse JSON response
+                        try:
+                            response = json.loads(http_response.read().decode("utf-8"))
+                            break  # Exit retry loop and handle the data returned
+                        except (
+                            IncompleteRead,
+                            json.decoder.JSONDecodeError,
+                            TimeoutError,
+                        ) as e:
+                            logger.warning(f"{type(e).__name__} reading response")
+                            if attempt < MAX_RETRIES - 1:
+                                delay = calculate_retry_delay(attempt, {})
+                                logger.warning(
+                                    f"Retrying in {delay:.1f}s (attempt {attempt + 1}/{MAX_RETRIES})"
+                                )
+                                time.sleep(delay)
+                            continue  # Next retry attempt
 
-            status_code = int(r.getcode())
-            try:
-                response = json.loads(r.read().decode("utf-8"))
-                read_error = False
-            except IncompleteRead:
-                logger.warning("Incomplete read error detected")
-                read_error = True
-            except json.decoder.JSONDecodeError:
-                logger.warning("JSON decode error detected")
-                read_error = True
-            except TimeoutError:
-                logger.warning("Tiemout error detected")
-                read_error = True
+                    case 451:
+                        # DMCA takedown - extract URL if available, then raise
+                        dmca_url = None
+                        try:
+                            response_data = json.loads(
+                                http_response.read().decode("utf-8")
+                            )
+                            dmca_url = response_data.get("block", {}).get("html_url")
+                        except Exception:
+                            pass
+                        raise RepositoryUnavailableError(
+                            "Repository unavailable due to legal reasons (HTTP 451)",
+                            dmca_url=dmca_url,
+                        )
 
-        if status_code != 200:
-            template = "API request returned HTTP {0}: {1}"
-            errors.append(template.format(status_code, r.reason))
-            raise Exception(", ".join(errors))
+                    case _:
+                        raise Exception(
+                            f"API request returned HTTP {http_response.getcode()}: {http_response.reason}"
+                        )
+            else:
+                logger.error(
+                    f"Failed to read response after {MAX_RETRIES} attempts for {next_url or template}"
+                )
+                raise Exception(
+                    f"Failed to read response after {MAX_RETRIES} attempts for {next_url or template}"
+                )
 
-        if read_error:
-            template = "API request problem reading response for {0}"
-            errors.append(template.format(request))
-            raise Exception(", ".join(errors))
+            # SECOND: Process and paginate
 
-        if len(errors) == 0:
-            if type(response) is list:
-                for resp in response:
-                    yield resp
-                # Parse Link header for next page URL (cursor-based pagination)
-                link_header = r.headers.get("Link", "")
-                next_url = None
-                if link_header:
-                    # Parse Link header: <https://api.github.com/...?per_page=100&after=cursor>; rel="next"
-                    for link in link_header.split(","):
-                        if 'rel="next"' in link:
-                            next_url = link[link.find("<") + 1 : link.find(">")]
-                            break
-                if not next_url:
-                    break
-            elif type(response) is dict and single_request:
+            # Pause before next request if rate limit is low
+            if (
+                remaining := int(http_response.headers.get("x-ratelimit-remaining", 0))
+            ) <= (args.throttle_limit or 0):
+                if args.throttle_limit:
+                    logger.info(
+                        f"Throttling: {remaining} requests left, pausing {args.throttle_pause}s"
+                    )
+                    time.sleep(args.throttle_pause)
+
+            # Yield results
+            if isinstance(response, list):
+                yield from response
+            elif isinstance(response, dict):
                 yield response
 
-        if len(errors) > 0:
-            raise Exception(", ".join(errors))
+            # Check for more pages
+            if not paginated or not (
+                next_url := _extract_next_page_url(
+                    http_response.headers.get("Link", "")
+                )
+            ):
+                break  # No more data
 
-        if single_request:
-            break
-
-
-def retrieve_data(args, template, query_args=None, single_request=False):
-    return list(retrieve_data_gen(args, template, query_args, single_request))
-
-
-def get_query_args(query_args=None):
-    if not query_args:
-        query_args = {}
-    return query_args
+    return list(fetch_all())
 
 
-def _get_response(request, auth, template):
-    retry_timeout = 3
-    errors = []
-    # We'll make requests in a loop so we can
-    # delay and retry in the case of rate-limiting
-    while True:
-        should_continue = False
+def make_request_with_retry(request, auth):
+    """Make HTTP request with automatic retry for transient errors."""
+
+    def is_retryable_status(status_code, headers):
+        # Server errors are always retryable
+        if status_code in (500, 502, 503, 504):
+            return True
+        # Rate limit (403/429) is retryable if limit exhausted
+        if status_code in (403, 429):
+            return int(headers.get("x-ratelimit-remaining", 1)) < 1
+        return False
+
+    for attempt in range(MAX_RETRIES):
         try:
-            r = urlopen(request, context=https_ctx)
+            return urlopen(request, context=https_ctx)
+
         except HTTPError as exc:
-            errors, should_continue = _request_http_error(exc, auth, errors)  # noqa
-            r = exc
-        except URLError as e:
-            logger.warning(e.reason)
-            should_continue, retry_timeout = _request_url_error(template, retry_timeout)
-            if not should_continue:
-                raise
-        except socket.error as e:
-            logger.warning(e.strerror)
-            should_continue, retry_timeout = _request_url_error(template, retry_timeout)
-            if not should_continue:
+            # HTTPError can be used as a response-like object
+            if not is_retryable_status(exc.code, exc.headers):
+                raise  # Non-retryable error
+
+            if attempt >= MAX_RETRIES - 1:
+                logger.error(f"HTTP {exc.code} failed after {MAX_RETRIES} attempts")
                 raise
 
-        if should_continue:
-            continue
+            delay = calculate_retry_delay(attempt, exc.headers)
+            logger.warning(
+                f"HTTP {exc.code}, retrying in {delay:.1f}s "
+                f"(attempt {attempt + 1}/{MAX_RETRIES})"
+            )
+            if auth is None and exc.code in (403, 429):
+                logger.info("Hint: Authenticate to raise your GitHub rate limit")
+            time.sleep(delay)
 
-        break
-    return r, errors
+        except (URLError, socket.error) as e:
+            if attempt >= MAX_RETRIES - 1:
+                logger.error(f"Connection error failed after {MAX_RETRIES} attempts: {e}")
+                raise
+            delay = calculate_retry_delay(attempt, {})
+            logger.warning(
+                f"Connection error: {e}, retrying in {delay:.1f}s "
+                f"(attempt {attempt + 1}/{MAX_RETRIES})"
+            )
+            time.sleep(delay)
+
+    raise Exception(f"Request failed after {MAX_RETRIES} attempts")  # pragma: no cover
 
 
 def _construct_request(per_page, query_args, template, auth, as_app=None, fine=False):
@@ -806,52 +819,6 @@ def _construct_request(per_page, query_args, template, auth, as_app=None, fine=F
         log_url += "?" + querystring
     logger.info("Requesting {}".format(log_url))
     return request
-
-
-def _request_http_error(exc, auth, errors):
-    # HTTPError behaves like a Response so we can
-    # check the status code and headers to see exactly
-    # what failed.
-
-    should_continue = False
-    headers = exc.headers
-    limit_remaining = int(headers.get("x-ratelimit-remaining", 0))
-
-    if exc.code == 403 and limit_remaining < 1:
-        # The X-RateLimit-Reset header includes a
-        # timestamp telling us when the limit will reset
-        # so we can calculate how long to wait rather
-        # than inefficiently polling:
-        gm_now = calendar.timegm(time.gmtime())
-        reset = int(headers.get("x-ratelimit-reset", 0)) or gm_now
-        # We'll never sleep for less than 10 seconds:
-        delta = max(10, reset - gm_now)
-
-        limit = headers.get("x-ratelimit-limit")
-        logger.warning(
-            "Exceeded rate limit of {} requests; waiting {} seconds to reset".format(
-                limit, delta
-            )
-        )  # noqa
-
-        if auth is None:
-            logger.info("Hint: Authenticate to raise your GitHub rate limit")
-
-        time.sleep(delta)
-        should_continue = True
-    return errors, should_continue
-
-
-def _request_url_error(template, retry_timeout):
-    # In case of a connection timing out, we can retry a few time
-    # But we won't crash and not back-up the rest now
-    logger.info("'{}' timed out".format(template))
-    retry_timeout -= 1
-
-    if retry_timeout >= 0:
-        return True, retry_timeout
-
-    raise Exception("'{}' timed out to much, skipping!".format(template))
 
 
 class S3HTTPRedirectHandler(HTTPRedirectHandler):
@@ -1503,7 +1470,7 @@ def download_attachments(
 
 def get_authenticated_user(args):
     template = "https://{0}/user".format(get_github_api_host(args))
-    data = retrieve_data(args, template, single_request=True)
+    data = retrieve_data(args, template, paginated=False)
     return data[0]
 
 
@@ -1517,7 +1484,7 @@ def check_git_lfs_install():
 
 def retrieve_repositories(args, authenticated_user):
     logger.info("Retrieving repositories")
-    single_request = False
+    paginated = True
     if args.user == authenticated_user["login"]:
         # we must use the /user/repos API to be able to access private repos
         template = "https://{0}/user/repos".format(get_github_api_host(args))
@@ -1540,16 +1507,16 @@ def retrieve_repositories(args, authenticated_user):
             repo_path = args.repository
         else:
             repo_path = "{0}/{1}".format(args.user, args.repository)
-        single_request = True
+        paginated = False
         template = "https://{0}/repos/{1}".format(get_github_api_host(args), repo_path)
 
-    repos = retrieve_data(args, template, single_request=single_request)
+    repos = retrieve_data(args, template, paginated=paginated)
 
     if args.all_starred:
         starred_template = "https://{0}/users/{1}/starred".format(
             get_github_api_host(args), args.user
         )
-        starred_repos = retrieve_data(args, starred_template, single_request=False)
+        starred_repos = retrieve_data(args, starred_template)
         # flag each repo as starred for downstream processing
         for item in starred_repos:
             item.update({"is_starred": True})
@@ -1559,7 +1526,7 @@ def retrieve_repositories(args, authenticated_user):
         gists_template = "https://{0}/users/{1}/gists".format(
             get_github_api_host(args), args.user
         )
-        gists = retrieve_data(args, gists_template, single_request=False)
+        gists = retrieve_data(args, gists_template)
         # flag each repo as a gist for downstream processing
         for item in gists:
             item.update({"is_gist": True})
@@ -1578,9 +1545,7 @@ def retrieve_repositories(args, authenticated_user):
             starred_gists_template = "https://{0}/gists/starred".format(
                 get_github_api_host(args)
             )
-            starred_gists = retrieve_data(
-                args, starred_gists_template, single_request=False
-            )
+            starred_gists = retrieve_data(args, starred_gists_template)
             # flag each repo as a starred gist for downstream processing
             for item in starred_gists:
                 item.update({"is_gist": True, "is_starred": True})
@@ -1849,14 +1814,14 @@ def backup_pulls(args, repo_cwd, repository, repos_template):
         pull_states = ["open", "closed"]
         for pull_state in pull_states:
             query_args["state"] = pull_state
-            _pulls = retrieve_data_gen(args, _pulls_template, query_args=query_args)
+            _pulls = retrieve_data(args, _pulls_template, query_args=query_args)
             for pull in _pulls:
                 if args.since and pull["updated_at"] < args.since:
                     break
                 if not args.since or pull["updated_at"] >= args.since:
                     pulls[pull["number"]] = pull
     else:
-        _pulls = retrieve_data_gen(args, _pulls_template, query_args=query_args)
+        _pulls = retrieve_data(args, _pulls_template, query_args=query_args)
         for pull in _pulls:
             if args.since and pull["updated_at"] < args.since:
                 break
@@ -1864,7 +1829,7 @@ def backup_pulls(args, repo_cwd, repository, repos_template):
                 pulls[pull["number"]] = retrieve_data(
                     args,
                     _pulls_template + "/{}".format(pull["number"]),
-                    single_request=True,
+                    paginated=False,
                 )[0]
 
     logger.info("Saving {0} pull requests to disk".format(len(list(pulls.keys()))))

@@ -40,7 +40,7 @@ class MockHTTPResponse:
 
 @pytest.fixture
 def mock_args():
-    """Mock args for retrieve_data_gen."""
+    """Mock args for retrieve_data."""
     args = Mock()
     args.as_app = False
     args.token_fine = None
@@ -77,10 +77,8 @@ def test_cursor_based_pagination(mock_args):
         return responses[len(requests_made) - 1]
 
     with patch("github_backup.github_backup.urlopen", side_effect=mock_urlopen):
-        results = list(
-            github_backup.retrieve_data_gen(
-                mock_args, "https://api.github.com/repos/owner/repo/issues"
-            )
+        results = github_backup.retrieve_data(
+            mock_args, "https://api.github.com/repos/owner/repo/issues"
         )
 
     # Verify all items retrieved and cursor was used in second request
@@ -112,10 +110,8 @@ def test_page_based_pagination(mock_args):
         return responses[len(requests_made) - 1]
 
     with patch("github_backup.github_backup.urlopen", side_effect=mock_urlopen):
-        results = list(
-            github_backup.retrieve_data_gen(
-                mock_args, "https://api.github.com/repos/owner/repo/pulls"
-            )
+        results = github_backup.retrieve_data(
+            mock_args, "https://api.github.com/repos/owner/repo/pulls"
         )
 
     # Verify all items retrieved and page parameter was used (not cursor)
@@ -142,10 +138,8 @@ def test_no_link_header_stops_pagination(mock_args):
         return responses[len(requests_made) - 1]
 
     with patch("github_backup.github_backup.urlopen", side_effect=mock_urlopen):
-        results = list(
-            github_backup.retrieve_data_gen(
-                mock_args, "https://api.github.com/repos/owner/repo/labels"
-            )
+        results = github_backup.retrieve_data(
+            mock_args, "https://api.github.com/repos/owner/repo/labels"
         )
 
     # Verify pagination stopped after first request
