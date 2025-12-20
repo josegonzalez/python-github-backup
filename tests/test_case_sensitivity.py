@@ -26,6 +26,8 @@ class TestCaseSensitivity:
         args.private = False
         args.public = False
         args.all = True
+        args.skip_archived = False
+        args.starred_skip_size_over = None
 
         # Simulate GitHub API returning canonical case
         repos = [
@@ -65,6 +67,8 @@ class TestCaseSensitivity:
         args.private = False
         args.public = False
         args.all = True
+        args.skip_archived = False
+        args.starred_skip_size_over = None
 
         repos = [
             {
@@ -93,6 +97,8 @@ class TestCaseSensitivity:
         args.private = False
         args.public = False
         args.all = True
+        args.skip_archived = False
+        args.starred_skip_size_over = None
 
         repos = [
             {"name": "repo1", "owner": {"login": "test-user"}, "private": False, "fork": False},

@@ -39,7 +39,7 @@ CLI Help output::
     github-backup [-h] [-t TOKEN_CLASSIC] [-f TOKEN_FINE] [-q] [--as-app]
                   [-o OUTPUT_DIRECTORY] [-l LOG_LEVEL] [-i]
                   [--incremental-by-files]
-                  [--starred] [--all-starred]
+                  [--starred] [--all-starred] [--starred-skip-size-over MB]
                   [--watched] [--followers] [--following] [--all]
                   [--issues] [--issue-comments] [--issue-events] [--pulls]
                   [--pull-comments] [--pull-commits] [--pull-details]
@@ -84,6 +84,8 @@ CLI Help output::
                             incremental backup based on modification date of files
       --starred             include JSON output of starred repositories in backup
       --all-starred         include starred repositories in backup [*]
+      --starred-skip-size-over MB
+                            skip starred repositories larger than this size in MB
       --watched             include JSON output of watched repositories in backup
       --followers           include JSON output of followers in backup
       --following           include JSON output of following users in backup
@@ -292,10 +294,20 @@ All is not everything
 
 The ``--all`` argument does not include: cloning private repos (``-P, --private``), cloning forks (``-F, --fork``), cloning starred repositories (``--all-starred``), ``--pull-details``, cloning LFS repositories (``--lfs``), cloning gists (``--gists``) or cloning starred gist repos (``--starred-gists``). See examples for more.
 
-Cloning all starred size
-------------------------
+Starred repository size
+-----------------------
 
-Using the ``--all-starred`` argument to clone all starred repositories may use a large amount of storage space, especially if ``--all`` or more arguments are used. e.g. commonly starred repos can have tens of thousands of issues, many large assets and the repo itself etc. Consider just storing links to starred repos in JSON format with ``--starred``.
+Using the ``--all-starred`` argument to clone all starred repositories may use a large amount of storage space.
+
+To see your starred repositories sorted by size (requires `GitHub CLI <https://cli.github.com>`_)::
+
+    gh api user/starred --paginate --jq 'sort_by(-.size)[]|"\(.full_name) \(.size/1024|round)MB"'
+
+To limit which starred repositories are cloned, use ``--starred-skip-size-over SIZE`` where SIZE is in MB. For example, ``--starred-skip-size-over 500`` will skip any starred repository where the git repository size (code and history) exceeds 500 MB. Note that this size limit only applies to the repository itself, not issues, release assets or other metadata. This filter only affects starred repositories; your own repositories are always included regardless of size.
+
+For finer control, avoid using ``--assets`` with starred repos, or use ``--skip-assets-on`` for specific repositories with large release binaries.
+
+Alternatively, consider just storing links to starred repos in JSON format with ``--starred``.
 
 Incremental Backup
 ------------------
