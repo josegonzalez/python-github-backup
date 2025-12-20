@@ -17,8 +17,6 @@ class TestHTTP451Exception:
         args.as_app = False
         args.token_fine = None
         args.token_classic = None
-        args.username = None
-        args.password = None
         args.osx_keychain_item_name = None
         args.osx_keychain_item_account = None
         args.throttle_limit = None
@@ -52,8 +50,6 @@ class TestHTTP451Exception:
         args.as_app = False
         args.token_fine = None
         args.token_classic = None
-        args.username = None
-        args.password = None
         args.osx_keychain_item_name = None
         args.osx_keychain_item_account = None
         args.throttle_limit = None
@@ -78,8 +74,6 @@ class TestHTTP451Exception:
         args.as_app = False
         args.token_fine = None
         args.token_classic = None
-        args.username = None
-        args.password = None
         args.osx_keychain_item_name = None
         args.osx_keychain_item_account = None
         args.throttle_limit = None
