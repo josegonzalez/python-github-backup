@@ -7,7 +7,6 @@ import base64
 import calendar
 import codecs
 import errno
-import getpass
 import json
 import logging
 import os
@@ -24,7 +23,6 @@ from collections.abc import Generator
 from datetime import datetime
 from http.client import IncompleteRead
 from urllib.error import HTTPError, URLError
-from urllib.parse import quote as urlquote
 from urllib.parse import urlencode, urlparse
 from urllib.request import HTTPRedirectHandler, Request, build_opener, urlopen
 
@@ -149,17 +147,6 @@ def mask_password(url, secret="*****"):
 def parse_args(args=None):
     parser = argparse.ArgumentParser(description="Backup a github account")
     parser.add_argument("user", metavar="USER", type=str, help="github username")
-    parser.add_argument(
-        "-u", "--username", dest="username", help="username for basic auth"
-    )
-    parser.add_argument(
-        "-p",
-        "--password",
-        dest="password",
-        help="password for basic auth. "
-        "If a username is given but not a password, the "
-        "password will be prompted for.",
-    )
     parser.add_argument(
         "-t",
         "--token",
@@ -533,16 +520,6 @@ def get_auth(args, encode=True, for_git_cli=False):
                 auth = args.token_classic
             else:
                 auth = "x-access-token:" + args.token_classic
-    elif args.username:
-        if not args.password:
-            args.password = getpass.getpass()
-        if encode:
-            password = args.password
-        else:
-            password = urlquote(args.password)
-        auth = args.username + ":" + password
-    elif args.password:
-        raise Exception("You must specify a username for basic auth")
 
     if not auth:
         return None

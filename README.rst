@@ -36,23 +36,26 @@ Show the CLI help output::
 
 CLI Help output::
 
-    github-backup [-h] [-u USERNAME] [-p PASSWORD] [-t TOKEN_CLASSIC]
-                  [-f TOKEN_FINE] [--as-app] [-o OUTPUT_DIRECTORY]
-                  [-l LOG_LEVEL] [-i] [--starred] [--all-starred]
-                  [--watched] [--followers] [--following] [--all] [--issues]
-                  [--issue-comments] [--issue-events] [--pulls]
+    github-backup [-h] [-t TOKEN_CLASSIC] [-f TOKEN_FINE] [-q] [--as-app]
+                  [-o OUTPUT_DIRECTORY] [-l LOG_LEVEL] [-i]
+                  [--incremental-by-files]
+                  [--starred] [--all-starred]
+                  [--watched] [--followers] [--following] [--all]
+                  [--issues] [--issue-comments] [--issue-events] [--pulls]
                   [--pull-comments] [--pull-commits] [--pull-details]
                   [--labels] [--hooks] [--milestones] [--repositories]
-                  [--bare] [--lfs] [--wikis] [--gists] [--starred-gists]
-                  [--skip-archived] [--skip-existing] [-L [LANGUAGES ...]]
-                  [-N NAME_REGEX] [-H GITHUB_HOST] [-O] [-R REPOSITORY]
-                  [-P] [-F] [--prefer-ssh] [-v]
+                  [--bare] [--no-prune] [--lfs] [--wikis] [--gists]
+                  [--starred-gists] [--skip-archived] [--skip-existing]
+                  [-L [LANGUAGES ...]] [-N NAME_REGEX] [-H GITHUB_HOST]
+                  [-O] [-R REPOSITORY] [-P] [-F] [--prefer-ssh] [-v]
                   [--keychain-name OSX_KEYCHAIN_ITEM_NAME]
                   [--keychain-account OSX_KEYCHAIN_ITEM_ACCOUNT]
                   [--releases] [--latest-releases NUMBER_OF_LATEST_RELEASES]
-                  [--skip-prerelease] [--assets] [--skip-assets-on [REPO ...]]
-                  [--attachments] [--exclude [REPOSITORY [REPOSITORY ...]]
-                  [--throttle-limit THROTTLE_LIMIT] [--throttle-pause THROTTLE_PAUSE]
+                  [--skip-prerelease] [--assets]
+                  [--skip-assets-on [SKIP_ASSETS_ON ...]] [--attachments]
+                  [--throttle-limit THROTTLE_LIMIT]
+                  [--throttle-pause THROTTLE_PAUSE]
+                  [--exclude [EXCLUDE ...]]
                   USER
 
     Backup a github account
@@ -60,27 +63,25 @@ CLI Help output::
     positional arguments:
       USER                  github username
 
-    optional arguments:
+    options:
       -h, --help            show this help message and exit
-      -u USERNAME, --username USERNAME
-                            username for basic auth
-      -p PASSWORD, --password PASSWORD
-                            password for basic auth. If a username is given but
-                            not a password, the password will be prompted for.
-      -f TOKEN_FINE, --token-fine TOKEN_FINE
-                            fine-grained personal access token or path to token
-                            (file://...)
-      -t TOKEN_CLASSIC, --token TOKEN_CLASSIC
+      -t, --token TOKEN_CLASSIC
                             personal access, OAuth, or JSON Web token, or path to
                             token (file://...)
+      -f, --token-fine TOKEN_FINE
+                            fine-grained personal access token (github_pat_....),
+                            or path to token (file://...)
+      -q, --quiet           supress log messages less severe than warning, e.g.
+                            info
       --as-app              authenticate as github app instead of as a user.
-      -o OUTPUT_DIRECTORY, --output-directory OUTPUT_DIRECTORY
+      -o, --output-directory OUTPUT_DIRECTORY
                             directory at which to backup the repositories
-      -l LOG_LEVEL, --log-level LOG_LEVEL
+      -l, --log-level LOG_LEVEL
                             log level to use (default: info, possible levels:
                             debug, info, warning, error, critical)
       -i, --incremental     incremental backup
-      --incremental-by-files incremental backup using modified time of files
+      --incremental-by-files
+                            incremental backup based on modification date of files
       --starred             include JSON output of starred repositories in backup
       --all-starred         include starred repositories in backup [*]
       --watched             include JSON output of watched repositories in backup
@@ -100,20 +101,22 @@ CLI Help output::
       --milestones          include milestones in backup
       --repositories        include repository clone in backup
       --bare                clone bare repositories
+      --no-prune            disable prune option for git fetch
       --lfs                 clone LFS repositories (requires Git LFS to be
                             installed, https://git-lfs.github.com) [*]
       --wikis               include wiki clone in backup
       --gists               include gists in backup [*]
       --starred-gists       include starred gists in backup [*]
+      --skip-archived       skip project if it is archived
       --skip-existing       skip project if a backup directory exists
-      -L [LANGUAGES [LANGUAGES ...]], --languages [LANGUAGES [LANGUAGES ...]]
+      -L, --languages [LANGUAGES ...]
                             only allow these languages
-      -N NAME_REGEX, --name-regex NAME_REGEX
+      -N, --name-regex NAME_REGEX
                             python regex to match names against
-      -H GITHUB_HOST, --github-host GITHUB_HOST
+      -H, --github-host GITHUB_HOST
                             GitHub Enterprise hostname
       -O, --organization    whether or not this is an organization user
-      -R REPOSITORY, --repository REPOSITORY
+      -R, --repository REPOSITORY
                             name of repository to limit backup to
       -P, --private         include private repositories [*]
       -F, --fork            include forked repositories [*]
@@ -128,19 +131,16 @@ CLI Help output::
       --releases            include release information, not including assets or
                             binaries
       --latest-releases NUMBER_OF_LATEST_RELEASES
-                            include certain number of the latest releases;
-                            only applies if including releases
-      --skip-prerelease     skip prerelease and draft versions; only applies if including releases
+                            include certain number of the latest releases; only
+                            applies if including releases
+      --skip-prerelease     skip prerelease and draft versions; only applies if
+                            including releases
       --assets              include assets alongside release information; only
                             applies if including releases
-      --skip-assets-on [REPO ...]
-                            skip asset downloads for these repositories (e.g.
-                            --skip-assets-on repo1 owner/repo2)
-      --attachments         download user-attachments from issues and pull requests
-                            to issues/attachments/{issue_number}/ and
-                            pulls/attachments/{pull_number}/ directories
-      --exclude [REPOSITORY [REPOSITORY ...]]
-                            names of repositories to exclude from backup.
+      --skip-assets-on [SKIP_ASSETS_ON ...]
+                            skip asset downloads for these repositories
+      --attachments         download user-attachments from issues and pull
+                            requests
       --throttle-limit THROTTLE_LIMIT
                             start throttling of GitHub API requests after this
                             amount of API requests remain
@@ -148,6 +148,8 @@ CLI Help output::
                             wait this amount of seconds when API request
                             throttling is active (default: 30.0, requires
                             --throttle-limit to be set)
+      --exclude [EXCLUDE ...]
+                            names of repositories to exclude
 
 
 Usage Details
@@ -156,13 +158,13 @@ Usage Details
 Authentication
 --------------
 
-**Password-based authentication** will fail if you have two-factor authentication enabled, and will `be deprecated <https://github.blog/2023-03-09-raising-the-bar-for-software-security-github-2fa-begins-march-13/>`_ by 2023 EOY.
+GitHub requires token-based authentication for API access. Password authentication was `removed in November 2020 <https://developer.github.com/changes/2020-02-14-deprecating-password-auth/>`_.
 
-``--username`` is used for basic password authentication and separate from the positional argument ``USER``, which specifies the user account you wish to back up.
+The positional argument ``USER`` specifies the user or organization account you wish to back up.
 
-**Classic tokens** are `slightly less secure <https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#personal-access-tokens-classic>`_ as they provide very coarse-grained permissions.
+**Fine-grained tokens** (``-f TOKEN_FINE``) are recommended for most use cases, especially long-running backups (e.g. cron jobs), as they provide precise permission control.
 
-If you need authentication for long-running backups (e.g. for a cron job) it is recommended to use **fine-grained personal access token** ``-f TOKEN_FINE``.
+**Classic tokens** (``-t TOKEN``) are `slightly less secure <https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#personal-access-tokens-classic>`_ as they provide very coarse-grained permissions.
 
 
 Fine Tokens

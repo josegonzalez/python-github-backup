@@ -46,8 +46,6 @@ class TestAllStarredCloning:
         args.prefer_ssh = False
         args.token_classic = None
         args.token_fine = None
-        args.username = None
-        args.password = None
         args.as_app = False
         args.osx_keychain_item_name = None
         args.osx_keychain_item_account = None

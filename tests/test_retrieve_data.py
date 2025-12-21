@@ -70,8 +70,6 @@ class TestRetrieveDataRetry:
         args.as_app = False
         args.token_fine = None
         args.token_classic = "fake_token"
-        args.username = None
-        args.password = None
         args.osx_keychain_item_name = None
         args.osx_keychain_item_account = None
         args.throttle_limit = None
@@ -313,8 +311,6 @@ class TestRetrieveDataThrottling:
         args.as_app = False
         args.token_fine = None
         args.token_classic = "fake_token"
-        args.username = None
-        args.password = None
         args.osx_keychain_item_name = None
         args.osx_keychain_item_account = None
         args.throttle_limit = 10  # Throttle when remaining <= 10
@@ -344,8 +340,6 @@ class TestRetrieveDataSingleItem:
         args.as_app = False
         args.token_fine = None
         args.token_classic = "fake_token"
-        args.username = None
-        args.password = None
         args.osx_keychain_item_name = None
         args.osx_keychain_item_account = None
         args.throttle_limit = None

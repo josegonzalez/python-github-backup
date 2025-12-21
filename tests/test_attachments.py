@@ -24,8 +24,6 @@ def attachment_test_setup(tmp_path):
     args.as_app = False
     args.token_fine = None
     args.token_classic = None
-    args.username = None
-    args.password = None
     args.osx_keychain_item_name = None
     args.osx_keychain_item_account = None
     args.user = "testuser"

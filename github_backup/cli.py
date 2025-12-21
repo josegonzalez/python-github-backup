@@ -43,7 +43,7 @@ def main():
     if args.private and not get_auth(args):
         logger.warning(
             "The --private flag has no effect without authentication. "
-            "Use -t/--token, -f/--token-fine, or -u/--username to authenticate."
+            "Use -t/--token or -f/--token-fine to authenticate."
         )
 
     if args.quiet:
