@@ -212,6 +212,13 @@ def parse_args(args=None):
         help="include starred repositories in backup [*]",
     )
     parser.add_argument(
+        "--starred-skip-size-over",
+        type=int,
+        metavar="MB",
+        dest="starred_skip_size_over",
+        help="skip starred repositories larger than this size in MB",
+    )
+    parser.add_argument(
         "--watched",
         action="store_true",
         dest="include_watched",
@@ -1570,6 +1577,25 @@ def filter_repositories(args, unfiltered_repositories):
         ]
     if args.skip_archived:
         repositories = [r for r in repositories if not r.get("archived")]
+    if args.starred_skip_size_over is not None:
+        if args.starred_skip_size_over <= 0:
+            logger.warning(
+                "--starred-skip-size-over must be greater than 0, ignoring"
+            )
+        else:
+            size_limit_kb = args.starred_skip_size_over * 1024
+            filtered = []
+            for r in repositories:
+                if r.get("is_starred") and r.get("size", 0) > size_limit_kb:
+                    size_mb = r.get("size", 0) / 1024
+                    logger.info(
+                        "Skipping starred repo {0} ({1:.0f} MB) due to --starred-skip-size-over {2}".format(
+                            r.get("full_name", r.get("name")), size_mb, args.starred_skip_size_over
+                        )
+                    )
+                else:
+                    filtered.append(r)
+            repositories = filtered
     if args.exclude:
         repositories = [
             r for r in repositories if "name" not in r or r["name"] not in args.exclude
