@@ -1,9 +1,26 @@
 Changelog
 =========
 
-0.58.0 (2025-12-16)
+0.59.0 (2025-12-21)
 -------------------
 ------------------------
+- Add --starred-skip-size-over flag to limit starred repo size (#108)
+  [Rodos]
+
+  Allow users to skip starred repositories exceeding a size threshold
+  when using --all-starred. Size is specified in MB and checked against
+  the GitHub API's repository size field.
+
+  - Only affects starred repos; user's own repos always included
+  - Logs each skipped repo with name and size
+
+  Closes #108
+- Chore: remove deprecated -u/-p password authentication options.
+  [Rodos]
+
+
+0.58.0 (2025-12-16)
+-------------------
 - Fix retry logic for HTTP 5xx errors and network failures. [Rodos]
 
   Refactors error handling to retry all 5xx errors (not just 502), network errors (URLError, socket.error, IncompleteRead), and JSON parse errors with exponential backoff and jitter. Respects retry-after and rate limit headers per GitHub API requirements. Consolidates retry logic into make_request_with_retry() wrapper and adds clear logging for retry attempts and failures. Removes dead code from 2016 (errors list, _request_http_error, _request_url_error) that was intentionally disabled in commit 1e5a9048 to fix #29.
