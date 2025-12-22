@@ -25,6 +25,7 @@ from http.client import IncompleteRead
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode, urlparse
 from urllib.request import HTTPRedirectHandler, Request, build_opener, urlopen
+from github_backup import max_retries
 
 try:
     from . import __version__
@@ -75,7 +76,7 @@ else:
             )
 
 # Retry configuration
-MAX_RETRIES = 5
+MAX_RETRIES = max_retries.MAX_RETRIES
 
 
 def logging_subprocess(
@@ -468,6 +469,13 @@ def parse_args(args=None):
     parser.add_argument(
         "--exclude", dest="exclude", help="names of repositories to exclude", nargs="*"
     )
+    parser.add_argument(
+        "--retries",
+        dest="max_retries",
+        type=int,
+        default=5,
+        help="maximum number of retries for API calls (default: 5)",
+    )
     return parser.parse_args(args)
 
 
@@ -737,16 +745,19 @@ def make_request_with_retry(request, auth):
         except HTTPError as exc:
             # HTTPError can be used as a response-like object
             if not is_retryable_status(exc.code, exc.headers):
+                logger.error(f"API Error: {exc.code} {exc.reason} for {request.full_url}")
                 raise  # Non-retryable error
 
             if attempt >= MAX_RETRIES - 1:
                 logger.error(f"HTTP {exc.code} failed after {MAX_RETRIES} attempts")
+                logger.error(f"HTTP {exc.code} failed after {MAX_RETRIES} attempts for {request.full_url}")
                 raise
 
             delay = calculate_retry_delay(attempt, exc.headers)
             logger.warning(
-                f"HTTP {exc.code}, retrying in {delay:.1f}s "
-                f"(attempt {attempt + 1}/{MAX_RETRIES})"
+                f"HTTP {exc.code} ({exc.reason}), retrying in {delay:.1f}s "
+                f"(attempt {attempt + 1}/{MAX_RETRIES}) for {request.full_url}"
+
             )
             if auth is None and exc.code in (403, 429):
                 logger.info("Hint: Authenticate to raise your GitHub rate limit")
@@ -754,12 +765,12 @@ def make_request_with_retry(request, auth):
 
         except (URLError, socket.error) as e:
             if attempt >= MAX_RETRIES - 1:
-                logger.error(f"Connection error failed after {MAX_RETRIES} attempts: {e}")
+                logger.error(f"Connection error failed after {MAX_RETRIES} attempts: {e} for {request.full_url}")
                 raise
             delay = calculate_retry_delay(attempt, {})
             logger.warning(
                 f"Connection error: {e}, retrying in {delay:.1f}s "
-                f"(attempt {attempt + 1}/{MAX_RETRIES})"
+                f"(attempt {attempt + 1}/{MAX_RETRIES}) for {request.full_url}"
             )
             time.sleep(delay)
 

@@ -4,6 +4,7 @@
 import logging
 import os
 import sys
+from github_backup import max_retries
 
 from github_backup.github_backup import (
     backup_account,
@@ -39,6 +40,7 @@ logging.basicConfig(level=logging.INFO, handlers=[stdout_handler, stderr_handler
 def main():
     """Main entry point for github-backup CLI."""
     args = parse_args()
+    max_retries.MAX_RETRIES = args.max_retries
 
     if args.private and not get_auth(args):
         logger.warning(
