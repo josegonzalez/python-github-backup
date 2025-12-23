@@ -25,7 +25,6 @@ from http.client import IncompleteRead
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode, urlparse
 from urllib.request import HTTPRedirectHandler, Request, build_opener, urlopen
-from github_backup import max_retries
 
 try:
     from . import __version__
@@ -636,7 +635,7 @@ def retrieve_data(args, template, query_args=None, paginated=True):
         while True:
             # FIRST: Fetch response
 
-            for attempt in range(max_retries.MAX_RETRIES):
+            for attempt in range(args.max_retries):
                 request = _construct_request(
                     per_page=per_page if paginated else None,
                     query_args=query_args,
@@ -645,7 +644,7 @@ def retrieve_data(args, template, query_args=None, paginated=True):
                     as_app=args.as_app,
                     fine=args.token_fine is not None,
                 )
-                http_response = make_request_with_retry(request, auth)
+                http_response = make_request_with_retry(request, auth, args.max_retries)
 
                 match http_response.getcode():
                     case 200:
@@ -659,10 +658,10 @@ def retrieve_data(args, template, query_args=None, paginated=True):
                             TimeoutError,
                         ) as e:
                             logger.warning(f"{type(e).__name__} reading response")
-                            if attempt < max_retries.MAX_RETRIES - 1:
+                            if attempt < args.max_retries - 1:
                                 delay = calculate_retry_delay(attempt, {})
                                 logger.warning(
-                                    f"Retrying in {delay:.1f}s (attempt {attempt + 1}/{max_retries.MAX_RETRIES})"
+                                    f"Retrying read in {delay:.1f}s (attempt {attempt + 1}/{args.max_retries})"
                                 )
                                 time.sleep(delay)
                             continue  # Next retry attempt
@@ -688,10 +687,10 @@ def retrieve_data(args, template, query_args=None, paginated=True):
                         )
             else:
                 logger.error(
-                    f"Failed to read response after {max_retries.MAX_RETRIES} attempts for {next_url or template}"
+                    f"Failed to read response after {args.max_retries} attempts for {next_url or template}"
                 )
                 raise Exception(
-                    f"Failed to read response after {max_retries.MAX_RETRIES} attempts for {next_url or template}"
+                    f"Failed to read response after {args.max_retries} attempts for {next_url or template}"
                 )
 
             # SECOND: Process and paginate
@@ -723,7 +722,7 @@ def retrieve_data(args, template, query_args=None, paginated=True):
     return list(fetch_all())
 
 
-def make_request_with_retry(request, auth):
+def make_request_with_retry(request, auth, max_retries=5):
     """Make HTTP request with automatic retry for transient errors."""
 
     def is_retryable_status(status_code, headers):
@@ -735,7 +734,7 @@ def make_request_with_retry(request, auth):
             return int(headers.get("x-ratelimit-remaining", 1)) < 1
         return False
 
-    for attempt in range(max_retries.MAX_RETRIES):
+    for attempt in range(max_retries):
         try:
             return urlopen(request, context=https_ctx)
 
@@ -745,32 +744,31 @@ def make_request_with_retry(request, auth):
                 logger.error(f"API Error: {exc.code} {exc.reason} for {request.full_url}")
                 raise  # Non-retryable error
 
-            if attempt >= max_retries.MAX_RETRIES - 1:
-                logger.error(f"HTTP {exc.code} failed after {max_retries.MAX_RETRIES} attempts for {request.full_url}")
+            if attempt >= max_retries - 1:
+                logger.error(f"HTTP {exc.code} failed after {max_retries} attempts for {request.full_url}")
                 raise
 
             delay = calculate_retry_delay(attempt, exc.headers)
             logger.warning(
                 f"HTTP {exc.code} ({exc.reason}), retrying in {delay:.1f}s "
-                f"(attempt {attempt + 1}/{max_retries.MAX_RETRIES}) for {request.full_url}"
-
+                f"(attempt {attempt + 1}/{max_retries}) for {request.full_url}"
             )
             if auth is None and exc.code in (403, 429):
                 logger.info("Hint: Authenticate to raise your GitHub rate limit")
             time.sleep(delay)
 
         except (URLError, socket.error) as e:
-            if attempt >= max_retries.MAX_RETRIES - 1:
-                logger.error(f"Connection error failed after {max_retries.MAX_RETRIES} attempts: {e} for {request.full_url}")
+            if attempt >= max_retries - 1:
+                logger.error(f"Connection error failed after {max_retries} attempts: {e} for {request.full_url}")
                 raise
             delay = calculate_retry_delay(attempt, {})
             logger.warning(
                 f"Connection error: {e}, retrying in {delay:.1f}s "
-                f"(attempt {attempt + 1}/{max_retries.MAX_RETRIES}) for {request.full_url}"
+                f"(attempt {attempt + 1}/{max_retries}) for {request.full_url}"
             )
             time.sleep(delay)
 
-    raise Exception(f"Request failed after {max_retries.MAX_RETRIES} attempts")  # pragma: no cover
+    raise Exception(f"Request failed after {max_retries} attempts")  # pragma: no cover
 
 
 def _construct_request(per_page, query_args, template, auth, as_app=None, fine=False):
