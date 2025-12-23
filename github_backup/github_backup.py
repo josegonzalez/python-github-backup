@@ -141,6 +141,17 @@ def mask_password(url, secret="*****"):
     return url.replace(parsed.password, secret)
 
 
+def non_negative_int(value):
+    """Argparse type validator for non-negative integers."""
+    try:
+        ivalue = int(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"'{value}' is not a valid integer")
+    if ivalue < 0:
+        raise argparse.ArgumentTypeError(f"{value} must be 0 or greater")
+    return ivalue
+
+
 def parse_args(args=None):
     parser = argparse.ArgumentParser(description="Backup a github account")
     parser.add_argument("user", metavar="USER", type=str, help="github username")
@@ -468,7 +479,7 @@ def parse_args(args=None):
     parser.add_argument(
         "--retries",
         dest="max_retries",
-        type=int,
+        type=non_negative_int,
         default=5,
         help="maximum number of retries for API calls (default: 5)",
     )
@@ -626,7 +637,7 @@ def retrieve_data(args, template, query_args=None, paginated=True):
     def _extract_next_page_url(link_header):
         for link in link_header.split(","):
             if 'rel="next"' in link:
-                return link[link.find("<") + 1:link.find(">")]
+                return link[link.find("<") + 1 : link.find(">")]
         return None
 
     def fetch_all() -> Generator[dict, None, None]:
@@ -635,7 +646,7 @@ def retrieve_data(args, template, query_args=None, paginated=True):
         while True:
             # FIRST: Fetch response
 
-            for attempt in range(args.max_retries):
+            for attempt in range(args.max_retries + 1):
                 request = _construct_request(
                     per_page=per_page if paginated else None,
                     query_args=query_args,
@@ -658,10 +669,10 @@ def retrieve_data(args, template, query_args=None, paginated=True):
                             TimeoutError,
                         ) as e:
                             logger.warning(f"{type(e).__name__} reading response")
-                            if attempt < args.max_retries - 1:
+                            if attempt < args.max_retries:
                                 delay = calculate_retry_delay(attempt, {})
                                 logger.warning(
-                                    f"Retrying read in {delay:.1f}s (attempt {attempt + 1}/{args.max_retries})"
+                                    f"Retrying read in {delay:.1f}s (attempt {attempt + 1}/{args.max_retries + 1})"
                                 )
                                 time.sleep(delay)
                             continue  # Next retry attempt
@@ -687,10 +698,10 @@ def retrieve_data(args, template, query_args=None, paginated=True):
                         )
             else:
                 logger.error(
-                    f"Failed to read response after {args.max_retries} attempts for {next_url or template}"
+                    f"Failed to read response after {args.max_retries + 1} attempts for {next_url or template}"
                 )
                 raise Exception(
-                    f"Failed to read response after {args.max_retries} attempts for {next_url or template}"
+                    f"Failed to read response after {args.max_retries + 1} attempts for {next_url or template}"
                 )
 
             # SECOND: Process and paginate
@@ -734,41 +745,49 @@ def make_request_with_retry(request, auth, max_retries=5):
             return int(headers.get("x-ratelimit-remaining", 1)) < 1
         return False
 
-    for attempt in range(max_retries):
+    for attempt in range(max_retries + 1):
         try:
             return urlopen(request, context=https_ctx)
 
         except HTTPError as exc:
             # HTTPError can be used as a response-like object
             if not is_retryable_status(exc.code, exc.headers):
-                logger.error(f"API Error: {exc.code} {exc.reason} for {request.full_url}")
+                logger.error(
+                    f"API Error: {exc.code} {exc.reason} for {request.full_url}"
+                )
                 raise  # Non-retryable error
 
-            if attempt >= max_retries - 1:
-                logger.error(f"HTTP {exc.code} failed after {max_retries} attempts for {request.full_url}")
+            if attempt >= max_retries:
+                logger.error(
+                    f"HTTP {exc.code} failed after {max_retries + 1} attempts for {request.full_url}"
+                )
                 raise
 
             delay = calculate_retry_delay(attempt, exc.headers)
             logger.warning(
                 f"HTTP {exc.code} ({exc.reason}), retrying in {delay:.1f}s "
-                f"(attempt {attempt + 1}/{max_retries}) for {request.full_url}"
+                f"(attempt {attempt + 1}/{max_retries + 1}) for {request.full_url}"
             )
             if auth is None and exc.code in (403, 429):
                 logger.info("Hint: Authenticate to raise your GitHub rate limit")
             time.sleep(delay)
 
         except (URLError, socket.error) as e:
-            if attempt >= max_retries - 1:
-                logger.error(f"Connection error failed after {max_retries} attempts: {e} for {request.full_url}")
+            if attempt >= max_retries:
+                logger.error(
+                    f"Connection error failed after {max_retries + 1} attempts: {e} for {request.full_url}"
+                )
                 raise
             delay = calculate_retry_delay(attempt, {})
             logger.warning(
                 f"Connection error: {e}, retrying in {delay:.1f}s "
-                f"(attempt {attempt + 1}/{max_retries}) for {request.full_url}"
+                f"(attempt {attempt + 1}/{max_retries + 1}) for {request.full_url}"
             )
             time.sleep(delay)
 
-    raise Exception(f"Request failed after {max_retries} attempts")  # pragma: no cover
+    raise Exception(
+        f"Request failed after {max_retries + 1} attempts"
+    )  # pragma: no cover
 
 
 def _construct_request(per_page, query_args, template, auth, as_app=None, fine=False):
@@ -1584,9 +1603,7 @@ def filter_repositories(args, unfiltered_repositories):
         repositories = [r for r in repositories if not r.get("archived")]
     if args.starred_skip_size_over is not None:
         if args.starred_skip_size_over <= 0:
-            logger.warning(
-                "--starred-skip-size-over must be greater than 0, ignoring"
-            )
+            logger.warning("--starred-skip-size-over must be greater than 0, ignoring")
         else:
             size_limit_kb = args.starred_skip_size_over * 1024
             filtered = []
@@ -1595,7 +1612,9 @@ def filter_repositories(args, unfiltered_repositories):
                     size_mb = r.get("size", 0) / 1024
                     logger.info(
                         "Skipping starred repo {0} ({1:.0f} MB) due to --starred-skip-size-over {2}".format(
-                            r.get("full_name", r.get("name")), size_mb, args.starred_skip_size_over
+                            r.get("full_name", r.get("name")),
+                            size_mb,
+                            args.starred_skip_size_over,
                         )
                     )
                 else:

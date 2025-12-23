@@ -49,6 +49,7 @@ def mock_args():
     args.osx_keychain_item_account = None
     args.throttle_limit = None
     args.throttle_pause = 0
+    args.max_retries = 5
     return args
 
 
