@@ -1,1 +1,0 @@
-MAX_RETRIES=5
