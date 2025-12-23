@@ -75,9 +75,6 @@ else:
                 "  3. Debian/Ubuntu: apt-get install ca-certificates\n\n"
             )
 
-# Retry configuration
-MAX_RETRIES = max_retries.MAX_RETRIES
-
 
 def logging_subprocess(
     popenargs, stdout_log_level=logging.DEBUG, stderr_log_level=logging.ERROR, **kwargs
@@ -639,7 +636,7 @@ def retrieve_data(args, template, query_args=None, paginated=True):
         while True:
             # FIRST: Fetch response
 
-            for attempt in range(MAX_RETRIES):
+            for attempt in range(max_retries.MAX_RETRIES):
                 request = _construct_request(
                     per_page=per_page if paginated else None,
                     query_args=query_args,
@@ -662,10 +659,10 @@ def retrieve_data(args, template, query_args=None, paginated=True):
                             TimeoutError,
                         ) as e:
                             logger.warning(f"{type(e).__name__} reading response")
-                            if attempt < MAX_RETRIES - 1:
+                            if attempt < max_retries.MAX_RETRIES - 1:
                                 delay = calculate_retry_delay(attempt, {})
                                 logger.warning(
-                                    f"Retrying in {delay:.1f}s (attempt {attempt + 1}/{MAX_RETRIES})"
+                                    f"Retrying in {delay:.1f}s (attempt {attempt + 1}/{max_retries.MAX_RETRIES})"
                                 )
                                 time.sleep(delay)
                             continue  # Next retry attempt
@@ -691,10 +688,10 @@ def retrieve_data(args, template, query_args=None, paginated=True):
                         )
             else:
                 logger.error(
-                    f"Failed to read response after {MAX_RETRIES} attempts for {next_url or template}"
+                    f"Failed to read response after {max_retries.MAX_RETRIES} attempts for {next_url or template}"
                 )
                 raise Exception(
-                    f"Failed to read response after {MAX_RETRIES} attempts for {next_url or template}"
+                    f"Failed to read response after {max_retries.MAX_RETRIES} attempts for {next_url or template}"
                 )
 
             # SECOND: Process and paginate
@@ -738,7 +735,7 @@ def make_request_with_retry(request, auth):
             return int(headers.get("x-ratelimit-remaining", 1)) < 1
         return False
 
-    for attempt in range(MAX_RETRIES):
+    for attempt in range(max_retries.MAX_RETRIES):
         try:
             return urlopen(request, context=https_ctx)
 
@@ -748,15 +745,14 @@ def make_request_with_retry(request, auth):
                 logger.error(f"API Error: {exc.code} {exc.reason} for {request.full_url}")
                 raise  # Non-retryable error
 
-            if attempt >= MAX_RETRIES - 1:
-                logger.error(f"HTTP {exc.code} failed after {MAX_RETRIES} attempts")
-                logger.error(f"HTTP {exc.code} failed after {MAX_RETRIES} attempts for {request.full_url}")
+            if attempt >= max_retries.MAX_RETRIES - 1:
+                logger.error(f"HTTP {exc.code} failed after {max_retries.MAX_RETRIES} attempts for {request.full_url}")
                 raise
 
             delay = calculate_retry_delay(attempt, exc.headers)
             logger.warning(
                 f"HTTP {exc.code} ({exc.reason}), retrying in {delay:.1f}s "
-                f"(attempt {attempt + 1}/{MAX_RETRIES}) for {request.full_url}"
+                f"(attempt {attempt + 1}/{max_retries.MAX_RETRIES}) for {request.full_url}"
 
             )
             if auth is None and exc.code in (403, 429):
@@ -764,17 +760,17 @@ def make_request_with_retry(request, auth):
             time.sleep(delay)
 
         except (URLError, socket.error) as e:
-            if attempt >= MAX_RETRIES - 1:
-                logger.error(f"Connection error failed after {MAX_RETRIES} attempts: {e} for {request.full_url}")
+            if attempt >= max_retries.MAX_RETRIES - 1:
+                logger.error(f"Connection error failed after {max_retries.MAX_RETRIES} attempts: {e} for {request.full_url}")
                 raise
             delay = calculate_retry_delay(attempt, {})
             logger.warning(
                 f"Connection error: {e}, retrying in {delay:.1f}s "
-                f"(attempt {attempt + 1}/{MAX_RETRIES}) for {request.full_url}"
+                f"(attempt {attempt + 1}/{max_retries.MAX_RETRIES}) for {request.full_url}"
             )
             time.sleep(delay)
 
-    raise Exception(f"Request failed after {MAX_RETRIES} attempts")  # pragma: no cover
+    raise Exception(f"Request failed after {max_retries.MAX_RETRIES} attempts")  # pragma: no cover
 
 
 def _construct_request(per_page, query_args, template, auth, as_app=None, fine=False):
