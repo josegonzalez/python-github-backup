@@ -152,7 +152,8 @@ CLI Help output::
                             --throttle-limit to be set)
       --exclude [EXCLUDE ...]
                             names of repositories to exclude
-
+      --retries MAX_RETRIES
+                            maximum number of retries for API calls (default: 5)
 
 Usage Details
 =============

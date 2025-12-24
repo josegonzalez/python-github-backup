@@ -21,6 +21,7 @@ class TestHTTP451Exception:
         args.osx_keychain_item_account = None
         args.throttle_limit = None
         args.throttle_pause = 0
+        args.max_retries = 5
 
         mock_response = Mock()
         mock_response.getcode.return_value = 451
@@ -30,18 +31,26 @@ class TestHTTP451Exception:
             "block": {
                 "reason": "dmca",
                 "created_at": "2024-11-12T14:38:04Z",
-                "html_url": "https://github.com/github/dmca/blob/master/2024/11/2024-11-04-source-code.md"
-            }
+                "html_url": "https://github.com/github/dmca/blob/master/2024/11/2024-11-04-source-code.md",
+            },
         }
         mock_response.read.return_value = json.dumps(dmca_data).encode("utf-8")
         mock_response.headers = {"x-ratelimit-remaining": "5000"}
         mock_response.reason = "Unavailable For Legal Reasons"
 
-        with patch("github_backup.github_backup.make_request_with_retry", return_value=mock_response):
+        with patch(
+            "github_backup.github_backup.make_request_with_retry",
+            return_value=mock_response,
+        ):
             with pytest.raises(github_backup.RepositoryUnavailableError) as exc_info:
-                github_backup.retrieve_data(args, "https://api.github.com/repos/test/dmca/issues")
+                github_backup.retrieve_data(
+                    args, "https://api.github.com/repos/test/dmca/issues"
+                )
 
-            assert exc_info.value.dmca_url == "https://github.com/github/dmca/blob/master/2024/11/2024-11-04-source-code.md"
+            assert (
+                exc_info.value.dmca_url
+                == "https://github.com/github/dmca/blob/master/2024/11/2024-11-04-source-code.md"
+            )
             assert "451" in str(exc_info.value)
 
     def test_repository_unavailable_error_without_dmca_url(self):
@@ -54,6 +63,7 @@ class TestHTTP451Exception:
         args.osx_keychain_item_account = None
         args.throttle_limit = None
         args.throttle_pause = 0
+        args.max_retries = 5
 
         mock_response = Mock()
         mock_response.getcode.return_value = 451
@@ -61,9 +71,14 @@ class TestHTTP451Exception:
         mock_response.headers = {"x-ratelimit-remaining": "5000"}
         mock_response.reason = "Unavailable For Legal Reasons"
 
-        with patch("github_backup.github_backup.make_request_with_retry", return_value=mock_response):
+        with patch(
+            "github_backup.github_backup.make_request_with_retry",
+            return_value=mock_response,
+        ):
             with pytest.raises(github_backup.RepositoryUnavailableError) as exc_info:
-                github_backup.retrieve_data(args, "https://api.github.com/repos/test/dmca/issues")
+                github_backup.retrieve_data(
+                    args, "https://api.github.com/repos/test/dmca/issues"
+                )
 
             assert exc_info.value.dmca_url is None
             assert "451" in str(exc_info.value)
@@ -78,6 +93,7 @@ class TestHTTP451Exception:
         args.osx_keychain_item_account = None
         args.throttle_limit = None
         args.throttle_pause = 0
+        args.max_retries = 5
 
         mock_response = Mock()
         mock_response.getcode.return_value = 451
@@ -85,9 +101,14 @@ class TestHTTP451Exception:
         mock_response.headers = {"x-ratelimit-remaining": "5000"}
         mock_response.reason = "Unavailable For Legal Reasons"
 
-        with patch("github_backup.github_backup.make_request_with_retry", return_value=mock_response):
+        with patch(
+            "github_backup.github_backup.make_request_with_retry",
+            return_value=mock_response,
+        ):
             with pytest.raises(github_backup.RepositoryUnavailableError):
-                github_backup.retrieve_data(args, "https://api.github.com/repos/test/dmca/issues")
+                github_backup.retrieve_data(
+                    args, "https://api.github.com/repos/test/dmca/issues"
+                )
 
 
 if __name__ == "__main__":
