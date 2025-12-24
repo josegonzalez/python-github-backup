@@ -1,9 +1,18 @@
 Changelog
 =========
 
-0.59.0 (2025-12-21)
+0.60.0 (2025-12-24)
 -------------------
 ------------------------
+- Rm max_retries.py. [michaelmartinez]
+- Readme. [michaelmartinez]
+- Don't use a global variable, pass the args instead. [michaelmartinez]
+- Readme, simplify the logic a bit. [michaelmartinez]
+- Max_retries 5. [michaelmartinez]
+
+
+0.59.0 (2025-12-21)
+-------------------
 - Add --starred-skip-size-over flag to limit starred repo size (#108)
   [Rodos]
 
