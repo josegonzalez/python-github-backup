@@ -311,6 +311,12 @@ def parse_args(args=None):
         help="include milestones in backup",
     )
     parser.add_argument(
+        "--security-advisories",
+        action="store_true",
+        dest="include_security_advisories",
+        help="include security advisories in backup",
+    )
+    parser.add_argument(
         "--repositories",
         action="store_true",
         dest="include_repository",
@@ -1718,6 +1724,9 @@ def backup_repositories(args, output_directory, repositories):
             if args.include_milestones or args.include_everything:
                 backup_milestones(args, repo_cwd, repository, repos_template)
 
+            if args.include_security_advisories or args.include_everything:
+                backup_security_advisories(args, repo_cwd, repository, repos_template)
+
             if args.include_labels or args.include_everything:
                 backup_labels(args, repo_cwd, repository, repos_template)
 
@@ -1929,6 +1938,41 @@ def backup_milestones(args, repo_cwd, repository, repos_template):
     else:
         logger.info(
             "Saved {0} of {1} milestones to disk ({2} unchanged)".format(
+                written_count, total, total - written_count
+            )
+        )
+
+
+def backup_security_advisories(args, repo_cwd, repository, repos_template):
+    advisory_cwd = os.path.join(repo_cwd, "security-advisories")
+    if args.skip_existing and os.path.isdir(advisory_cwd):
+        return
+
+    logger.info("Retrieving {0} security advisories".format(repository["full_name"]))
+    mkdir_p(repo_cwd, advisory_cwd)
+
+    template = "{0}/{1}/security-advisories".format(repos_template, repository["full_name"])
+
+    _advisories = retrieve_data(args, template)
+
+    advisories = {}
+    for advisory in _advisories:
+        advisories[advisory["ghsa_id"]] = advisory
+
+    written_count = 0
+    for ghsa_id, advisory in list(advisories.items()):
+        advisory_file = "{0}/{1}.json".format(advisory_cwd, ghsa_id)
+        if json_dump_if_changed(advisory, advisory_file):
+            written_count += 1
+
+    total = len(advisories)
+    if written_count == total:
+        logger.info("Saved {0} security advisories to disk".format(total))
+    elif written_count == 0:
+        logger.info("{0} security advisories unchanged, skipped write".format(total))
+    else:
+        logger.info(
+            "Saved {0} of {1} security advisories to disk ({2} unchanged)".format(
                 written_count, total, total - written_count
             )
         )
