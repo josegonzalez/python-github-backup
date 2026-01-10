@@ -37,6 +37,7 @@ class TestAllStarredCloning:
         args.include_labels = False
         args.include_hooks = False
         args.include_milestones = False
+        args.include_security_advisories = False
         args.include_releases = False
         args.include_assets = False
         args.include_attachments = False
