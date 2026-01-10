@@ -55,7 +55,7 @@ CLI Help output::
                   [--skip-assets-on [SKIP_ASSETS_ON ...]] [--attachments]
                   [--throttle-limit THROTTLE_LIMIT]
                   [--throttle-pause THROTTLE_PAUSE]
-                  [--exclude [EXCLUDE ...]]
+                  [--exclude [EXCLUDE ...]] [--retries MAX_RETRIES]
                   USER
 
     Backup a github account
