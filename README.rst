@@ -43,9 +43,9 @@ CLI Help output::
                   [--watched] [--followers] [--following] [--all]
                   [--issues] [--issue-comments] [--issue-events] [--pulls]
                   [--pull-comments] [--pull-commits] [--pull-details]
-                  [--labels] [--hooks] [--milestones] [--repositories]
-                  [--bare] [--no-prune] [--lfs] [--wikis] [--gists]
-                  [--starred-gists] [--skip-archived] [--skip-existing]
+                  [--labels] [--hooks] [--milestones] [--security-advisories]
+                  [--repositories] [--bare] [--no-prune] [--lfs] [--wikis]
+                  [--gists] [--starred-gists] [--skip-archived] [--skip-existing]
                   [-L [LANGUAGES ...]] [-N NAME_REGEX] [-H GITHUB_HOST]
                   [-O] [-R REPOSITORY] [-P] [-F] [--prefer-ssh] [-v]
                   [--keychain-name OSX_KEYCHAIN_ITEM_NAME]
@@ -101,6 +101,8 @@ CLI Help output::
       --hooks               include hooks in backup (works only when
                             authenticated)
       --milestones          include milestones in backup
+      --security-advisories
+                            include security advisories in backup
       --repositories        include repository clone in backup
       --bare                clone bare repositories
       --no-prune            disable prune option for git fetch
@@ -401,7 +403,7 @@ Quietly and incrementally backup useful Github user data (public and private rep
     export FINE_ACCESS_TOKEN=SOME-GITHUB-TOKEN
     GH_USER=YOUR-GITHUB-USER
 
-    github-backup -f $FINE_ACCESS_TOKEN --prefer-ssh -o ~/github-backup/ -l error -P -i --all-starred --starred --watched --followers --following --issues --issue-comments --issue-events --pulls --pull-comments --pull-commits --labels --milestones --repositories --wikis --releases --assets --attachments --pull-details --gists --starred-gists $GH_USER
+    github-backup -f $FINE_ACCESS_TOKEN --prefer-ssh -o ~/github-backup/ -l error -P -i --all-starred --starred --watched --followers --following --issues --issue-comments --issue-events --pulls --pull-comments --pull-commits --labels --milestones --security-advisories --repositories --wikis --releases --assets --attachments --pull-details --gists --starred-gists $GH_USER
     
 Debug an error/block or incomplete backup into a temporary directory. Omit "incremental" to fill a previous incomplete backup. ::
 
