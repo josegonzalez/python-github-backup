@@ -1,9 +1,16 @@
 Changelog
 =========
 
-0.60.0 (2025-12-24)
+0.61.0 (2026-01-12)
 -------------------
 ------------------------
+- Docs: Add missing `--retries` argument to README. [Lukas Bestle]
+- Test: Adapt tests to new argument. [Lukas Bestle]
+- Feat: Backup of repository security advisories. [Lukas Bestle]
+
+
+0.60.0 (2025-12-24)
+-------------------
 - Rm max_retries.py. [michaelmartinez]
 - Readme. [michaelmartinez]
 - Don't use a global variable, pass the args instead. [michaelmartinez]
