@@ -1062,6 +1062,65 @@ def download_attachment_file(url, path, auth, as_app=False, fine=False):
     return metadata
 
 
+def get_jwt_signed_url_via_markdown_api(url, token, repo_context):
+    """Convert a user-attachments/assets URL to a JWT-signed URL via Markdown API.
+
+    GitHub's Markdown API renders image URLs and returns HTML containing
+    JWT-signed private-user-images.githubusercontent.com URLs that work
+    without token authentication.
+
+    This is a workaround for issue #477 where fine-grained PATs cannot
+    download user-attachments URLs from private repos directly.
+
+    Limitations:
+    - Only works for /assets/ URLs (images)
+    - Does NOT work for /files/ URLs (PDFs, text files, etc.)
+    - JWT URLs expire after ~5 minutes
+
+    Args:
+        url: The github.com/user-attachments/assets/UUID URL
+        token: Raw fine-grained PAT (github_pat_...)
+        repo_context: Repository context as "owner/repo"
+
+    Returns:
+        str: JWT-signed URL from private-user-images.githubusercontent.com
+        None: If conversion fails
+    """
+
+    try:
+        payload = json.dumps(
+            {"text": f"![img]({url})", "mode": "gfm", "context": repo_context}
+        ).encode("utf-8")
+
+        request = Request("https://api.github.com/markdown", data=payload, method="POST")
+        request.add_header("Authorization", f"token {token}")
+        request.add_header("Content-Type", "application/json")
+        request.add_header("Accept", "application/vnd.github+json")
+
+        html = urlopen(request, timeout=30).read().decode("utf-8")
+
+        # Parse JWT-signed URL from HTML response
+        # Format: <img src="https://private-user-images.githubusercontent.com/...?jwt=..." ...>
+        if match := re.search(
+            r'src="(https://private-user-images\.githubusercontent\.com/[^"]+)"', html
+        ):
+            jwt_url = match.group(1)
+            logger.debug("Converted attachment URL to JWT-signed URL via Markdown API")
+            return jwt_url
+
+        logger.debug("Markdown API response did not contain JWT-signed URL")
+        return None
+
+    except HTTPError as e:
+        logger.debug(
+            "Markdown API request failed with HTTP {0}: {1}".format(e.code, e.reason)
+        )
+        return None
+    except Exception as e:
+        logger.debug("Markdown API request failed: {0}".format(str(e)))
+        return None
+
+
 def extract_attachment_urls(item_data, issue_number=None, repository_full_name=None):
     """Extract GitHub-hosted attachment URLs from issue/PR body and comments.
 
@@ -1415,14 +1474,45 @@ def download_attachments(
         filename = get_attachment_filename(url)
         filepath = os.path.join(attachments_dir, filename)
 
-        # Download and get metadata
-        metadata = download_attachment_file(
-            url,
-            filepath,
-            get_auth(args, encode=not args.as_app),
-            as_app=args.as_app,
-            fine=args.token_fine is not None,
+        # Issue #477: Fine-grained PATs cannot download user-attachments/assets
+        # from private repos directly (404). Use Markdown API workaround to get
+        # a JWT-signed URL. Only works for /assets/ (images), not /files/.
+        needs_jwt = (
+            args.token_fine is not None
+            and repository.get("private", False)
+            and "github.com/user-attachments/assets/" in url
         )
+
+        if not needs_jwt:
+            # NORMAL download path
+            metadata = download_attachment_file(
+                url,
+                filepath,
+                get_auth(args, encode=not args.as_app),
+                as_app=args.as_app,
+                fine=args.token_fine is not None,
+            )
+        elif jwt_url := get_jwt_signed_url_via_markdown_api(
+            url, args.token_fine, repository["full_name"]
+        ):
+            # JWT needed and extracted, download via JWT
+            metadata = download_attachment_file(
+                jwt_url, filepath, auth=None, as_app=False, fine=False
+            )
+            metadata["url"] = url  # Apply back the original URL
+            metadata["jwt_workaround"] = True
+        else:
+            # Markdown API workaround failed - skip download we know will fail
+            metadata = {
+                "url": url,
+                "success": False,
+                "skipped_at": datetime.now(timezone.utc).isoformat(),
+                "error": "Fine-grained token cannot download private repo attachments. "
+                "Markdown API workaround failed. Use --token-classic instead.",
+            }
+            logger.warning(
+                "Skipping attachment {0}: {1}".format(url, metadata["error"])
+            )
 
         # If download succeeded but we got an extension from Content-Disposition,
         # we may need to rename the file to add the extension
@@ -1951,7 +2041,9 @@ def backup_security_advisories(args, repo_cwd, repository, repos_template):
     logger.info("Retrieving {0} security advisories".format(repository["full_name"]))
     mkdir_p(repo_cwd, advisory_cwd)
 
-    template = "{0}/{1}/security-advisories".format(repos_template, repository["full_name"])
+    template = "{0}/{1}/security-advisories".format(
+        repos_template, repository["full_name"]
+    )
 
     _advisories = retrieve_data(args, template)
 

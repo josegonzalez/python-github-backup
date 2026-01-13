@@ -281,6 +281,8 @@ The tool automatically extracts file extensions from HTTP headers to ensure file
 
 **Repository filtering** for repo files/assets handles renamed and transferred repositories gracefully. URLs are included if they either match the current repository name directly, or redirect to it (e.g., ``willmcgugan/rich`` redirects to ``Textualize/rich`` after transfer).
 
+**Fine-grained token limitation:** Due to a GitHub platform limitation, fine-grained personal access tokens (``github_pat_...``) cannot download attachments from private repositories directly. This affects both ``/assets/`` (images) and ``/files/`` (documents) URLs. The tool implements a workaround for image attachments using GitHub's Markdown API, which converts URLs to temporary JWT-signed URLs that can be downloaded. However, this workaround only works for images - document attachments (PDFs, text files, etc.) will fail with 404 errors when using fine-grained tokens on private repos. For full attachment support on private repositories, use a classic token (``-t``) instead of a fine-grained token (``-f``). See `#477 <https://github.com/josegonzalez/python-github-backup/issues/477>`_ for details.
+
 
 Run in Docker container
 -----------------------

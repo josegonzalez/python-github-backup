@@ -1,7 +1,6 @@
 """Tests for case-insensitive username/organization filtering."""
 
 import pytest
-from unittest.mock import Mock
 
 from github_backup import github_backup
 
@@ -9,25 +8,14 @@ from github_backup import github_backup
 class TestCaseSensitivity:
     """Test suite for case-insensitive username matching in filter_repositories."""
 
-    def test_filter_repositories_case_insensitive_user(self):
+    def test_filter_repositories_case_insensitive_user(self, create_args):
         """Should filter repositories case-insensitively for usernames.
 
         Reproduces issue #198 where typing 'iamrodos' fails to match
         repositories with owner.login='Iamrodos' (the canonical case from GitHub API).
         """
         # Simulate user typing lowercase username
-        args = Mock()
-        args.user = "iamrodos"  # lowercase (what user typed)
-        args.repository = None
-        args.name_regex = None
-        args.languages = None
-        args.exclude = None
-        args.fork = False
-        args.private = False
-        args.public = False
-        args.all = True
-        args.skip_archived = False
-        args.starred_skip_size_over = None
+        args = create_args(user="iamrodos")
 
         # Simulate GitHub API returning canonical case
         repos = [
@@ -52,23 +40,12 @@ class TestCaseSensitivity:
         assert filtered[0]["name"] == "repo1"
         assert filtered[1]["name"] == "repo2"
 
-    def test_filter_repositories_case_insensitive_org(self):
+    def test_filter_repositories_case_insensitive_org(self, create_args):
         """Should filter repositories case-insensitively for organizations.
 
         Tests the example from issue #198 where 'prai-org' doesn't match 'PRAI-Org'.
         """
-        args = Mock()
-        args.user = "prai-org"  # lowercase (what user typed)
-        args.repository = None
-        args.name_regex = None
-        args.languages = None
-        args.exclude = None
-        args.fork = False
-        args.private = False
-        args.public = False
-        args.all = True
-        args.skip_archived = False
-        args.starred_skip_size_over = None
+        args = create_args(user="prai-org")
 
         repos = [
             {
@@ -85,20 +62,9 @@ class TestCaseSensitivity:
         assert len(filtered) == 1
         assert filtered[0]["name"] == "repo1"
 
-    def test_filter_repositories_case_variations(self):
+    def test_filter_repositories_case_variations(self, create_args):
         """Should handle various case combinations correctly."""
-        args = Mock()
-        args.user = "TeSt-UsEr"  # Mixed case
-        args.repository = None
-        args.name_regex = None
-        args.languages = None
-        args.exclude = None
-        args.fork = False
-        args.private = False
-        args.public = False
-        args.all = True
-        args.skip_archived = False
-        args.starred_skip_size_over = None
+        args = create_args(user="TeSt-UsEr")
 
         repos = [
             {"name": "repo1", "owner": {"login": "test-user"}, "private": False, "fork": False},

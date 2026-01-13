@@ -1,39 +1,11 @@
 """Tests for --starred-skip-size-over flag behavior (issue #108)."""
 
 import pytest
-from unittest.mock import Mock
 
 from github_backup import github_backup
 
 
-class TestStarredSkipSizeOver:
-    """Test suite for --starred-skip-size-over flag.
-
-    Issue #108: Allow restricting size of starred repositories before cloning.
-    The size is based on the GitHub API's 'size' field (in KB), but the CLI
-    argument accepts MB for user convenience.
-    """
-
-    def _create_mock_args(self, **overrides):
-        """Create a mock args object with sensible defaults."""
-        args = Mock()
-        args.user = "testuser"
-        args.repository = None
-        args.name_regex = None
-        args.languages = None
-        args.fork = False
-        args.private = False
-        args.skip_archived = False
-        args.starred_skip_size_over = None
-        args.exclude = None
-
-        for key, value in overrides.items():
-            setattr(args, key, value)
-
-        return args
-
-
-class TestStarredSkipSizeOverArgumentParsing(TestStarredSkipSizeOver):
+class TestStarredSkipSizeOverArgumentParsing:
     """Tests for --starred-skip-size-over argument parsing."""
 
     def test_starred_skip_size_over_not_set_defaults_to_none(self):
@@ -52,12 +24,17 @@ class TestStarredSkipSizeOverArgumentParsing(TestStarredSkipSizeOver):
             github_backup.parse_args(["testuser", "--starred-skip-size-over", "abc"])
 
 
-class TestStarredSkipSizeOverFiltering(TestStarredSkipSizeOver):
-    """Tests for --starred-skip-size-over filtering behavior."""
+class TestStarredSkipSizeOverFiltering:
+    """Tests for --starred-skip-size-over filtering behavior.
 
-    def test_starred_repo_under_limit_is_kept(self):
+    Issue #108: Allow restricting size of starred repositories before cloning.
+    The size is based on the GitHub API's 'size' field (in KB), but the CLI
+    argument accepts MB for user convenience.
+    """
+
+    def test_starred_repo_under_limit_is_kept(self, create_args):
         """Starred repos under the size limit should be kept."""
-        args = self._create_mock_args(starred_skip_size_over=500)
+        args = create_args(starred_skip_size_over=500)
 
         repos = [
             {
@@ -72,9 +49,9 @@ class TestStarredSkipSizeOverFiltering(TestStarredSkipSizeOver):
         assert len(result) == 1
         assert result[0]["name"] == "small-repo"
 
-    def test_starred_repo_over_limit_is_filtered(self):
+    def test_starred_repo_over_limit_is_filtered(self, create_args):
         """Starred repos over the size limit should be filtered out."""
-        args = self._create_mock_args(starred_skip_size_over=500)
+        args = create_args(starred_skip_size_over=500)
 
         repos = [
             {
@@ -88,9 +65,9 @@ class TestStarredSkipSizeOverFiltering(TestStarredSkipSizeOver):
         result = github_backup.filter_repositories(args, repos)
         assert len(result) == 0
 
-    def test_own_repo_over_limit_is_kept(self):
+    def test_own_repo_over_limit_is_kept(self, create_args):
         """User's own repos should not be affected by the size limit."""
-        args = self._create_mock_args(starred_skip_size_over=500)
+        args = create_args(starred_skip_size_over=500)
 
         repos = [
             {
@@ -105,9 +82,9 @@ class TestStarredSkipSizeOverFiltering(TestStarredSkipSizeOver):
         assert len(result) == 1
         assert result[0]["name"] == "my-huge-repo"
 
-    def test_starred_repo_at_exact_limit_is_kept(self):
+    def test_starred_repo_at_exact_limit_is_kept(self, create_args):
         """Starred repos at exactly the size limit should be kept."""
-        args = self._create_mock_args(starred_skip_size_over=500)
+        args = create_args(starred_skip_size_over=500)
 
         repos = [
             {
@@ -122,9 +99,9 @@ class TestStarredSkipSizeOverFiltering(TestStarredSkipSizeOver):
         assert len(result) == 1
         assert result[0]["name"] == "exact-limit-repo"
 
-    def test_mixed_repos_filtered_correctly(self):
+    def test_mixed_repos_filtered_correctly(self, create_args):
         """Mix of own and starred repos should be filtered correctly."""
-        args = self._create_mock_args(starred_skip_size_over=500)
+        args = create_args(starred_skip_size_over=500)
 
         repos = [
             {
@@ -153,9 +130,9 @@ class TestStarredSkipSizeOverFiltering(TestStarredSkipSizeOver):
         assert "starred-small" in names
         assert "starred-huge" not in names
 
-    def test_no_size_limit_keeps_all_starred(self):
+    def test_no_size_limit_keeps_all_starred(self, create_args):
         """When no size limit is set, all starred repos should be kept."""
-        args = self._create_mock_args(starred_skip_size_over=None)
+        args = create_args(starred_skip_size_over=None)
 
         repos = [
             {
@@ -169,9 +146,9 @@ class TestStarredSkipSizeOverFiltering(TestStarredSkipSizeOver):
         result = github_backup.filter_repositories(args, repos)
         assert len(result) == 1
 
-    def test_repo_without_size_field_is_kept(self):
+    def test_repo_without_size_field_is_kept(self, create_args):
         """Repos without a size field should be kept (size defaults to 0)."""
-        args = self._create_mock_args(starred_skip_size_over=500)
+        args = create_args(starred_skip_size_over=500)
 
         repos = [
             {
@@ -185,9 +162,9 @@ class TestStarredSkipSizeOverFiltering(TestStarredSkipSizeOver):
         result = github_backup.filter_repositories(args, repos)
         assert len(result) == 1
 
-    def test_zero_value_warns_and_is_ignored(self, caplog):
+    def test_zero_value_warns_and_is_ignored(self, create_args, caplog):
         """Zero value should warn and keep all repos."""
-        args = self._create_mock_args(starred_skip_size_over=0)
+        args = create_args(starred_skip_size_over=0)
 
         repos = [
             {
@@ -202,9 +179,9 @@ class TestStarredSkipSizeOverFiltering(TestStarredSkipSizeOver):
         assert len(result) == 1
         assert "must be greater than 0" in caplog.text
 
-    def test_negative_value_warns_and_is_ignored(self, caplog):
+    def test_negative_value_warns_and_is_ignored(self, create_args, caplog):
         """Negative value should warn and keep all repos."""
-        args = self._create_mock_args(starred_skip_size_over=-5)
+        args = create_args(starred_skip_size_over=-5)
 
         repos = [
             {
