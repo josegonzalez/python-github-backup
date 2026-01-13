@@ -46,6 +46,16 @@ def main():
             "Use -t/--token or -f/--token-fine to authenticate."
         )
 
+    # Issue #477: Fine-grained PATs cannot download all attachment types from
+    # private repos. Image attachments will be retried via Markdown API workaround.
+    if args.include_attachments and args.token_fine:
+        logger.warning(
+            "Using --attachments with fine-grained token. Due to GitHub platform "
+            "limitations, file attachments (PDFs, etc.) from private repos may fail. "
+            "Image attachments will be retried via workaround. For full attachment "
+            "support, use --token-classic instead."
+        )
+
     if args.quiet:
         logger.setLevel(logging.WARNING)
 

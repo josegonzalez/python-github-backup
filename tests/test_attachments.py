@@ -349,3 +349,139 @@ class TestManifestDuplicatePrevention:
             downloaded_urls[0]
             == "https://github.com/user-attachments/assets/unavailable"
         )
+
+
+class TestJWTWorkaround:
+    """Test JWT workaround for fine-grained tokens on private repos (issue #477)."""
+
+    def test_markdown_api_extracts_jwt_url(self):
+        """Markdown API response with JWT URL is extracted correctly."""
+        from unittest.mock import patch, Mock
+
+        html_response = '''<p><a href="https://private-user-images.githubusercontent.com/123/abc.png?jwt=eyJhbGciOiJ"><img src="https://private-user-images.githubusercontent.com/123/abc.png?jwt=eyJhbGciOiJ" alt="img"></a></p>'''
+
+        mock_response = Mock()
+        mock_response.read.return_value = html_response.encode("utf-8")
+
+        with patch("github_backup.github_backup.urlopen", return_value=mock_response):
+            result = github_backup.get_jwt_signed_url_via_markdown_api(
+                "https://github.com/user-attachments/assets/abc123",
+                "github_pat_token",
+                "owner/repo"
+            )
+
+        assert result == "https://private-user-images.githubusercontent.com/123/abc.png?jwt=eyJhbGciOiJ"
+
+    def test_markdown_api_returns_none_on_http_error(self):
+        """HTTP errors return None."""
+        from unittest.mock import patch
+        from urllib.error import HTTPError
+
+        with patch("github_backup.github_backup.urlopen", side_effect=HTTPError(None, 403, "Forbidden", {}, None)):
+            result = github_backup.get_jwt_signed_url_via_markdown_api(
+                "https://github.com/user-attachments/assets/abc123",
+                "github_pat_token",
+                "owner/repo"
+            )
+
+        assert result is None
+
+    def test_markdown_api_returns_none_when_no_jwt_url(self):
+        """Response without JWT URL returns None."""
+        from unittest.mock import patch, Mock
+
+        mock_response = Mock()
+        mock_response.read.return_value = b"<p>No image here</p>"
+
+        with patch("github_backup.github_backup.urlopen", return_value=mock_response):
+            result = github_backup.get_jwt_signed_url_via_markdown_api(
+                "https://github.com/user-attachments/assets/abc123",
+                "github_pat_token",
+                "owner/repo"
+            )
+
+        assert result is None
+
+    def test_needs_jwt_only_for_fine_grained_private_assets(self):
+        """needs_jwt is True only for fine-grained + private + /assets/ URL."""
+        assets_url = "https://github.com/user-attachments/assets/abc123"
+        files_url = "https://github.com/user-attachments/files/123/doc.pdf"
+
+        # Fine-grained + private + assets = True
+        assert (
+            "github_pat_" is not None
+            and True  # private
+            and "github.com/user-attachments/assets/" in assets_url
+        ) is True
+
+        # Fine-grained + private + files = False
+        assert (
+            "github_pat_" is not None
+            and True
+            and "github.com/user-attachments/assets/" in files_url
+        ) is False
+
+        # Fine-grained + public + assets = False
+        assert (
+            "github_pat_" is not None
+            and False  # public
+            and "github.com/user-attachments/assets/" in assets_url
+        ) is False
+
+    def test_jwt_workaround_sets_manifest_flag(self, attachment_test_setup):
+        """Successful JWT workaround sets jwt_workaround flag in manifest."""
+        from unittest.mock import patch, Mock
+
+        setup = attachment_test_setup
+        setup["args"].token_fine = "github_pat_test"
+        setup["repository"]["private"] = True
+
+        issue_data = {"body": "https://github.com/user-attachments/assets/abc123"}
+
+        jwt_url = "https://private-user-images.githubusercontent.com/123/abc.png?jwt=token"
+
+        with patch(
+            "github_backup.github_backup.get_jwt_signed_url_via_markdown_api",
+            return_value=jwt_url
+        ), patch(
+            "github_backup.github_backup.download_attachment_file",
+            return_value={"success": True, "http_status": 200, "url": jwt_url}
+        ):
+            github_backup.download_attachments(
+                setup["args"], setup["issue_cwd"], issue_data, 123, setup["repository"]
+            )
+
+        manifest_path = os.path.join(setup["issue_cwd"], "attachments", "123", "manifest.json")
+        with open(manifest_path) as f:
+            manifest = json.load(f)
+
+        assert manifest["attachments"][0]["jwt_workaround"] is True
+        assert manifest["attachments"][0]["url"] == "https://github.com/user-attachments/assets/abc123"
+
+    def test_jwt_workaround_failure_uses_skipped_at(self, attachment_test_setup):
+        """Failed JWT workaround uses skipped_at instead of downloaded_at."""
+        from unittest.mock import patch
+
+        setup = attachment_test_setup
+        setup["args"].token_fine = "github_pat_test"
+        setup["repository"]["private"] = True
+
+        issue_data = {"body": "https://github.com/user-attachments/assets/abc123"}
+
+        with patch(
+            "github_backup.github_backup.get_jwt_signed_url_via_markdown_api",
+            return_value=None  # Markdown API failed
+        ):
+            github_backup.download_attachments(
+                setup["args"], setup["issue_cwd"], issue_data, 123, setup["repository"]
+            )
+
+        manifest_path = os.path.join(setup["issue_cwd"], "attachments", "123", "manifest.json")
+        with open(manifest_path) as f:
+            manifest = json.load(f)
+
+        attachment = manifest["attachments"][0]
+        assert attachment["success"] is False
+        assert "skipped_at" in attachment
+        assert "downloaded_at" not in attachment
+        assert "Use --token-classic" in attachment["error"]
