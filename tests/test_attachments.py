@@ -4,7 +4,7 @@ import json
 import os
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -12,22 +12,13 @@ from github_backup import github_backup
 
 
 @pytest.fixture
-def attachment_test_setup(tmp_path):
+def attachment_test_setup(tmp_path, create_args):
     """Fixture providing setup and helper for attachment download tests."""
-    from unittest.mock import patch
-
     issue_cwd = tmp_path / "issues"
     issue_cwd.mkdir()
 
-    # Mock args
-    args = Mock()
-    args.as_app = False
-    args.token_fine = None
-    args.token_classic = None
-    args.osx_keychain_item_name = None
-    args.osx_keychain_item_account = None
-    args.user = "testuser"
-    args.repository = "testrepo"
+    # Create args using shared fixture
+    args = create_args(user="testuser", repository="testrepo")
 
     repository = {"full_name": "testuser/testrepo"}
 
@@ -356,9 +347,12 @@ class TestJWTWorkaround:
 
     def test_markdown_api_extracts_jwt_url(self):
         """Markdown API response with JWT URL is extracted correctly."""
-        from unittest.mock import patch, Mock
-
-        html_response = '''<p><a href="https://private-user-images.githubusercontent.com/123/abc.png?jwt=eyJhbGciOiJ"><img src="https://private-user-images.githubusercontent.com/123/abc.png?jwt=eyJhbGciOiJ" alt="img"></a></p>'''
+        html_response = (
+            '<p><a href="https://private-user-images.githubusercontent.com'
+            '/123/abc.png?jwt=eyJhbGciOiJ"><img src="https://private-user-'
+            'images.githubusercontent.com/123/abc.png?jwt=eyJhbGciOiJ" '
+            'alt="img"></a></p>'
+        )
 
         mock_response = Mock()
         mock_response.read.return_value = html_response.encode("utf-8")
@@ -370,14 +364,18 @@ class TestJWTWorkaround:
                 "owner/repo"
             )
 
-        assert result == "https://private-user-images.githubusercontent.com/123/abc.png?jwt=eyJhbGciOiJ"
+        expected = (
+            "https://private-user-images.githubusercontent.com"
+            "/123/abc.png?jwt=eyJhbGciOiJ"
+        )
+        assert result == expected
 
     def test_markdown_api_returns_none_on_http_error(self):
         """HTTP errors return None."""
-        from unittest.mock import patch
         from urllib.error import HTTPError
 
-        with patch("github_backup.github_backup.urlopen", side_effect=HTTPError(None, 403, "Forbidden", {}, None)):
+        error = HTTPError("http://test", 403, "Forbidden", {}, None)
+        with patch("github_backup.github_backup.urlopen", side_effect=error):
             result = github_backup.get_jwt_signed_url_via_markdown_api(
                 "https://github.com/user-attachments/assets/abc123",
                 "github_pat_token",
@@ -388,8 +386,6 @@ class TestJWTWorkaround:
 
     def test_markdown_api_returns_none_when_no_jwt_url(self):
         """Response without JWT URL returns None."""
-        from unittest.mock import patch, Mock
-
         mock_response = Mock()
         mock_response.read.return_value = b"<p>No image here</p>"
 
@@ -406,32 +402,36 @@ class TestJWTWorkaround:
         """needs_jwt is True only for fine-grained + private + /assets/ URL."""
         assets_url = "https://github.com/user-attachments/assets/abc123"
         files_url = "https://github.com/user-attachments/files/123/doc.pdf"
+        token_fine = "github_pat_test"
+        private = True
+        public = False
 
         # Fine-grained + private + assets = True
-        assert (
-            "github_pat_" is not None
-            and True  # private
+        needs_jwt = (
+            token_fine is not None
+            and private
             and "github.com/user-attachments/assets/" in assets_url
-        ) is True
+        )
+        assert needs_jwt is True
 
         # Fine-grained + private + files = False
-        assert (
-            "github_pat_" is not None
-            and True
+        needs_jwt = (
+            token_fine is not None
+            and private
             and "github.com/user-attachments/assets/" in files_url
-        ) is False
+        )
+        assert needs_jwt is False
 
         # Fine-grained + public + assets = False
-        assert (
-            "github_pat_" is not None
-            and False  # public
+        needs_jwt = (
+            token_fine is not None
+            and public
             and "github.com/user-attachments/assets/" in assets_url
-        ) is False
+        )
+        assert needs_jwt is False
 
     def test_jwt_workaround_sets_manifest_flag(self, attachment_test_setup):
         """Successful JWT workaround sets jwt_workaround flag in manifest."""
-        from unittest.mock import patch, Mock
-
         setup = attachment_test_setup
         setup["args"].token_fine = "github_pat_test"
         setup["repository"]["private"] = True
@@ -460,8 +460,6 @@ class TestJWTWorkaround:
 
     def test_jwt_workaround_failure_uses_skipped_at(self, attachment_test_setup):
         """Failed JWT workaround uses skipped_at instead of downloaded_at."""
-        from unittest.mock import patch
-
         setup = attachment_test_setup
         setup["args"].token_fine = "github_pat_test"
         setup["repository"]["private"] = True

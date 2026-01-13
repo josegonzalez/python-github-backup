@@ -1,9 +1,7 @@
 """Tests for Link header pagination handling."""
 
 import json
-from unittest.mock import Mock, patch
-
-import pytest
+from unittest.mock import patch
 
 from github_backup import github_backup
 
@@ -38,23 +36,9 @@ class MockHTTPResponse:
         return headers
 
 
-@pytest.fixture
-def mock_args():
-    """Mock args for retrieve_data."""
-    args = Mock()
-    args.as_app = False
-    args.token_fine = None
-    args.token_classic = "fake_token"
-    args.osx_keychain_item_name = None
-    args.osx_keychain_item_account = None
-    args.throttle_limit = None
-    args.throttle_pause = 0
-    args.max_retries = 5
-    return args
-
-
-def test_cursor_based_pagination(mock_args):
+def test_cursor_based_pagination(create_args):
     """Link header with 'after' cursor parameter works correctly."""
+    args = create_args(token_classic="fake_token")
 
     # Simulate issues endpoint behavior: returns cursor in Link header
     responses = [
@@ -77,7 +61,7 @@ def test_cursor_based_pagination(mock_args):
 
     with patch("github_backup.github_backup.urlopen", side_effect=mock_urlopen):
         results = github_backup.retrieve_data(
-            mock_args, "https://api.github.com/repos/owner/repo/issues"
+            args, "https://api.github.com/repos/owner/repo/issues"
         )
 
     # Verify all items retrieved and cursor was used in second request
@@ -86,8 +70,9 @@ def test_cursor_based_pagination(mock_args):
     assert "after=ABC123" in requests_made[1]
 
 
-def test_page_based_pagination(mock_args):
+def test_page_based_pagination(create_args):
     """Link header with 'page' parameter works correctly."""
+    args = create_args(token_classic="fake_token")
 
     # Simulate pulls/repos endpoint behavior: returns page numbers in Link header
     responses = [
@@ -110,7 +95,7 @@ def test_page_based_pagination(mock_args):
 
     with patch("github_backup.github_backup.urlopen", side_effect=mock_urlopen):
         results = github_backup.retrieve_data(
-            mock_args, "https://api.github.com/repos/owner/repo/pulls"
+            args, "https://api.github.com/repos/owner/repo/pulls"
         )
 
     # Verify all items retrieved and page parameter was used (not cursor)
@@ -120,8 +105,9 @@ def test_page_based_pagination(mock_args):
     assert "after" not in requests_made[1]
 
 
-def test_no_link_header_stops_pagination(mock_args):
+def test_no_link_header_stops_pagination(create_args):
     """Pagination stops when Link header is absent."""
+    args = create_args(token_classic="fake_token")
 
     # Simulate endpoint with results that fit in a single page
     responses = [
@@ -138,7 +124,7 @@ def test_no_link_header_stops_pagination(mock_args):
 
     with patch("github_backup.github_backup.urlopen", side_effect=mock_urlopen):
         results = github_backup.retrieve_data(
-            mock_args, "https://api.github.com/repos/owner/repo/labels"
+            args, "https://api.github.com/repos/owner/repo/labels"
         )
 
     # Verify pagination stopped after first request

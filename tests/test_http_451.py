@@ -11,17 +11,9 @@ from github_backup import github_backup
 class TestHTTP451Exception:
     """Test suite for HTTP 451 DMCA takedown exception handling."""
 
-    def test_repository_unavailable_error_raised(self):
+    def test_repository_unavailable_error_raised(self, create_args):
         """HTTP 451 should raise RepositoryUnavailableError with DMCA URL."""
-        args = Mock()
-        args.as_app = False
-        args.token_fine = None
-        args.token_classic = None
-        args.osx_keychain_item_name = None
-        args.osx_keychain_item_account = None
-        args.throttle_limit = None
-        args.throttle_pause = 0
-        args.max_retries = 5
+        args = create_args()
 
         mock_response = Mock()
         mock_response.getcode.return_value = 451
@@ -53,17 +45,9 @@ class TestHTTP451Exception:
             )
             assert "451" in str(exc_info.value)
 
-    def test_repository_unavailable_error_without_dmca_url(self):
+    def test_repository_unavailable_error_without_dmca_url(self, create_args):
         """HTTP 451 without DMCA details should still raise exception."""
-        args = Mock()
-        args.as_app = False
-        args.token_fine = None
-        args.token_classic = None
-        args.osx_keychain_item_name = None
-        args.osx_keychain_item_account = None
-        args.throttle_limit = None
-        args.throttle_pause = 0
-        args.max_retries = 5
+        args = create_args()
 
         mock_response = Mock()
         mock_response.getcode.return_value = 451
@@ -83,17 +67,9 @@ class TestHTTP451Exception:
             assert exc_info.value.dmca_url is None
             assert "451" in str(exc_info.value)
 
-    def test_repository_unavailable_error_with_malformed_json(self):
+    def test_repository_unavailable_error_with_malformed_json(self, create_args):
         """HTTP 451 with malformed JSON should still raise exception."""
-        args = Mock()
-        args.as_app = False
-        args.token_fine = None
-        args.token_classic = None
-        args.osx_keychain_item_name = None
-        args.osx_keychain_item_account = None
-        args.throttle_limit = None
-        args.throttle_pause = 0
-        args.max_retries = 5
+        args = create_args()
 
         mock_response = Mock()
         mock_response.getcode.return_value = 451

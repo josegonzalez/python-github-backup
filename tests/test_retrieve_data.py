@@ -63,21 +63,9 @@ class TestCalculateRetryDelay:
 class TestRetrieveDataRetry:
     """Tests for retry behavior in retrieve_data."""
 
-    @pytest.fixture
-    def mock_args(self):
-        args = Mock()
-        args.as_app = False
-        args.token_fine = None
-        args.token_classic = "fake_token"
-        args.osx_keychain_item_name = None
-        args.osx_keychain_item_account = None
-        args.throttle_limit = None
-        args.throttle_pause = 0
-        args.max_retries = DEFAULT_MAX_RETRIES
-        return args
-
-    def test_json_parse_error_retries_and_fails(self, mock_args):
+    def test_json_parse_error_retries_and_fails(self, create_args):
         """HTTP 200 with invalid JSON should retry and eventually fail."""
+        args = create_args(token_classic="fake_token")
         mock_response = Mock()
         mock_response.getcode.return_value = 200
         mock_response.read.return_value = b"not valid json {"
@@ -85,7 +73,7 @@ class TestRetrieveDataRetry:
 
         call_count = 0
 
-        def mock_make_request(*args, **kwargs):
+        def mock_make_request(*a, **kw):
             nonlocal call_count
             call_count += 1
             return mock_response
@@ -99,7 +87,7 @@ class TestRetrieveDataRetry:
             ):  # No delay in tests
                 with pytest.raises(Exception) as exc_info:
                     github_backup.retrieve_data(
-                        mock_args, "https://api.github.com/repos/test/repo/issues"
+                        args, "https://api.github.com/repos/test/repo/issues"
                     )
 
         assert "Failed to read response after" in str(exc_info.value)
@@ -107,8 +95,9 @@ class TestRetrieveDataRetry:
             call_count == DEFAULT_MAX_RETRIES + 1
         )  # 1 initial + 5 retries = 6 attempts
 
-    def test_json_parse_error_recovers_on_retry(self, mock_args):
+    def test_json_parse_error_recovers_on_retry(self, create_args):
         """HTTP 200 with invalid JSON should succeed if retry returns valid JSON."""
+        args = create_args(token_classic="fake_token")
         bad_response = Mock()
         bad_response.getcode.return_value = 200
         bad_response.read.return_value = b"not valid json {"
@@ -122,7 +111,7 @@ class TestRetrieveDataRetry:
         responses = [bad_response, bad_response, good_response]
         call_count = 0
 
-        def mock_make_request(*args, **kwargs):
+        def mock_make_request(*a, **kw):
             nonlocal call_count
             result = responses[call_count]
             call_count += 1
@@ -136,14 +125,15 @@ class TestRetrieveDataRetry:
                 "github_backup.github_backup.calculate_retry_delay", return_value=0
             ):
                 result = github_backup.retrieve_data(
-                    mock_args, "https://api.github.com/repos/test/repo/issues"
+                    args, "https://api.github.com/repos/test/repo/issues"
                 )
 
         assert result == [{"id": 1}]
         assert call_count == 3  # Failed twice, succeeded on third
 
-    def test_http_error_raises_exception(self, mock_args):
+    def test_http_error_raises_exception(self, create_args):
         """Non-success HTTP status codes should raise Exception."""
+        args = create_args(token_classic="fake_token")
         mock_response = Mock()
         mock_response.getcode.return_value = 404
         mock_response.read.return_value = b'{"message": "Not Found"}'
@@ -156,7 +146,7 @@ class TestRetrieveDataRetry:
         ):
             with pytest.raises(Exception) as exc_info:
                 github_backup.retrieve_data(
-                    mock_args, "https://api.github.com/repos/test/notfound/issues"
+                    args, "https://api.github.com/repos/test/notfound/issues"
                 )
 
             assert not isinstance(
@@ -346,21 +336,13 @@ class TestMakeRequestWithRetry:
 class TestRetrieveDataThrottling:
     """Tests for throttling behavior in retrieve_data."""
 
-    @pytest.fixture
-    def mock_args(self):
-        args = Mock()
-        args.as_app = False
-        args.token_fine = None
-        args.token_classic = "fake_token"
-        args.osx_keychain_item_name = None
-        args.osx_keychain_item_account = None
-        args.throttle_limit = 10  # Throttle when remaining <= 10
-        args.throttle_pause = 5  # Pause 5 seconds
-        args.max_retries = DEFAULT_MAX_RETRIES
-        return args
-
-    def test_throttling_pauses_when_rate_limit_low(self, mock_args):
+    def test_throttling_pauses_when_rate_limit_low(self, create_args):
         """Should pause when x-ratelimit-remaining is at or below throttle_limit."""
+        args = create_args(
+            token_classic="fake_token",
+            throttle_limit=10,
+            throttle_pause=5,
+        )
         mock_response = Mock()
         mock_response.getcode.return_value = 200
         mock_response.read.return_value = json.dumps([{"id": 1}]).encode("utf-8")
@@ -375,7 +357,7 @@ class TestRetrieveDataThrottling:
         ):
             with patch("github_backup.github_backup.time.sleep") as mock_sleep:
                 github_backup.retrieve_data(
-                    mock_args, "https://api.github.com/repos/test/repo/issues"
+                    args, "https://api.github.com/repos/test/repo/issues"
                 )
 
         mock_sleep.assert_called_once_with(5)  # throttle_pause value
@@ -384,21 +366,9 @@ class TestRetrieveDataThrottling:
 class TestRetrieveDataSingleItem:
     """Tests for single item (dict) responses in retrieve_data."""
 
-    @pytest.fixture
-    def mock_args(self):
-        args = Mock()
-        args.as_app = False
-        args.token_fine = None
-        args.token_classic = "fake_token"
-        args.osx_keychain_item_name = None
-        args.osx_keychain_item_account = None
-        args.throttle_limit = None
-        args.throttle_pause = 0
-        args.max_retries = DEFAULT_MAX_RETRIES
-        return args
-
-    def test_dict_response_returned_as_list(self, mock_args):
+    def test_dict_response_returned_as_list(self, create_args):
         """Single dict response should be returned as a list with one item."""
+        args = create_args(token_classic="fake_token")
         mock_response = Mock()
         mock_response.getcode.return_value = 200
         mock_response.read.return_value = json.dumps(
@@ -411,7 +381,7 @@ class TestRetrieveDataSingleItem:
             return_value=mock_response,
         ):
             result = github_backup.retrieve_data(
-                mock_args, "https://api.github.com/user"
+                args, "https://api.github.com/user"
             )
 
         assert result == [{"login": "testuser", "id": 123}]
@@ -474,17 +444,12 @@ class TestRetriesCliArgument:
         assert result == good_response
         assert call_count == 2  # 1 initial + 1 retry = 2 attempts
 
-    def test_custom_retry_count_limits_attempts(self):
+    def test_custom_retry_count_limits_attempts(self, create_args):
         """Custom --retries value should limit actual retry attempts."""
-        args = Mock()
-        args.as_app = False
-        args.token_fine = None
-        args.token_classic = "fake_token"
-        args.osx_keychain_item_name = None
-        args.osx_keychain_item_account = None
-        args.throttle_limit = None
-        args.throttle_pause = 0
-        args.max_retries = 2  # 2 retries = 3 total attempts (1 initial + 2 retries)
+        args = create_args(
+            token_classic="fake_token",
+            max_retries=2,  # 2 retries = 3 total attempts (1 initial + 2 retries)
+        )
 
         mock_response = Mock()
         mock_response.getcode.return_value = 200
