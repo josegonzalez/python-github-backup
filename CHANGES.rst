@@ -1,9 +1,44 @@
 Changelog
 =========
 
-0.61.0 (2026-01-12)
+0.61.1 (2026-01-13)
 -------------------
 ------------------------
+- Refactor test fixtures to use shared create_args helper. [Rodos]
+
+  Uses the real parse_args() function to get CLI defaults, so when
+  new arguments are added they're automatically available to all tests.
+
+  Changes:
+  - Add tests/conftest.py with create_args fixture
+  - Update 8 test files to use shared fixture
+  - Remove duplicate _create_mock_args methods
+  - Remove redundant @pytest.fixture mock_args definitions
+
+  This eliminates the need to update multiple test files when
+  adding new CLI arguments.
+- Fix fine-grained PAT attachment downloads for private repos (#477)
+  [Rodos]
+
+  Fine-grained personal access tokens cannot download attachments from
+  private repositories directly due to a GitHub platform limitation.
+
+  This adds a workaround for image attachments (/assets/ URLs) using
+  GitHub's Markdown API to convert URLs to JWT-signed URLs that can be
+  downloaded without authentication.
+
+  Changes:
+  - Add get_jwt_signed_url_via_markdown_api() function
+  - Detect fine-grained token + private repo + /assets/ URL upfront
+  - Use JWT workaround for those cases, mark success with jwt_workaround flag
+  - Skip download with skipped_at when workaround fails
+  - Add startup warning when using --attachments with fine-grained tokens
+  - Document limitation in README (file attachments still fail)
+  - Add 6 unit tests for JWT workaround logic
+
+
+0.61.0 (2026-01-12)
+-------------------
 - Docs: Add missing `--retries` argument to README. [Lukas Bestle]
 - Test: Adapt tests to new argument. [Lukas Bestle]
 - Feat: Backup of repository security advisories. [Lukas Bestle]
