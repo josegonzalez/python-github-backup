@@ -2045,7 +2045,13 @@ def backup_security_advisories(args, repo_cwd, repository, repos_template):
         repos_template, repository["full_name"]
     )
 
-    _advisories = retrieve_data(args, template)
+    try:
+        _advisories = retrieve_data(args, template)
+    except Exception as e:
+        if "404" in str(e):
+            logger.info("Security advisories are not available for this repository, skipping")
+            return
+        raise
 
     advisories = {}
     for advisory in _advisories:
