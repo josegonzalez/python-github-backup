@@ -2039,7 +2039,6 @@ def backup_security_advisories(args, repo_cwd, repository, repos_template):
         return
 
     logger.info("Retrieving {0} security advisories".format(repository["full_name"]))
-    mkdir_p(repo_cwd, advisory_cwd)
 
     template = "{0}/{1}/security-advisories".format(
         repos_template, repository["full_name"]
@@ -2052,6 +2051,8 @@ def backup_security_advisories(args, repo_cwd, repository, repos_template):
             logger.info("Security advisories are not available for this repository, skipping")
             return
         raise
+
+    mkdir_p(repo_cwd, advisory_cwd)
 
     advisories = {}
     for advisory in _advisories:
