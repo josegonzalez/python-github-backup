@@ -284,6 +284,17 @@ The tool automatically extracts file extensions from HTTP headers to ensure file
 **Fine-grained token limitation:** Due to a GitHub platform limitation, fine-grained personal access tokens (``github_pat_...``) cannot download attachments from private repositories directly. This affects both ``/assets/`` (images) and ``/files/`` (documents) URLs. The tool implements a workaround for image attachments using GitHub's Markdown API, which converts URLs to temporary JWT-signed URLs that can be downloaded. However, this workaround only works for images - document attachments (PDFs, text files, etc.) will fail with 404 errors when using fine-grained tokens on private repos. For full attachment support on private repositories, use a classic token (``-t``) instead of a fine-grained token (``-f``). See `#477 <https://github.com/josegonzalez/python-github-backup/issues/477>`_ for details.
 
 
+About security advisories
+-------------------------
+
+GitHub security advisories are only available in public repositories. GitHub does not provide the respective API endpoint for private repositories.
+
+Therefore the logic is implemented as follows:
+- Security advisories are included in the `--all` option.
+- If only the `--all` option was provided, backups of security advisories are skipped for private repositories.
+- If the `--security-advisories` option is provided (on its own or in addition to `--all`), a backup of security advisories is attempted for all repositories, with graceful handling if the GitHub API doesn't return any.
+
+
 Run in Docker container
 -----------------------
 
