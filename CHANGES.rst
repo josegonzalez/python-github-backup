@@ -1,9 +1,45 @@
 Changelog
 =========
 
-0.61.1 (2026-01-13)
+0.61.2 (2026-01-19)
 -------------------
 ------------------------
+
+Fix
+~~~
+- Skip security advisories for private repos unless explicitly
+  requested. [Lukas Bestle]
+- Handle 404 errors on security advisories. [Lukas Bestle]
+
+Other
+~~~~~
+- Chore(deps): bump black in the python-packages group.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [black](https://github.com/psf/black).
+
+
+  Updates `black` from 25.12.0 to 26.1.0
+  - [Release notes](https://github.com/psf/black/releases)
+  - [Changelog](https://github.com/psf/black/blob/main/CHANGES.md)
+  - [Commits](https://github.com/psf/black/compare/25.12.0...26.1.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: black
+    dependency-version: 26.1.0
+    dependency-type: direct:production
+    update-type: version-update:semver-major
+    dependency-group: python-packages
+  ...
+- Docs: Explain security advisories in README. [Lukas Bestle]
+- Feat: Only make security advisory dir if successful. [Lukas Bestle]
+
+  Avoids empty directories for private repos
+
+
+0.61.1 (2026-01-13)
+-------------------
 - Refactor test fixtures to use shared create_args helper. [Rodos]
 
   Uses the real parse_args() function to get CLI defaults, so when
