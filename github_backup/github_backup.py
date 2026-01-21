@@ -1814,7 +1814,7 @@ def backup_repositories(args, output_directory, repositories):
             if args.include_milestones or args.include_everything:
                 backup_milestones(args, repo_cwd, repository, repos_template)
 
-            if args.include_security_advisories or (args.include_everything and not repository["Private"]):
+            if args.include_security_advisories or (args.include_everything and not repository.get("private", False)):
                 backup_security_advisories(args, repo_cwd, repository, repos_template)
 
             if args.include_labels or args.include_everything:
