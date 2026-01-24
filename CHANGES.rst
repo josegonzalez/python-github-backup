@@ -1,9 +1,39 @@
 Changelog
 =========
 
-0.61.2 (2026-01-19)
+0.61.3 (2026-01-24)
 -------------------
 ------------------------
+- Fix KeyError: 'Private' when using --all flag (#481) [Rodos]
+
+  The repository dictionary uses lowercase "private" key. Use .get() with
+  the correct case to match the pattern used elsewhere in the codebase.
+
+  The bug only affects --all users since --security-advisories short-circuits
+  before the key access.
+- Chore(deps): bump setuptools in the python-packages group.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [setuptools](https://github.com/pypa/setuptools).
+
+
+  Updates `setuptools` from 80.9.0 to 80.10.1
+  - [Release notes](https://github.com/pypa/setuptools/releases)
+  - [Changelog](https://github.com/pypa/setuptools/blob/main/NEWS.rst)
+  - [Commits](https://github.com/pypa/setuptools/compare/v80.9.0...v80.10.1)
+
+  ---
+  updated-dependencies:
+  - dependency-name: setuptools
+    dependency-version: 80.10.1
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+
+
+0.61.2 (2026-01-19)
+-------------------
 
 Fix
 ~~~
