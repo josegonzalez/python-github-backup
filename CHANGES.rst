@@ -1,9 +1,68 @@
 Changelog
 =========
 
-0.61.3 (2026-01-24)
+0.61.4 (2026-02-16)
 -------------------
 ------------------------
+- Fix HTTP 451 DMCA and 403 TOS handling regression (#487) [Rodos]
+
+  The DMCA handling added in PR #454 had a bug: make_request_with_retry()
+  raises HTTPError before retrieve_data() could check the status code via
+  getcode(), making the case 451 handler dead code. This also affected
+  HTTP 403 TOS violations (e.g. jumoog/MagiskOnWSA).
+
+  Fix by catching HTTPError in retrieve_data() and converting 451 and
+  blocked 403 responses (identified by "block" key in response body) to
+  RepositoryUnavailableError. Non-block 403s (permissions, scopes) still
+  propagate as HTTPError. Also handle RepositoryUnavailableError in
+  retrieve_repositories() for the --repository case.
+
+  Rewrote tests to mock urlopen (not make_request_with_retry) to exercise
+  the real code path that was previously untested.
+
+  Closes #487
+- Chore(deps): bump setuptools in the python-packages group.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [setuptools](https://github.com/pypa/setuptools).
+
+
+  Updates `setuptools` from 80.10.2 to 82.0.0
+  - [Release notes](https://github.com/pypa/setuptools/releases)
+  - [Changelog](https://github.com/pypa/setuptools/blob/main/NEWS.rst)
+  - [Commits](https://github.com/pypa/setuptools/compare/v80.10.2...v82.0.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: setuptools
+    dependency-version: 82.0.0
+    dependency-type: direct:production
+    update-type: version-update:semver-major
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump setuptools in the python-packages group.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [setuptools](https://github.com/pypa/setuptools).
+
+
+  Updates `setuptools` from 80.10.1 to 80.10.2
+  - [Release notes](https://github.com/pypa/setuptools/releases)
+  - [Changelog](https://github.com/pypa/setuptools/blob/main/NEWS.rst)
+  - [Commits](https://github.com/pypa/setuptools/compare/v80.10.1...v80.10.2)
+
+  ---
+  updated-dependencies:
+  - dependency-name: setuptools
+    dependency-version: 80.10.2
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  ...
+
+
+0.61.3 (2026-01-24)
+-------------------
 - Fix KeyError: 'Private' when using --all flag (#481) [Rodos]
 
   The repository dictionary uses lowercase "private" key. Use .get() with
