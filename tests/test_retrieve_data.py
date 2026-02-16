@@ -288,6 +288,28 @@ class TestMakeRequestWithRetry:
         assert exc_info.value.code == 403
         assert call_count == 1  # No retries
 
+    def test_451_error_not_retried(self):
+        """HTTP 451 should not be retried - raise immediately."""
+        call_count = 0
+
+        def mock_urlopen(*args, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            raise HTTPError(
+                url="https://api.github.com/test",
+                code=451,
+                msg="Unavailable For Legal Reasons",
+                hdrs={"x-ratelimit-remaining": "5000"},
+                fp=None,
+            )
+
+        with patch("github_backup.github_backup.urlopen", side_effect=mock_urlopen):
+            with pytest.raises(HTTPError) as exc_info:
+                make_request_with_retry(Mock(), None)
+
+        assert exc_info.value.code == 451
+        assert call_count == 1  # No retries
+
     def test_connection_error_retries_and_succeeds(self):
         """URLError (connection error) should retry and succeed if subsequent request works."""
         good_response = Mock()

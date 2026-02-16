@@ -39,11 +39,11 @@ logger = logging.getLogger(__name__)
 
 
 class RepositoryUnavailableError(Exception):
-    """Raised when a repository is unavailable due to legal reasons (e.g., DMCA takedown)."""
+    """Raised when a repository is unavailable due to legal reasons (e.g., DMCA takedown, TOS violation)."""
 
-    def __init__(self, message, dmca_url=None):
+    def __init__(self, message, legal_url=None):
         super().__init__(message)
-        self.dmca_url = dmca_url
+        self.legal_url = legal_url
 
 
 # Setup SSL context with fallback chain
@@ -647,6 +647,14 @@ def retrieve_data(args, template, query_args=None, paginated=True):
         return None
 
     def fetch_all() -> Generator[dict, None, None]:
+        def _extract_legal_url(response_body_bytes):
+            """Extract DMCA/legal notice URL from GitHub API error response body."""
+            try:
+                data = json.loads(response_body_bytes.decode("utf-8"))
+                return data.get("block", {}).get("html_url")
+            except Exception:
+                return None
+
         next_url = None
 
         while True:
@@ -661,47 +669,66 @@ def retrieve_data(args, template, query_args=None, paginated=True):
                     as_app=args.as_app,
                     fine=args.token_fine is not None,
                 )
-                http_response = make_request_with_retry(request, auth, args.max_retries)
-
-                match http_response.getcode():
-                    case 200:
-                        # Success - Parse JSON response
-                        try:
-                            response = json.loads(http_response.read().decode("utf-8"))
-                            break  # Exit retry loop and handle the data returned
-                        except (
-                            IncompleteRead,
-                            json.decoder.JSONDecodeError,
-                            TimeoutError,
-                        ) as e:
-                            logger.warning(f"{type(e).__name__} reading response")
-                            if attempt < args.max_retries:
-                                delay = calculate_retry_delay(attempt, {})
-                                logger.warning(
-                                    f"Retrying read in {delay:.1f}s (attempt {attempt + 1}/{args.max_retries + 1})"
-                                )
-                                time.sleep(delay)
-                            continue  # Next retry attempt
-
-                    case 451:
-                        # DMCA takedown - extract URL if available, then raise
-                        dmca_url = None
-                        try:
-                            response_data = json.loads(
-                                http_response.read().decode("utf-8")
-                            )
-                            dmca_url = response_data.get("block", {}).get("html_url")
-                        except Exception:
-                            pass
+                try:
+                    http_response = make_request_with_retry(
+                        request, auth, args.max_retries
+                    )
+                except HTTPError as exc:
+                    if exc.code == 451:
+                        legal_url = _extract_legal_url(exc.read())
                         raise RepositoryUnavailableError(
-                            "Repository unavailable due to legal reasons (HTTP 451)",
-                            dmca_url=dmca_url,
+                            f"Repository unavailable due to legal reasons (HTTP {exc.code})",
+                            legal_url=legal_url,
                         )
+                    elif exc.code == 403:
+                        # Rate-limit 403s (x-ratelimit-remaining=0) are retried
+                        # by make_request_with_retry — re-raise if exhausted.
+                        if int(exc.headers.get("x-ratelimit-remaining", 1)) < 1:
+                            raise
+                        # Only convert to RepositoryUnavailableError if GitHub
+                        # indicates a TOS/DMCA block (response contains "block"
+                        # key). Other 403s (permissions, scopes) should propagate.
+                        body = exc.read()
+                        try:
+                            data = json.loads(body.decode("utf-8"))
+                        except Exception:
+                            data = {}
+                        if "block" in data:
+                            raise RepositoryUnavailableError(
+                                "Repository access blocked (HTTP 403)",
+                                legal_url=data.get("block", {}).get("html_url"),
+                            )
+                        raise
+                    else:
+                        raise
 
-                    case _:
-                        raise Exception(
-                            f"API request returned HTTP {http_response.getcode()}: {http_response.reason}"
+                # urlopen raises HTTPError for non-2xx, so only success gets here.
+                # Guard against unexpected status codes from proxies, future Python
+                # changes, or other edge cases we haven't considered.
+                status = http_response.getcode()
+                if status != 200:
+                    raise Exception(
+                        f"Unexpected HTTP {status} from {next_url or template} "
+                        f"(expected non-2xx to raise HTTPError)"
+                    )
+
+                # Parse JSON response
+                try:
+                    response = json.loads(http_response.read().decode("utf-8"))
+                    break  # Exit retry loop and handle the data returned
+                except (
+                    IncompleteRead,
+                    json.decoder.JSONDecodeError,
+                    TimeoutError,
+                ) as e:
+                    logger.warning(f"{type(e).__name__} reading response")
+                    if attempt < args.max_retries:
+                        delay = calculate_retry_delay(attempt, {})
+                        logger.warning(
+                            f"Retrying read in {delay:.1f}s (attempt {attempt + 1}/{args.max_retries + 1})"
                         )
+                        time.sleep(delay)
+                    continue  # Next retry attempt
             else:
                 logger.error(
                     f"Failed to read response after {args.max_retries + 1} attempts for {next_url or template}"
@@ -1614,7 +1641,13 @@ def retrieve_repositories(args, authenticated_user):
         paginated = False
         template = "https://{0}/repos/{1}".format(get_github_api_host(args), repo_path)
 
-    repos = retrieve_data(args, template, paginated=paginated)
+    try:
+        repos = retrieve_data(args, template, paginated=paginated)
+    except RepositoryUnavailableError as e:
+        logger.warning(f"Repository is unavailable: {e}")
+        if e.legal_url:
+            logger.warning(f"Legal notice: {e.legal_url}")
+        return []
 
     if args.all_starred:
         starred_template = "https://{0}/users/{1}/starred".format(
@@ -1832,11 +1865,9 @@ def backup_repositories(args, output_directory, repositories):
                     include_assets=args.include_assets or args.include_everything,
                 )
         except RepositoryUnavailableError as e:
-            logger.warning(
-                f"Repository {repository['full_name']} is unavailable (HTTP 451)"
-            )
-            if e.dmca_url:
-                logger.warning(f"DMCA notice: {e.dmca_url}")
+            logger.warning(f"Repository {repository['full_name']} is unavailable: {e}")
+            if e.legal_url:
+                logger.warning(f"Legal notice: {e.legal_url}")
             logger.info(f"Skipping remaining resources for {repository['full_name']}")
             continue
 
