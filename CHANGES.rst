@@ -1,9 +1,19 @@
 Changelog
 =========
 
-0.61.4 (2026-02-16)
+0.61.5 (2026-02-18)
 -------------------
 ------------------------
+- Fix empty repository crash due to None timestamp comparison (#489)
+  [Rodos]
+
+  Empty repositories have None for pushed_at/updated_at, causing a
+  TypeError when compared to the last_update string. Use .get() with
+  truthiness check to skip None timestamps in incremental tracking.
+
+
+0.61.4 (2026-02-16)
+-------------------
 - Fix HTTP 451 DMCA and 403 TOS handling regression (#487) [Rodos]
 
   The DMCA handling added in PR #454 had a bug: make_request_with_retry()
