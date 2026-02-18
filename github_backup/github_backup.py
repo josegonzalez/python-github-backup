@@ -1772,9 +1772,9 @@ def backup_repositories(args, output_directory, repositories):
 
     last_update = "0000-00-00T00:00:00Z"
     for repository in repositories:
-        if "updated_at" in repository and repository["updated_at"] > last_update:
+        if repository.get("updated_at") and repository["updated_at"] > last_update:
             last_update = repository["updated_at"]
-        elif "pushed_at" in repository and repository["pushed_at"] > last_update:
+        elif repository.get("pushed_at") and repository["pushed_at"] > last_update:
             last_update = repository["pushed_at"]
 
         if repository.get("is_gist"):
