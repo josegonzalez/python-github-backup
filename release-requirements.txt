@@ -1,6 +1,6 @@
 # Linting & Formatting
 autopep8==2.3.2
-black==26.1.0
+black==26.3.0
 flake8==7.3.0
 
 # Testing
@@ -9,7 +9,7 @@ pytest==9.0.2
 # Release & Publishing
 twine==6.2.0
 gitchangelog==3.0.4
-setuptools==82.0.0
+setuptools==82.0.1
 
 # Documentation
 restructuredtext-lint==2.0.2
