@@ -1,6 +1,6 @@
 # Linting & Formatting
 autopep8==2.3.2
-black==26.3.0
+black==26.3.1
 flake8==7.3.0
 
 # Testing
