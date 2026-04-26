@@ -5,6 +5,8 @@ Unreleased
 ----------
 - Add GitHub Discussions backups via GraphQL, including comments, replies,
   optional attachment downloads, and per-repository incremental checkpoints.
+- Add pull request review backups with ``--pull-reviews`` and one-time
+  incremental backfill for existing backups.
 - Add ``--token-from-gh`` to read authentication from ``gh auth token``.
 
 

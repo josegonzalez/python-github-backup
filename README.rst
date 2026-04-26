@@ -42,7 +42,8 @@ CLI Help output::
                   [--starred] [--all-starred] [--starred-skip-size-over MB]
                   [--watched] [--followers] [--following] [--all]
                   [--issues] [--issue-comments] [--issue-events] [--pulls]
-                  [--pull-comments] [--pull-commits] [--pull-details]
+                  [--pull-comments] [--pull-reviews] [--pull-commits]
+                  [--pull-details]
                   [--labels] [--hooks] [--milestones] [--security-advisories]
                   [--discussions] [--repositories] [--bare] [--no-prune]
                   [--lfs] [--wikis] [--gists] [--starred-gists]
@@ -97,6 +98,7 @@ CLI Help output::
       --issue-events        include issue events in backup
       --pulls               include pull requests in backup
       --pull-comments       include pull request review comments in backup
+      --pull-reviews        include pull request reviews in backup
       --pull-commits        include pull request commits in backup
       --pull-details        include more pull request details in backup [*]
       --labels              include labels in backup
@@ -340,6 +342,14 @@ For finer control, avoid using ``--assets`` with starred repos, or use ``--skip-
 
 Alternatively, consider just storing links to starred repos in JSON format with ``--starred``.
 
+About pull request reviews
+--------------------------
+
+Use ``--pull-reviews`` with ``--pulls`` to include GitHub pull request review metadata under each pull request's ``review_data`` key. Reviews are separate from review comments: ``--pull-comments`` backs up inline review comments via ``comment_data`` and regular PR conversation comments via ``comment_regular_data``, while ``--pull-reviews`` backs up review state, submitted time, commit ID, and the top-level review body.
+
+``--pull-reviews`` is included in ``--all``. Incremental backups use a per-repository checkpoint at ``repositories/{repo}/pulls/reviews_last_update``. If ``--pull-reviews`` is enabled on an existing incremental backup, the first run performs a one-time backfill for pull request reviews so older PRs are not skipped by the existing repository checkpoint. Existing ``comment_data``, ``comment_regular_data`` and ``commit_data`` fields are preserved when only review data is being added.
+
+
 Incremental Backup
 ------------------
 
@@ -431,14 +441,14 @@ Quietly and incrementally backup useful Github user data (public and private rep
     export FINE_ACCESS_TOKEN=SOME-GITHUB-TOKEN
     GH_USER=YOUR-GITHUB-USER
 
-    github-backup -f $FINE_ACCESS_TOKEN --prefer-ssh -o ~/github-backup/ -l error -P -i --all-starred --starred --watched --followers --following --issues --issue-comments --issue-events --pulls --pull-comments --pull-commits --labels --milestones --security-advisories --discussions --repositories --wikis --releases --assets --attachments --pull-details --gists --starred-gists $GH_USER
+    github-backup -f $FINE_ACCESS_TOKEN --prefer-ssh -o ~/github-backup/ -l error -P -i --all-starred --starred --watched --followers --following --issues --issue-comments --issue-events --pulls --pull-comments --pull-reviews --pull-commits --labels --milestones --security-advisories --discussions --repositories --wikis --releases --assets --attachments --pull-details --gists --starred-gists $GH_USER
     
 Debug an error/block or incomplete backup into a temporary directory. Omit "incremental" to fill a previous incomplete backup. ::
 
     export FINE_ACCESS_TOKEN=SOME-GITHUB-TOKEN
     GH_USER=YOUR-GITHUB-USER
 
-    github-backup -f $FINE_ACCESS_TOKEN -o /tmp/github-backup/ -l debug -P --all-starred --starred --watched --followers --following --issues --issue-comments --issue-events --pulls --pull-comments --pull-commits --labels --milestones --discussions --repositories --wikis --releases --assets --pull-details --gists --starred-gists $GH_USER
+    github-backup -f $FINE_ACCESS_TOKEN -o /tmp/github-backup/ -l debug -P --all-starred --starred --watched --followers --following --issues --issue-comments --issue-events --pulls --pull-comments --pull-reviews --pull-commits --labels --milestones --discussions --repositories --wikis --releases --assets --pull-details --gists --starred-gists $GH_USER
 
 Pipe a token from stdin to avoid storing it in environment variables or command history (Unix-like systems only)::
 

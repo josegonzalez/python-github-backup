@@ -287,6 +287,12 @@ def parse_args(args=None):
         help="include pull request review comments in backup",
     )
     parser.add_argument(
+        "--pull-reviews",
+        action="store_true",
+        dest="include_pull_reviews",
+        help="include pull request reviews in backup",
+    )
+    parser.add_argument(
         "--pull-commits",
         action="store_true",
         dest="include_pull_commits",
@@ -2672,6 +2678,57 @@ def backup_issues(args, repo_cwd, repository, repos_template):
         os.replace(issue_file + ".temp", issue_file)  # Atomic write
 
 
+PULL_OPTIONAL_DATA_KEYS = (
+    "comment_regular_data",
+    "comment_data",
+    "commit_data",
+    "review_data",
+)
+PULL_REVIEWS_LAST_UPDATE_FILENAME = "reviews_last_update"
+
+
+def read_json_file_if_exists(path):
+    if not os.path.isfile(path):
+        return None
+
+    try:
+        with codecs.open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, UnicodeDecodeError, json.decoder.JSONDecodeError) as e:
+        logger.debug("Error reading existing JSON file {0}: {1}".format(path, e))
+        return None
+
+
+def restore_existing_pull_optional_data(pull, existing_pull):
+    if not existing_pull:
+        return
+
+    for key in PULL_OPTIONAL_DATA_KEYS:
+        if key not in pull and key in existing_pull:
+            pull[key] = existing_pull[key]
+
+
+def get_pull_reviews_since(args, pulls_cwd):
+    args_since = getattr(args, "since", None)
+    if not args.incremental:
+        return args_since, None, None
+
+    reviews_last_update_path = os.path.join(
+        pulls_cwd, PULL_REVIEWS_LAST_UPDATE_FILENAME
+    )
+    if not os.path.exists(reviews_last_update_path):
+        # One-time backfill for existing incremental backups: if the user adds
+        # --pull-reviews after a repository checkpoint already exists, the
+        # repository-level checkpoint would otherwise skip old PRs forever.
+        return None, None, reviews_last_update_path
+
+    reviews_since = open(reviews_last_update_path).read().strip()
+    if args_since and reviews_since:
+        return min(args_since, reviews_since), reviews_since, reviews_last_update_path
+
+    return args_since or reviews_since, reviews_since, reviews_last_update_path
+
+
 def backup_pulls(args, repo_cwd, repository, repos_template):
     has_pulls_dir = os.path.isdir("{0}/pulls/.git".format(repo_cwd))
     if args.skip_existing and has_pulls_dir:
@@ -2681,7 +2738,20 @@ def backup_pulls(args, repo_cwd, repository, repos_template):
     pulls_cwd = os.path.join(repo_cwd, "pulls")
     mkdir_p(repo_cwd, pulls_cwd)
 
+    include_pull_reviews = args.include_pull_reviews or args.include_everything
+    repository_since = getattr(args, "since", None)
+    pulls_since = repository_since
+    pull_reviews_since = None
+    pull_reviews_last_update_path = None
+    if include_pull_reviews:
+        (
+            pulls_since,
+            pull_reviews_since,
+            pull_reviews_last_update_path,
+        ) = get_pull_reviews_since(args, pulls_cwd)
+
     pulls = {}
+    newest_pull_update = None
     _pulls_template = "{0}/{1}/pulls".format(repos_template, repository["full_name"])
     _issue_template = "{0}/{1}/issues".format(repos_template, repository["full_name"])
     query_args = {
@@ -2691,27 +2761,43 @@ def backup_pulls(args, repo_cwd, repository, repos_template):
         "direction": "desc",
     }
 
+    def track_newest_pull_update(pull):
+        nonlocal newest_pull_update
+        updated_at = pull.get("updated_at")
+        if updated_at and (
+            newest_pull_update is None or updated_at > newest_pull_update
+        ):
+            newest_pull_update = updated_at
+
+    def pull_is_due_for_repository_checkpoint(pull):
+        return not repository_since or pull["updated_at"] >= repository_since
+
     if not args.include_pull_details:
         pull_states = ["open", "closed"]
         for pull_state in pull_states:
             query_args["state"] = pull_state
             _pulls = retrieve_data(args, _pulls_template, query_args=query_args)
             for pull in _pulls:
-                if args.since and pull["updated_at"] < args.since:
+                track_newest_pull_update(pull)
+                if pulls_since and pull["updated_at"] < pulls_since:
                     break
-                if not args.since or pull["updated_at"] >= args.since:
+                if not pulls_since or pull["updated_at"] >= pulls_since:
                     pulls[pull["number"]] = pull
     else:
         _pulls = retrieve_data(args, _pulls_template, query_args=query_args)
         for pull in _pulls:
-            if args.since and pull["updated_at"] < args.since:
+            track_newest_pull_update(pull)
+            if pulls_since and pull["updated_at"] < pulls_since:
                 break
-            if not args.since or pull["updated_at"] >= args.since:
-                pulls[pull["number"]] = retrieve_data(
-                    args,
-                    _pulls_template + "/{}".format(pull["number"]),
-                    paginated=False,
-                )[0]
+            if not pulls_since or pull["updated_at"] >= pulls_since:
+                if pull_is_due_for_repository_checkpoint(pull):
+                    pulls[pull["number"]] = retrieve_data(
+                        args,
+                        _pulls_template + "/{}".format(pull["number"]),
+                        paginated=False,
+                    )[0]
+                else:
+                    pulls[pull["number"]] = pull
 
     logger.info("Saving {0} pull requests to disk".format(len(list(pulls.keys()))))
     # Comments from pulls API are only _review_ comments
@@ -2721,24 +2807,50 @@ def backup_pulls(args, repo_cwd, repository, repos_template):
     comments_regular_template = _issue_template + "/{0}/comments"
     comments_template = _pulls_template + "/{0}/comments"
     commits_template = _pulls_template + "/{0}/commits"
+    reviews_template = _pulls_template + "/{0}/reviews"
+    pull_review_errors = False
+
     for number, pull in list(pulls.items()):
         pull_file = "{0}/{1}.json".format(pulls_cwd, number)
+        existing_pull = read_json_file_if_exists(pull_file)
+        needs_review_backfill = (
+            include_pull_reviews
+            and (not existing_pull or "review_data" not in existing_pull)
+        )
+
         if args.incremental_by_files and os.path.isfile(pull_file):
             modified = os.path.getmtime(pull_file)
             modified = datetime.fromtimestamp(modified).strftime("%Y-%m-%dT%H:%M:%SZ")
-            if modified > pull["updated_at"]:
+            if modified > pull["updated_at"] and not needs_review_backfill:
                 logger.info(
                     "Skipping pull request {0} because it wasn't modified since last backup".format(
                         number
                     )
                 )
                 continue
-        if args.include_pull_comments or args.include_everything:
+
+        should_fetch_non_review_data = pull_is_due_for_repository_checkpoint(pull)
+        if (
+            args.include_pull_comments or args.include_everything
+        ) and should_fetch_non_review_data:
             template = comments_regular_template.format(number)
             pulls[number]["comment_regular_data"] = retrieve_data(args, template)
             template = comments_template.format(number)
             pulls[number]["comment_data"] = retrieve_data(args, template)
-        if args.include_pull_commits or args.include_everything:
+        if include_pull_reviews:
+            template = reviews_template.format(number)
+            try:
+                pulls[number]["review_data"] = retrieve_data(args, template)
+            except Exception as e:
+                pull_review_errors = True
+                logger.warning(
+                    "Unable to retrieve reviews for pull request {0}#{1}, skipping reviews: {2}".format(
+                        repository["full_name"], number, e
+                    )
+                )
+        if (
+            args.include_pull_commits or args.include_everything
+        ) and should_fetch_non_review_data:
             template = commits_template.format(number)
             pulls[number]["commit_data"] = retrieve_data(args, template)
         if args.include_attachments:
@@ -2746,9 +2858,21 @@ def backup_pulls(args, repo_cwd, repository, repos_template):
                 args, pulls_cwd, pulls[number], number, repository, item_type="pull"
             )
 
+        restore_existing_pull_optional_data(pull, existing_pull)
+
         with codecs.open(pull_file + ".temp", "w", encoding="utf-8") as f:
             json_dump(pull, f)
         os.replace(pull_file + ".temp", pull_file)  # Atomic write
+
+    if (
+        include_pull_reviews
+        and args.incremental
+        and pull_reviews_last_update_path
+        and newest_pull_update
+        and not pull_review_errors
+        and (not pull_reviews_since or newest_pull_update > pull_reviews_since)
+    ):
+        open(pull_reviews_last_update_path, "w").write(newest_pull_update)
 
 
 def backup_milestones(args, repo_cwd, repository, repos_template):
