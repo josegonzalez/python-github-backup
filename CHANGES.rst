@@ -7,6 +7,11 @@ Unreleased
   optional attachment downloads, and per-repository incremental checkpoints.
 - Add pull request review backups with ``--pull-reviews`` and one-time
   incremental backfill for existing backups.
+- Store incremental ``last_update`` checkpoints per repository resource instead
+  of using one global checkpoint for the whole output directory. Existing
+  backups use the legacy global checkpoint as a migration fallback, and the
+  legacy file is removed once existing issue/pull backups have resource
+  checkpoints (#62).
 - Add ``--token-from-gh`` to read authentication from ``gh auth token``.
 
 

@@ -347,15 +347,19 @@ About pull request reviews
 
 Use ``--pull-reviews`` with ``--pulls`` to include GitHub pull request review metadata under each pull request's ``review_data`` key. Reviews are separate from review comments: ``--pull-comments`` backs up inline review comments via ``comment_data`` and regular PR conversation comments via ``comment_regular_data``, while ``--pull-reviews`` backs up review state, submitted time, commit ID, and the top-level review body.
 
-``--pull-reviews`` is included in ``--all``. Incremental backups use a per-repository checkpoint at ``repositories/{repo}/pulls/reviews_last_update``. If ``--pull-reviews`` is enabled on an existing incremental backup, the first run performs a one-time backfill for pull request reviews so older PRs are not skipped by the existing repository checkpoint. Existing ``comment_data``, ``comment_regular_data`` and ``commit_data`` fields are preserved when only review data is being added.
+``--pull-reviews`` is included in ``--all``. Incremental backups use a per-repository checkpoint at ``repositories/{repo}/pulls/reviews_last_update``. If ``--pull-reviews`` is enabled on an existing incremental backup, the first run performs a one-time backfill for pull request reviews so older PRs are not skipped by the existing pull request checkpoint. Existing ``comment_data``, ``comment_regular_data`` and ``commit_data`` fields are preserved when only review data is being added.
 
 
 Incremental Backup
 ------------------
 
-Using (``-i, --incremental``) will only request new data from the API **since the last run (successful or not)**. e.g. only request issues from the API since the last run. 
+Using (``-i, --incremental``) will only request new data from the API **since the last successful resource backup**. e.g. only request issues from the API since the last issue backup for that repository.
 
-This means any blocking errors on previous runs can cause a large amount of missing data in backups.
+Incremental checkpoints for issue and pull request API backups are stored per resource in that repository's backup directory (for example ``repositories/{repo}/issues/last_update``, ``repositories/{repo}/pulls/last_update`` or ``starred/{owner}/{repo}/pulls/last_update``). Older versions stored a single global ``last_update`` file in the output directory root. During migration, the legacy global checkpoint is used as a fallback only for resource directories that already contain backup data but do not yet have their own checkpoint. New repositories or newly enabled resources with no existing data get a full backup instead of inheriting an unrelated global checkpoint.
+
+After all existing issue and pull request resource directories have per-resource checkpoints, the legacy global ``last_update`` file is removed automatically.
+
+This means any blocking errors on previous runs can cause missing data in backups for the affected repository resource.
 
 Using (``--incremental-by-files``) will request new data from the API **based on when the file was modified on filesystem**. e.g. if you modify the file yourself you may miss something.
 
@@ -368,7 +372,7 @@ Known blocking errors
 
 Some errors will block the backup run by exiting the script. e.g. receiving a 403 Forbidden error from the Github API.
 
-If the incremental argument is used, this will result in the next backup only requesting API data since the last blocked/failed run. Potentially causing unexpected large amounts of missing data.
+If the incremental argument is used, per-resource checkpoints are only advanced after that resource's backup work completes. A blocking error can still abort the overall run, but repositories and resources that were not processed will keep their previous checkpoints.
 
 It's therefore recommended to only use the incremental argument if the output/result is being actively monitored, or complimented with periodic full non-incremental runs, to avoid unexpected missing data in a regular backup runs.
 

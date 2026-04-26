@@ -1920,26 +1920,138 @@ def filter_repositories(args, unfiltered_repositories):
     return repositories
 
 
+INCREMENTAL_LAST_UPDATE_FILENAME = "last_update"
+INCREMENTAL_RESOURCE_DIRECTORIES = ("issues", "pulls")
+
+
+def get_repository_checkpoint_time(repository):
+    timestamps = [
+        timestamp
+        for timestamp in (repository.get("updated_at"), repository.get("pushed_at"))
+        if timestamp
+    ]
+    if timestamps:
+        return max(timestamps)
+
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.localtime())
+
+
+def resource_backup_exists(resource_cwd):
+    if not os.path.isdir(resource_cwd):
+        return False
+
+    ignored_names = {
+        INCREMENTAL_LAST_UPDATE_FILENAME,
+        PULL_REVIEWS_LAST_UPDATE_FILENAME,
+    }
+    for name in os.listdir(resource_cwd):
+        if name in ignored_names or name.endswith(".temp"):
+            continue
+        return True
+
+    return False
+
+
+def read_legacy_last_update(args, output_directory):
+    if not args.incremental:
+        return None, None
+
+    last_update_path = os.path.join(output_directory, INCREMENTAL_LAST_UPDATE_FILENAME)
+    if os.path.exists(last_update_path):
+        return last_update_path, open(last_update_path).read().strip()
+
+    return last_update_path, None
+
+
+def read_resource_last_update(args, resource_cwd, legacy_last_update=None):
+    if not args.incremental:
+        return None
+
+    last_update_path = os.path.join(resource_cwd, INCREMENTAL_LAST_UPDATE_FILENAME)
+    if os.path.exists(last_update_path):
+        return open(last_update_path).read().strip()
+
+    if legacy_last_update and resource_backup_exists(resource_cwd):
+        return legacy_last_update
+
+    return None
+
+
+def write_resource_last_update(args, resource_cwd, repository):
+    if not args.incremental:
+        return
+
+    mkdir_p(resource_cwd)
+    last_update_path = os.path.join(resource_cwd, INCREMENTAL_LAST_UPDATE_FILENAME)
+    open(last_update_path, "w").write(get_repository_checkpoint_time(repository))
+
+
+def iter_incremental_resource_dirs(output_directory):
+    repositories_dir = os.path.join(output_directory, "repositories")
+    if os.path.isdir(repositories_dir):
+        for repository_name in os.listdir(repositories_dir):
+            repo_cwd = os.path.join(repositories_dir, repository_name)
+            if not os.path.isdir(repo_cwd):
+                continue
+            for resource_name in INCREMENTAL_RESOURCE_DIRECTORIES:
+                yield os.path.join(repo_cwd, resource_name)
+
+    starred_dir = os.path.join(output_directory, "starred")
+    if os.path.isdir(starred_dir):
+        for owner_name in os.listdir(starred_dir):
+            owner_cwd = os.path.join(starred_dir, owner_name)
+            if not os.path.isdir(owner_cwd):
+                continue
+            for repository_name in os.listdir(owner_cwd):
+                repo_cwd = os.path.join(owner_cwd, repository_name)
+                if not os.path.isdir(repo_cwd):
+                    continue
+                for resource_name in INCREMENTAL_RESOURCE_DIRECTORIES:
+                    yield os.path.join(repo_cwd, resource_name)
+
+
+def has_unmigrated_incremental_resources(output_directory):
+    for resource_cwd in iter_incremental_resource_dirs(output_directory):
+        last_update_path = os.path.join(
+            resource_cwd, INCREMENTAL_LAST_UPDATE_FILENAME
+        )
+        if resource_backup_exists(resource_cwd) and not os.path.exists(
+            last_update_path
+        ):
+            return True
+
+    return False
+
+
+def remove_legacy_last_update_if_migrated(
+    args, output_directory, legacy_last_update_path
+):
+    if not args.incremental or not legacy_last_update_path:
+        return
+    if not os.path.exists(legacy_last_update_path):
+        return
+    if has_unmigrated_incremental_resources(output_directory):
+        logger.info(
+            "Keeping legacy global last_update until all existing issue/pull "
+            "backups have per-resource checkpoints"
+        )
+        return
+
+    os.remove(legacy_last_update_path)
+    logger.info(
+        "Removed legacy global last_update after migrating incremental checkpoints"
+    )
+
+
 def backup_repositories(args, output_directory, repositories):
     logger.info("Backing up repositories")
     repos_template = "https://{0}/repos".format(get_github_api_host(args))
+    legacy_last_update_path, legacy_last_update = read_legacy_last_update(
+        args, output_directory
+    )
+    incremental_resource_work_attempted = False
 
-    if args.incremental:
-        last_update_path = os.path.join(output_directory, "last_update")
-        if os.path.exists(last_update_path):
-            args.since = open(last_update_path).read().strip()
-        else:
-            args.since = None
-    else:
-        args.since = None
-
-    last_update = "0000-00-00T00:00:00Z"
     for repository in repositories:
-        if repository.get("updated_at") and repository["updated_at"] > last_update:
-            last_update = repository["updated_at"]
-        elif repository.get("pushed_at") and repository["pushed_at"] > last_update:
-            last_update = repository["pushed_at"]
-
         if repository.get("is_gist"):
             repo_cwd = os.path.join(output_directory, "gists", repository["id"])
         elif repository.get("is_starred"):
@@ -2002,10 +2114,22 @@ def backup_repositories(args, output_directory, repositories):
                     no_prune=args.no_prune,
                 )
             if args.include_issues or args.include_everything:
+                incremental_resource_work_attempted = True
+                issue_cwd = os.path.join(repo_cwd, "issues")
+                args.since = read_resource_last_update(
+                    args, issue_cwd, legacy_last_update
+                )
                 backup_issues(args, repo_cwd, repository, repos_template)
+                write_resource_last_update(args, issue_cwd, repository)
 
             if args.include_pulls or args.include_everything:
+                incremental_resource_work_attempted = True
+                pulls_cwd = os.path.join(repo_cwd, "pulls")
+                args.since = read_resource_last_update(
+                    args, pulls_cwd, legacy_last_update
+                )
                 backup_pulls(args, repo_cwd, repository, repos_template)
+                write_resource_last_update(args, pulls_cwd, repository)
 
             if args.include_discussions or args.include_everything:
                 backup_discussions(args, repo_cwd, repository)
@@ -2013,7 +2137,9 @@ def backup_repositories(args, output_directory, repositories):
             if args.include_milestones or args.include_everything:
                 backup_milestones(args, repo_cwd, repository, repos_template)
 
-            if args.include_security_advisories or (args.include_everything and not repository.get("private", False)):
+            if args.include_security_advisories or (
+                args.include_everything and not repository.get("private", False)
+            ):
                 backup_security_advisories(args, repo_cwd, repository, repos_template)
 
             if args.include_labels or args.include_everything:
@@ -2037,11 +2163,10 @@ def backup_repositories(args, output_directory, repositories):
             logger.info(f"Skipping remaining resources for {repository['full_name']}")
             continue
 
-    if args.incremental:
-        if last_update == "0000-00-00T00:00:00Z":
-            last_update = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.localtime())
-
-        open(last_update_path, "w").write(last_update)
+    if incremental_resource_work_attempted:
+        remove_legacy_last_update_if_migrated(
+            args, output_directory, legacy_last_update_path
+        )
 
 
 DISCUSSION_PAGE_SIZE = 100
