@@ -16,7 +16,7 @@ def test_backup_pulls_includes_review_data(create_args, tmp_path, monkeypatch):
     repository = {"full_name": "owner/repo"}
     calls = []
 
-    def fake_retrieve_data(passed_args, template, query_args=None, paginated=True):
+    def fake_retrieve_data(passed_args, template, query_args=None, paginated=True, **kwargs):
         calls.append((template, query_args))
         if template == "https://api.github.com/repos/owner/repo/pulls":
             if query_args["state"] == "open":
@@ -73,7 +73,7 @@ def test_pull_reviews_backfill_ignores_repository_checkpoint(
     args.since = "2026-01-01T00:00:00Z"
     repository = {"full_name": "owner/repo"}
 
-    def fake_retrieve_data(passed_args, template, query_args=None, paginated=True):
+    def fake_retrieve_data(passed_args, template, query_args=None, paginated=True, **kwargs):
         if template == "https://api.github.com/repos/owner/repo/pulls":
             if query_args["state"] == "open":
                 return [
@@ -117,7 +117,7 @@ def test_pull_reviews_uses_review_checkpoint_when_older_than_repository_checkpoi
     pulls_dir.mkdir()
     (pulls_dir / "reviews_last_update").write_text("2025-01-01T00:00:00Z")
 
-    def fake_retrieve_data(passed_args, template, query_args=None, paginated=True):
+    def fake_retrieve_data(passed_args, template, query_args=None, paginated=True, **kwargs):
         if template == "https://api.github.com/repos/owner/repo/pulls":
             if query_args["state"] == "open":
                 return [
@@ -169,7 +169,7 @@ def test_pull_reviews_preserves_existing_optional_pull_data(
             f,
         )
 
-    def fake_retrieve_data(passed_args, template, query_args=None, paginated=True):
+    def fake_retrieve_data(passed_args, template, query_args=None, paginated=True, **kwargs):
         if template == "https://api.github.com/repos/owner/repo/pulls":
             if query_args["state"] == "open":
                 return [
@@ -213,7 +213,7 @@ def test_pull_reviews_does_not_advance_checkpoint_on_review_error(
     pulls_dir.mkdir()
     (pulls_dir / "reviews_last_update").write_text("2025-01-01T00:00:00Z")
 
-    def fake_retrieve_data(passed_args, template, query_args=None, paginated=True):
+    def fake_retrieve_data(passed_args, template, query_args=None, paginated=True, **kwargs):
         if template == "https://api.github.com/repos/owner/repo/pulls":
             if query_args["state"] == "open":
                 return [

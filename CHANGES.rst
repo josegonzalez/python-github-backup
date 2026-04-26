@@ -12,6 +12,8 @@ Unreleased
   backups use the legacy global checkpoint as a migration fallback, and the
   legacy file is removed once existing issue/pull backups have resource
   checkpoints (#62).
+- Stop paginating pull requests during incremental backups once the sorted
+  results are older than the active checkpoint.
 - Add ``--token-from-gh`` to read authentication from ``gh auth token``.
 
 
