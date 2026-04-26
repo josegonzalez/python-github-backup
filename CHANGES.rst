@@ -13,7 +13,9 @@ Unreleased
   legacy file is removed once existing issue/pull backups have resource
   checkpoints (#62).
 - Stop paginating pull requests during incremental backups once the sorted
-  results are older than the active checkpoint.
+  results are at or older than the active checkpoint.
+- Avoid re-fetching discussions and pull requests whose ``updated_at`` exactly
+  matches the active incremental checkpoint.
 - Avoid extra release asset list requests by using asset metadata already
   included in GitHub's releases response.
 - Add ``--token-from-gh`` to read authentication from ``gh auth token``.

@@ -2513,7 +2513,7 @@ def retrieve_discussion_summaries(args, repository, since=None):
             if updated_at and (newest_seen is None or updated_at > newest_seen):
                 newest_seen = updated_at
 
-            if since and updated_at and updated_at < since:
+            if since and updated_at and updated_at <= since:
                 stop = True
                 break
 
@@ -2899,7 +2899,7 @@ def backup_pulls(args, repo_cwd, repository, repos_template):
             newest_pull_update = updated_at
 
     def pull_is_due_for_repository_checkpoint(pull):
-        return not repository_since or pull["updated_at"] >= repository_since
+        return not repository_since or pull["updated_at"] > repository_since
 
     if not args.include_pull_details:
         pull_states = ["open", "closed"]
@@ -2909,18 +2909,18 @@ def backup_pulls(args, repo_cwd, repository, repos_template):
                 args, _pulls_template, query_args=query_args, lazy=True
             ):
                 track_newest_pull_update(pull)
-                if pulls_since and pull["updated_at"] < pulls_since:
+                if pulls_since and pull["updated_at"] <= pulls_since:
                     break
-                if not pulls_since or pull["updated_at"] >= pulls_since:
+                if not pulls_since or pull["updated_at"] > pulls_since:
                     pulls[pull["number"]] = pull
     else:
         for pull in retrieve_data(
             args, _pulls_template, query_args=query_args, lazy=True
         ):
             track_newest_pull_update(pull)
-            if pulls_since and pull["updated_at"] < pulls_since:
+            if pulls_since and pull["updated_at"] <= pulls_since:
                 break
-            if not pulls_since or pull["updated_at"] >= pulls_since:
+            if not pulls_since or pull["updated_at"] > pulls_since:
                 if pull_is_due_for_repository_checkpoint(pull):
                     pulls[pull["number"]] = retrieve_data(
                         args,

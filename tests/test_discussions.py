@@ -46,6 +46,41 @@ def test_retrieve_discussion_summaries_stops_at_incremental_since(create_args):
     assert mock_retrieve.call_count == 1
 
 
+def test_retrieve_discussion_summaries_excludes_checkpoint_timestamp(create_args):
+    args = create_args()
+    repository = {"full_name": "owner/repo"}
+
+    page = {
+        "repository": {
+            "hasDiscussionsEnabled": True,
+            "discussions": {
+                "totalCount": 1,
+                "nodes": [
+                    {
+                        "number": 1,
+                        "title": "already backed up",
+                        "updatedAt": "2026-01-01T00:00:00Z",
+                    },
+                ],
+                "pageInfo": {"hasNextPage": True, "endCursor": "NEXT"},
+            },
+        }
+    }
+
+    with patch(
+        "github_backup.github_backup.retrieve_graphql_data", return_value=page
+    ) as mock_retrieve:
+        summaries, newest, enabled, total = github_backup.retrieve_discussion_summaries(
+            args, repository, since="2026-01-01T00:00:00Z"
+        )
+
+    assert enabled is True
+    assert total == 1
+    assert newest == "2026-01-01T00:00:00Z"
+    assert summaries == []
+    assert mock_retrieve.call_count == 1
+
+
 def test_retrieve_discussion_summaries_disabled_discussions(create_args):
     args = create_args()
     repository = {"full_name": "owner/repo"}
