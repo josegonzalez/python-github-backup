@@ -3164,7 +3164,12 @@ def backup_releases(args, repo_cwd, repository, repos_template, include_assets=F
             written_count += 1
 
         if include_assets and not skip_assets:
-            assets = retrieve_data(args, release["assets_url"])
+            # The releases list API already includes release asset metadata. Use
+            # it to avoid an extra /releases/{id}/assets request per release.
+            # Keep a fallback for older/enterprise responses that might omit it.
+            assets = release.get("assets")
+            if assets is None:
+                assets = retrieve_data(args, release["assets_url"])
             if len(assets) > 0:
                 # give release asset files somewhere to live & download them (not including source archives)
                 release_assets_cwd = os.path.join(release_cwd, release_name_safe)

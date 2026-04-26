@@ -14,6 +14,8 @@ Unreleased
   checkpoints (#62).
 - Stop paginating pull requests during incremental backups once the sorted
   results are older than the active checkpoint.
+- Avoid extra release asset list requests by using asset metadata already
+  included in GitHub's releases response.
 - Add ``--token-from-gh`` to read authentication from ``gh auth token``.
 
 
