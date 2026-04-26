@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Unreleased
+----------
+- Add ``--token-from-gh`` to read authentication from ``gh auth token``.
+
+
 0.61.5 (2026-02-18)
 -------------------
 ------------------------

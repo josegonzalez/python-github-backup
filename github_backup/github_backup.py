@@ -168,6 +168,12 @@ def parse_args(args=None):
         help="fine-grained personal access token (github_pat_....), or path to token (file://...)",
     )  # noqa
     parser.add_argument(
+        "--token-from-gh",
+        action="store_true",
+        dest="token_from_gh",
+        help="read token from GitHub CLI (gh auth token)",
+    )
+    parser.add_argument(
         "-q",
         "--quiet",
         action="store_true",
@@ -537,17 +543,25 @@ def get_auth(args, encode=True, for_git_cli=False):
             raise Exception(
                 "Fine-grained token supplied does not look like a GitHub PAT"
             )
-    elif args.token_classic:
-        if args.token_classic.startswith(FILE_URI_PREFIX):
-            args.token_classic = read_file_contents(args.token_classic)
+    elif args.token_classic or args.token_from_gh:
+        token = args.token_classic
+        if args.token_from_gh:
+            if args.as_app:
+                raise Exception(
+                    "--token-from-gh cannot be used with --as-app; provide the app token with --token instead"
+                )
+            token = read_token_from_gh_cli(args)
+        elif token.startswith(FILE_URI_PREFIX):
+            token = read_file_contents(token)
+            args.token_classic = token
 
         if not args.as_app:
-            auth = args.token_classic + ":" + "x-oauth-basic"
+            auth = token + ":" + "x-oauth-basic"
         else:
             if not for_git_cli:
-                auth = args.token_classic
+                auth = token
             else:
-                auth = "x-access-token:" + args.token_classic
+                auth = "x-access-token:" + token
 
     if not auth:
         return None
@@ -578,6 +592,38 @@ def get_github_host(args):
 
 def read_file_contents(file_uri):
     return open(file_uri[len(FILE_URI_PREFIX) :], "rt").readline().strip()
+
+
+def read_token_from_gh_cli(args):
+    cached_token = getattr(args, "_token_from_gh_value", None)
+    if cached_token:
+        return cached_token
+
+    command = ["gh", "auth", "token"]
+    if args.github_host:
+        command.extend(["--hostname", get_github_host(args)])
+
+    try:
+        token = subprocess.check_output(command, stderr=subprocess.PIPE).decode(
+            "utf-8"
+        ).strip()
+    except FileNotFoundError:
+        raise Exception(
+            "Unable to read token from GitHub CLI: 'gh' executable not found"
+        )
+    except subprocess.CalledProcessError as e:
+        stderr = e.stderr.decode("utf-8", errors="replace").strip()
+        if stderr:
+            raise Exception(
+                "Unable to read token from GitHub CLI: {0}".format(stderr)
+            )
+        raise Exception("Unable to read token from GitHub CLI")
+
+    if not token:
+        raise Exception("Unable to read token from GitHub CLI: token was empty")
+
+    args._token_from_gh_value = token
+    return token
 
 
 def get_github_repo_url(args, repository):

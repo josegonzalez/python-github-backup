@@ -36,8 +36,8 @@ Show the CLI help output::
 
 CLI Help output::
 
-    github-backup [-h] [-t TOKEN_CLASSIC] [-f TOKEN_FINE] [-q] [--as-app]
-                  [-o OUTPUT_DIRECTORY] [-l LOG_LEVEL] [-i]
+    github-backup [-h] [-t TOKEN_CLASSIC] [-f TOKEN_FINE] [--token-from-gh]
+                  [-q] [--as-app] [-o OUTPUT_DIRECTORY] [-l LOG_LEVEL] [-i]
                   [--incremental-by-files]
                   [--starred] [--all-starred] [--starred-skip-size-over MB]
                   [--watched] [--followers] [--following] [--all]
@@ -71,6 +71,7 @@ CLI Help output::
       -f, --token-fine TOKEN_FINE
                             fine-grained personal access token (github_pat_....),
                             or path to token (file://...)
+      --token-from-gh       read token from GitHub CLI (gh auth token)
       -q, --quiet           supress log messages less severe than warning, e.g.
                             info
       --as-app              authenticate as github app instead of as a user.
@@ -170,6 +171,8 @@ The positional argument ``USER`` specifies the user or organization account you 
 **Fine-grained tokens** (``-f TOKEN_FINE``) are recommended for most use cases, especially long-running backups (e.g. cron jobs), as they provide precise permission control.
 
 **Classic tokens** (``-t TOKEN``) are `slightly less secure <https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#personal-access-tokens-classic>`_ as they provide very coarse-grained permissions.
+
+If you already authenticate with the `GitHub CLI <https://cli.github.com/>`_, you can use ``--token-from-gh`` to read the token with ``gh auth token`` instead of passing a token directly. This avoids placing the token in shell history or process arguments. When ``--github-host`` is set, the token is read with ``gh auth token --hostname HOST``.
 
 
 Fine Tokens
