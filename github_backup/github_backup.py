@@ -323,6 +323,12 @@ def parse_args(args=None):
         help="include security advisories in backup",
     )
     parser.add_argument(
+        "--discussions",
+        action="store_true",
+        dest="include_discussions",
+        help="include discussions in backup",
+    )
+    parser.add_argument(
         "--repositories",
         action="store_true",
         dest="include_repository",
@@ -469,7 +475,7 @@ def parse_args(args=None):
         "--attachments",
         action="store_true",
         dest="include_attachments",
-        help="download user-attachments from issues and pull requests",
+        help="download user-attachments from issues, pull requests, and discussions",
     )
     parser.add_argument(
         "--throttle-limit",
@@ -579,6 +585,31 @@ def get_github_api_host(args):
         host = "api.github.com"
 
     return host
+
+
+def get_github_graphql_url(args):
+    if args.github_host:
+        return "https://{0}/api/graphql".format(args.github_host)
+
+    return "https://api.github.com/graphql"
+
+
+def get_graphql_auth(args):
+    auth = get_auth(args, encode=False)
+    if not auth:
+        return None
+
+    # GraphQL expects a bearer token. Classic tokens and keychain tokens use
+    # "token:x-oauth-basic" for REST Basic auth, so strip the synthetic
+    # password before sending the GraphQL Authorization header.
+    if (
+        not getattr(args, "as_app", False)
+        and getattr(args, "token_fine", None) is None
+        and ":" in auth
+    ):
+        auth = auth.split(":", 1)[0]
+
+    return auth
 
 
 def get_github_host(args):
@@ -810,6 +841,84 @@ def retrieve_data(args, template, query_args=None, paginated=True):
                 break  # No more data
 
     return list(fetch_all())
+
+
+def retrieve_graphql_data(args, query, variables=None):
+    """Fetch data from GitHub's GraphQL API."""
+    auth = get_graphql_auth(args)
+    if not auth:
+        raise Exception("GitHub GraphQL API requires authentication")
+
+    variables = variables or {}
+    payload = json.dumps(
+        {"query": query, "variables": variables}, ensure_ascii=False
+    ).encode("utf-8")
+    endpoint = get_github_graphql_url(args)
+
+    for attempt in range(args.max_retries + 1):
+        request = Request(endpoint, data=payload, method="POST")
+        request.add_header("Accept", "application/json")
+        request.add_header("Content-Type", "application/json")
+        request.add_header("Authorization", "bearer " + auth)
+        logger.info("Requesting {0}".format(endpoint))
+
+        http_response = make_request_with_retry(request, auth, args.max_retries)
+
+        status = http_response.getcode()
+        if status != 200:
+            raise Exception(
+                f"Unexpected HTTP {status} from {endpoint} "
+                f"(expected non-2xx to raise HTTPError)"
+            )
+
+        try:
+            response = json.loads(http_response.read().decode("utf-8"))
+        except (IncompleteRead, json.decoder.JSONDecodeError, TimeoutError) as e:
+            logger.warning(f"{type(e).__name__} reading GraphQL response")
+            if attempt < args.max_retries:
+                delay = calculate_retry_delay(attempt, {})
+                logger.warning(
+                    f"Retrying GraphQL read in {delay:.1f}s "
+                    f"(attempt {attempt + 1}/{args.max_retries + 1})"
+                )
+                time.sleep(delay)
+                continue
+            raise Exception(
+                f"Failed to read GraphQL response after {args.max_retries + 1} "
+                f"attempts for {endpoint}"
+            )
+
+        if (
+            remaining := int(http_response.headers.get("x-ratelimit-remaining", 0))
+        ) <= (args.throttle_limit or 0):
+            if args.throttle_limit:
+                logger.info(
+                    f"Throttling: {remaining} requests left, pausing {args.throttle_pause}s"
+                )
+                time.sleep(args.throttle_pause)
+
+        errors = response.get("errors") or []
+        if errors:
+            if any(error.get("type") == "RATE_LIMITED" for error in errors):
+                if attempt < args.max_retries:
+                    delay = calculate_retry_delay(attempt, http_response.headers)
+                    logger.warning(
+                        f"GraphQL rate limit hit, retrying in {delay:.1f}s "
+                        f"(attempt {attempt + 1}/{args.max_retries + 1})"
+                    )
+                    time.sleep(delay)
+                    continue
+
+            messages = "; ".join(
+                error.get("message", str(error)) for error in errors
+            )
+            raise Exception("GraphQL Error: {0}".format(messages))
+
+        return response.get("data", {})
+
+    raise Exception(
+        f"GraphQL request failed after {args.max_retries + 1} attempts"
+    )  # pragma: no cover
 
 
 def make_request_with_retry(request, auth, max_retries=5):
@@ -1195,7 +1304,7 @@ def get_jwt_signed_url_via_markdown_api(url, token, repo_context):
 
 
 def extract_attachment_urls(item_data, issue_number=None, repository_full_name=None):
-    """Extract GitHub-hosted attachment URLs from issue/PR body and comments.
+    """Extract GitHub-hosted attachment URLs from issue/PR/discussion body and comments.
 
     What qualifies as an attachment?
     There is no "attachment" concept in the GitHub API - it's a user behavior pattern
@@ -1337,33 +1446,29 @@ def extract_attachment_urls(item_data, issue_number=None, repository_full_name=N
             # and exclude the URL to avoid downloading from wrong repos
             return False
 
-    # Extract from body
-    body = item_data.get("body") or ""
-    # Remove code blocks before searching for URLs
-    body_cleaned = remove_code_blocks(body)
-    for pattern in patterns:
-        found_urls = re.findall(pattern, body_cleaned)
-        urls.extend([clean_url(url) for url in found_urls])
+    def extract_from_text(text):
+        text_cleaned = remove_code_blocks(text or "")
+        for pattern in patterns:
+            found_urls = re.findall(pattern, text_cleaned)
+            urls.extend([clean_url(url) for url in found_urls])
 
-    # Extract from issue comments
+    def extract_from_comments(comments):
+        for comment in comments:
+            extract_from_text(comment.get("body") or "")
+            # GitHub Discussions support one level of replies. Issues and pull
+            # requests don't have reply_data, so this is a no-op for them.
+            extract_from_comments(comment.get("reply_data") or [])
+
+    # Extract from body
+    extract_from_text(item_data.get("body") or "")
+
+    # Extract from issue comments and discussion comments
     if "comment_data" in item_data:
-        for comment in item_data["comment_data"]:
-            comment_body = comment.get("body") or ""
-            # Remove code blocks before searching for URLs
-            comment_cleaned = remove_code_blocks(comment_body)
-            for pattern in patterns:
-                found_urls = re.findall(pattern, comment_cleaned)
-                urls.extend([clean_url(url) for url in found_urls])
+        extract_from_comments(item_data["comment_data"])
 
     # Extract from PR regular comments
     if "comment_regular_data" in item_data:
-        for comment in item_data["comment_regular_data"]:
-            comment_body = comment.get("body") or ""
-            # Remove code blocks before searching for URLs
-            comment_cleaned = remove_code_blocks(comment_body)
-            for pattern in patterns:
-                found_urls = re.findall(pattern, comment_cleaned)
-                urls.extend([clean_url(url) for url in found_urls])
+        extract_from_comments(item_data["comment_regular_data"])
 
     regex_urls = list(set(urls))  # dedupe
 
@@ -1465,20 +1570,24 @@ def resolve_filename_collision(filepath):
 def download_attachments(
     args, item_cwd, item_data, number, repository, item_type="issue"
 ):
-    """Download user-attachments from issue/PR body and comments with manifest.
+    """Download user-attachments from issue/PR/discussion body and comments with manifest.
 
     Args:
         args: Command line arguments
-        item_cwd: Working directory (issue_cwd or pulls_cwd)
-        item_data: Issue or PR data dict
-        number: Issue or PR number
+        item_cwd: Working directory (issue_cwd, pulls_cwd, or discussion_cwd)
+        item_data: Issue, PR, or discussion data dict
+        number: Issue, PR, or discussion number
         repository: Repository dict
-        item_type: "issue" or "pull" for logging/manifest
+        item_type: "issue", "pull", or "discussion" for logging/manifest
     """
     import json
     from datetime import datetime, timezone
 
-    item_type_display = "issue" if item_type == "issue" else "pull request"
+    item_type_display = {
+        "issue": "issue",
+        "pull": "pull request",
+        "discussion": "discussion",
+    }.get(item_type, item_type)
 
     urls = extract_attachment_urls(
         item_data, issue_number=number, repository_full_name=repository["full_name"]
@@ -1623,6 +1732,8 @@ def download_attachments(
     # Write manifest
     if attachment_metadata_list:
         manifest = {
+            "item_number": number,
+            "item_type": item_type,
             "issue_number": number,
             "issue_type": item_type,
             "repository": (
@@ -1890,6 +2001,9 @@ def backup_repositories(args, output_directory, repositories):
             if args.include_pulls or args.include_everything:
                 backup_pulls(args, repo_cwd, repository, repos_template)
 
+            if args.include_discussions or args.include_everything:
+                backup_discussions(args, repo_cwd, repository)
+
             if args.include_milestones or args.include_everything:
                 backup_milestones(args, repo_cwd, repository, repos_template)
 
@@ -1922,6 +2036,570 @@ def backup_repositories(args, output_directory, repositories):
             last_update = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.localtime())
 
         open(last_update_path, "w").write(last_update)
+
+
+DISCUSSION_PAGE_SIZE = 100
+
+DISCUSSION_LIST_QUERY = """
+query($owner: String!, $name: String!, $after: String, $pageSize: Int!) {
+  repository(owner: $owner, name: $name) {
+    hasDiscussionsEnabled
+    discussions(
+      first: $pageSize,
+      after: $after,
+      orderBy: {field: UPDATED_AT, direction: DESC}
+    ) {
+      totalCount
+      nodes {
+        id
+        number
+        title
+        updatedAt
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+    }
+  }
+}
+"""
+
+DISCUSSION_DETAIL_QUERY = """
+query(
+  $owner: String!,
+  $name: String!,
+  $number: Int!,
+  $commentsCursor: String,
+  $pageSize: Int!
+) {
+  repository(owner: $owner, name: $name) {
+    discussion(number: $number) {
+      activeLockReason
+      answer {
+        id
+        databaseId
+        url
+      }
+      answerChosenAt
+      answerChosenBy {
+        ...ActorFields
+      }
+      author {
+        ...ActorFields
+      }
+      authorAssociation
+      body
+      bodyHTML
+      bodyText
+      category {
+        createdAt
+        description
+        emoji
+        emojiHTML
+        id
+        isAnswerable
+        name
+        slug
+        updatedAt
+      }
+      closed
+      closedAt
+      createdAt
+      createdViaEmail
+      databaseId
+      editor {
+        ...ActorFields
+      }
+      id
+      includesCreatedEdit
+      isAnswered
+      labels(first: 100) {
+        totalCount
+        nodes {
+          id
+          name
+          color
+          description
+        }
+      }
+      lastEditedAt
+      locked
+      number
+      poll {
+        id
+        question
+        totalVoteCount
+        options(first: 100) {
+          totalCount
+          nodes {
+            id
+            option
+            totalVoteCount
+          }
+        }
+      }
+      publishedAt
+      reactionGroups {
+        ...ReactionGroupFields
+      }
+      resourcePath
+      stateReason
+      title
+      updatedAt
+      upvoteCount
+      url
+      comments(first: $pageSize, after: $commentsCursor) {
+        totalCount
+        nodes {
+          ...DiscussionCommentFields
+          replies(first: $pageSize) {
+            totalCount
+            nodes {
+              ...DiscussionReplyFields
+            }
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+          }
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+      }
+    }
+  }
+}
+
+fragment ActorFields on Actor {
+  avatarUrl
+  login
+  resourcePath
+  url
+}
+
+fragment ReactionGroupFields on ReactionGroup {
+  content
+  reactors {
+    totalCount
+  }
+}
+
+fragment DiscussionCommentFields on DiscussionComment {
+  author {
+    ...ActorFields
+  }
+  authorAssociation
+  body
+  bodyHTML
+  bodyText
+  createdAt
+  createdViaEmail
+  databaseId
+  deletedAt
+  editor {
+    ...ActorFields
+  }
+  id
+  includesCreatedEdit
+  isAnswer
+  isMinimized
+  lastEditedAt
+  minimizedReason
+  publishedAt
+  reactionGroups {
+    ...ReactionGroupFields
+  }
+  replyTo {
+    id
+    databaseId
+    url
+  }
+  resourcePath
+  updatedAt
+  upvoteCount
+  url
+}
+
+fragment DiscussionReplyFields on DiscussionComment {
+  author {
+    ...ActorFields
+  }
+  authorAssociation
+  body
+  bodyHTML
+  bodyText
+  createdAt
+  createdViaEmail
+  databaseId
+  deletedAt
+  editor {
+    ...ActorFields
+  }
+  id
+  includesCreatedEdit
+  isAnswer
+  isMinimized
+  lastEditedAt
+  minimizedReason
+  publishedAt
+  reactionGroups {
+    ...ReactionGroupFields
+  }
+  replyTo {
+    id
+    databaseId
+    url
+  }
+  resourcePath
+  updatedAt
+  upvoteCount
+  url
+}
+"""
+
+DISCUSSION_REPLIES_QUERY = """
+query($commentId: ID!, $repliesCursor: String, $pageSize: Int!) {
+  node(id: $commentId) {
+    ... on DiscussionComment {
+      replies(first: $pageSize, after: $repliesCursor) {
+        totalCount
+        nodes {
+          ...DiscussionReplyFields
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+      }
+    }
+  }
+}
+
+fragment ActorFields on Actor {
+  avatarUrl
+  login
+  resourcePath
+  url
+}
+
+fragment ReactionGroupFields on ReactionGroup {
+  content
+  reactors {
+    totalCount
+  }
+}
+
+fragment DiscussionReplyFields on DiscussionComment {
+  author {
+    ...ActorFields
+  }
+  authorAssociation
+  body
+  bodyHTML
+  bodyText
+  createdAt
+  createdViaEmail
+  databaseId
+  deletedAt
+  editor {
+    ...ActorFields
+  }
+  id
+  includesCreatedEdit
+  isAnswer
+  isMinimized
+  lastEditedAt
+  minimizedReason
+  publishedAt
+  reactionGroups {
+    ...ReactionGroupFields
+  }
+  replyTo {
+    id
+    databaseId
+    url
+  }
+  resourcePath
+  updatedAt
+  upvoteCount
+  url
+}
+"""
+
+
+def _repository_owner_name(repository):
+    return repository["full_name"].split("/", 1)
+
+
+def _connection_nodes(connection):
+    return [node for node in (connection or {}).get("nodes") or [] if node]
+
+
+def retrieve_discussion_summaries(args, repository, since=None):
+    owner, name = _repository_owner_name(repository)
+    after = None
+    summaries = []
+    newest_seen = None
+    discussions_enabled = None
+    total_count = 0
+
+    while True:
+        data = retrieve_graphql_data(
+            args,
+            DISCUSSION_LIST_QUERY,
+            {
+                "owner": owner,
+                "name": name,
+                "after": after,
+                "pageSize": DISCUSSION_PAGE_SIZE,
+            },
+        )
+        repository_data = data.get("repository")
+        if repository_data is None:
+            raise Exception(
+                "Repository {0} not found in GraphQL response".format(
+                    repository["full_name"]
+                )
+            )
+
+        discussions_enabled = repository_data.get("hasDiscussionsEnabled")
+        if not discussions_enabled:
+            return [], None, False, 0
+
+        discussions = repository_data.get("discussions") or {}
+        total_count = discussions.get("totalCount", total_count)
+        stop = False
+
+        for discussion in _connection_nodes(discussions):
+            updated_at = discussion.get("updatedAt")
+            if updated_at and (newest_seen is None or updated_at > newest_seen):
+                newest_seen = updated_at
+
+            if since and updated_at and updated_at < since:
+                stop = True
+                break
+
+            summaries.append(discussion)
+
+        page_info = discussions.get("pageInfo") or {}
+        if stop or not page_info.get("hasNextPage"):
+            break
+
+        after = page_info.get("endCursor")
+
+    return summaries, newest_seen, discussions_enabled, total_count
+
+
+def retrieve_discussion_comment_replies(args, comment_id, after=None):
+    data = retrieve_graphql_data(
+        args,
+        DISCUSSION_REPLIES_QUERY,
+        {
+            "commentId": comment_id,
+            "repliesCursor": after,
+            "pageSize": DISCUSSION_PAGE_SIZE,
+        },
+    )
+    node = data.get("node") or {}
+    return node.get("replies") or {}
+
+
+def _discussion_comment_with_replies(args, comment_node):
+    replies_connection = comment_node.get("replies") or {}
+    replies = _connection_nodes(replies_connection)
+    reply_total_count = replies_connection.get("totalCount", len(replies))
+    page_info = replies_connection.get("pageInfo") or {}
+
+    while page_info.get("hasNextPage"):
+        replies_connection = retrieve_discussion_comment_replies(
+            args, comment_node["id"], page_info.get("endCursor")
+        )
+        replies.extend(_connection_nodes(replies_connection))
+        page_info = replies_connection.get("pageInfo") or {}
+
+    comment = {key: value for key, value in comment_node.items() if key != "replies"}
+    comment["reply_count"] = reply_total_count
+    comment["reply_data"] = replies
+    return comment
+
+
+def retrieve_discussion(args, repository, number):
+    owner, name = _repository_owner_name(repository)
+    comments_cursor = None
+    discussion_data = None
+    comments = []
+    comment_total_count = 0
+
+    while True:
+        data = retrieve_graphql_data(
+            args,
+            DISCUSSION_DETAIL_QUERY,
+            {
+                "owner": owner,
+                "name": name,
+                "number": number,
+                "commentsCursor": comments_cursor,
+                "pageSize": DISCUSSION_PAGE_SIZE,
+            },
+        )
+        repository_data = data.get("repository") or {}
+        discussion = repository_data.get("discussion")
+        if discussion is None:
+            raise Exception(
+                "Discussion #{0} not found in {1}".format(
+                    number, repository["full_name"]
+                )
+            )
+
+        if discussion_data is None:
+            discussion_data = {
+                key: value for key, value in discussion.items() if key != "comments"
+            }
+
+        comments_connection = discussion.get("comments") or {}
+        comment_total_count = comments_connection.get(
+            "totalCount", comment_total_count
+        )
+        for comment_node in _connection_nodes(comments_connection):
+            comments.append(_discussion_comment_with_replies(args, comment_node))
+
+        page_info = comments_connection.get("pageInfo") or {}
+        if not page_info.get("hasNextPage"):
+            break
+
+        comments_cursor = page_info.get("endCursor")
+
+    discussion_data["comment_count"] = comment_total_count
+    discussion_data["comment_data"] = comments
+    return discussion_data
+
+
+def backup_discussions(args, repo_cwd, repository):
+    discussion_cwd = os.path.join(repo_cwd, "discussions")
+    if args.skip_existing and os.path.isdir(discussion_cwd):
+        return
+
+    if not get_graphql_auth(args):
+        logger.info(
+            "Skipping {0} discussions since GitHub GraphQL API requires authentication".format(
+                repository["full_name"]
+            )
+        )
+        return
+
+    discussions_since = None
+    discussion_last_update_path = os.path.join(discussion_cwd, "last_update")
+    if args.incremental and os.path.exists(discussion_last_update_path):
+        discussions_since = open(discussion_last_update_path).read().strip()
+
+    logger.info("Retrieving {0} discussions".format(repository["full_name"]))
+    try:
+        (
+            summaries,
+            newest_seen,
+            discussions_enabled,
+            total_count,
+        ) = retrieve_discussion_summaries(args, repository, since=discussions_since)
+    except Exception as e:
+        logger.warning(
+            "Unable to retrieve discussions for {0}, skipping: {1}".format(
+                repository["full_name"], e
+            )
+        )
+        return
+
+    if not discussions_enabled:
+        logger.info(
+            "Discussions are not enabled for {0}, skipping".format(
+                repository["full_name"]
+            )
+        )
+        return
+
+    mkdir_p(repo_cwd, discussion_cwd)
+
+    if discussions_since:
+        logger.info(
+            "Saving {0} updated discussions to disk ({1} total)".format(
+                len(summaries), total_count
+            )
+        )
+    else:
+        logger.info("Saving {0} discussions to disk".format(len(summaries)))
+
+    written_count = 0
+    skipped_count = 0
+    had_errors = False
+    for summary in summaries:
+        number = summary["number"]
+        discussion_file = os.path.join(discussion_cwd, "{0}.json".format(number))
+
+        if args.incremental_by_files and os.path.isfile(discussion_file):
+            modified = os.path.getmtime(discussion_file)
+            modified = datetime.fromtimestamp(modified).strftime("%Y-%m-%dT%H:%M:%SZ")
+            if modified > summary["updatedAt"]:
+                logger.info(
+                    "Skipping discussion {0} because it wasn't modified since last backup".format(
+                        number
+                    )
+                )
+                skipped_count += 1
+                continue
+
+        try:
+            discussion = retrieve_discussion(args, repository, number)
+        except Exception as e:
+            logger.warning(
+                "Unable to retrieve discussion {0}#{1}, skipping: {2}".format(
+                    repository["full_name"], number, e
+                )
+            )
+            had_errors = True
+            continue
+
+        if args.include_attachments:
+            download_attachments(
+                args,
+                discussion_cwd,
+                discussion,
+                number,
+                repository,
+                item_type="discussion",
+            )
+
+        if json_dump_if_changed(discussion, discussion_file):
+            written_count += 1
+
+    if (
+        args.incremental
+        and not had_errors
+        and newest_seen
+        and (not discussions_since or newest_seen > discussions_since)
+    ):
+        open(discussion_last_update_path, "w").write(newest_seen)
+
+    attempted_count = len(summaries) - skipped_count
+    if not summaries:
+        logger.info("No discussions to save")
+    elif attempted_count == 0:
+        logger.info("{0} discussions skipped".format(skipped_count))
+    elif written_count == attempted_count:
+        logger.info("Saved {0} discussions to disk".format(written_count))
+    elif written_count == 0:
+        logger.info(
+            "{0} discussions unchanged, skipped write".format(attempted_count)
+        )
+    else:
+        logger.info(
+            "Saved {0} discussions to disk ({1} unchanged, {2} skipped)".format(
+                written_count,
+                attempted_count - written_count,
+                skipped_count,
+            )
+        )
 
 
 def backup_issues(args, repo_cwd, repository, repos_template):

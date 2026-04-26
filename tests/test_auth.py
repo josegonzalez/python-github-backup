@@ -56,6 +56,16 @@ def test_token_from_gh_is_cached(create_args):
     mock_check_output.assert_called_once()
 
 
+def test_graphql_auth_strips_basic_auth_suffix_for_gh_cli_token(create_args):
+    args = create_args(token_from_gh=True)
+
+    with patch(
+        "github_backup.github_backup.subprocess.check_output",
+        return_value=b"gho_graphql_token\n",
+    ):
+        assert github_backup.get_graphql_auth(args) == "gho_graphql_token"
+
+
 def test_token_from_gh_rejects_as_app(create_args):
     args = create_args(token_from_gh=True, as_app=True)
 

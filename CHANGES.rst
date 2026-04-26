@@ -3,6 +3,8 @@ Changelog
 
 Unreleased
 ----------
+- Add GitHub Discussions backups via GraphQL, including comments, replies,
+  optional attachment downloads, and per-repository incremental checkpoints.
 - Add ``--token-from-gh`` to read authentication from ``gh auth token``.
 
 

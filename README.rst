@@ -4,7 +4,7 @@ github-backup
 
 |PyPI| |Python Versions|
 
-The package can be used to backup an *entire* `Github <https://github.com/>`_ organization, repository or user account, including starred repos, issues and wikis in the most appropriate format (clones for wikis, json files for issues).
+The package can be used to backup an *entire* `Github <https://github.com/>`_ organization, repository or user account, including starred repos, issues, discussions and wikis in the most appropriate format (clones for wikis, json files for issues and discussions).
 
 Requirements
 ============
@@ -44,8 +44,9 @@ CLI Help output::
                   [--issues] [--issue-comments] [--issue-events] [--pulls]
                   [--pull-comments] [--pull-commits] [--pull-details]
                   [--labels] [--hooks] [--milestones] [--security-advisories]
-                  [--repositories] [--bare] [--no-prune] [--lfs] [--wikis]
-                  [--gists] [--starred-gists] [--skip-archived] [--skip-existing]
+                  [--discussions] [--repositories] [--bare] [--no-prune]
+                  [--lfs] [--wikis] [--gists] [--starred-gists]
+                  [--skip-archived] [--skip-existing]
                   [-L [LANGUAGES ...]] [-N NAME_REGEX] [-H GITHUB_HOST]
                   [-O] [-R REPOSITORY] [-P] [-F] [--prefer-ssh] [-v]
                   [--keychain-name OSX_KEYCHAIN_ITEM_NAME]
@@ -104,6 +105,7 @@ CLI Help output::
       --milestones          include milestones in backup
       --security-advisories
                             include security advisories in backup
+      --discussions         include discussions in backup
       --repositories        include repository clone in backup
       --bare                clone bare repositories
       --no-prune            disable prune option for git fetch
@@ -144,8 +146,8 @@ CLI Help output::
                             applies if including releases
       --skip-assets-on [SKIP_ASSETS_ON ...]
                             skip asset downloads for these repositories
-      --attachments         download user-attachments from issues and pull
-                            requests
+      --attachments         download user-attachments from issues, pull requests,
+                            and discussions
       --throttle-limit THROTTLE_LIMIT
                             start throttling of GitHub API requests after this
                             amount of API requests remain
@@ -184,7 +186,7 @@ Customise the permissions for your use case, but for a personal account full bac
 
 **User permissions**: Read access to followers, starring, and watching.
 
-**Repository permissions**: Read access to contents, issues, metadata, pull requests, and webhooks.
+**Repository permissions**: Read access to contents, discussions, issues, metadata, pull requests, and webhooks.
 
 
 GitHub Apps
@@ -265,9 +267,9 @@ LFS objects are fetched for all refs, not just the current checkout, ensuring a 
 About Attachments
 -----------------
 
-When you use the ``--attachments`` option with ``--issues`` or ``--pulls``, the tool will download user-uploaded attachments (images, videos, documents, etc.) from issue and pull request descriptions and comments. In some circumstances attachments contain valuable data related to the topic, and without their backup important information or context might be lost inadvertently.
+When you use the ``--attachments`` option with ``--issues``, ``--pulls`` or ``--discussions``, the tool will download user-uploaded attachments (images, videos, documents, etc.) from issue, pull request and discussion descriptions and comments. In some circumstances attachments contain valuable data related to the topic, and without their backup important information or context might be lost inadvertently.
 
-Attachments are saved to ``issues/attachments/{issue_number}/`` and ``pulls/attachments/{pull_number}/`` directories, where ``{issue_number}`` is the GitHub issue number (e.g., issue #123 saves to ``issues/attachments/123/``). Each attachment directory contains:
+Attachments are saved to ``issues/attachments/{issue_number}/``, ``pulls/attachments/{pull_number}/`` and ``discussions/attachments/{discussion_number}/`` directories, where ``{issue_number}`` is the GitHub issue number (e.g., issue #123 saves to ``issues/attachments/123/``). Each attachment directory contains:
 
 - The downloaded attachment files (named by their GitHub identifier with appropriate file extensions)
 - If multiple attachments have the same filename, conflicts are resolved with numeric suffixes (e.g., ``report.pdf``, ``report_1.pdf``, ``report_2.pdf``)
@@ -285,6 +287,16 @@ The tool automatically extracts file extensions from HTTP headers to ensure file
 **Repository filtering** for repo files/assets handles renamed and transferred repositories gracefully. URLs are included if they either match the current repository name directly, or redirect to it (e.g., ``willmcgugan/rich`` redirects to ``Textualize/rich`` after transfer).
 
 **Fine-grained token limitation:** Due to a GitHub platform limitation, fine-grained personal access tokens (``github_pat_...``) cannot download attachments from private repositories directly. This affects both ``/assets/`` (images) and ``/files/`` (documents) URLs. The tool implements a workaround for image attachments using GitHub's Markdown API, which converts URLs to temporary JWT-signed URLs that can be downloaded. However, this workaround only works for images - document attachments (PDFs, text files, etc.) will fail with 404 errors when using fine-grained tokens on private repos. For full attachment support on private repositories, use a classic token (``-t``) instead of a fine-grained token (``-f``). See `#477 <https://github.com/josegonzalez/python-github-backup/issues/477>`_ for details.
+
+
+About Discussions
+-----------------
+
+GitHub Discussions are backed up with GitHub's GraphQL API because the REST API does not expose discussions. Use ``--discussions`` to save each discussion as JSON under ``repositories/{repo}/discussions/{number}.json``. Discussion backups include the discussion body and metadata, category information, comments, and comment replies.
+
+``--discussions`` is included in ``--all``. Unlike most REST API-backed resources, discussions require authentication because GitHub's GraphQL API requires a token. Fine-grained personal access tokens and GitHub Apps need read access to the repository's Discussions permission.
+
+Incremental backups use a per-repository checkpoint at ``repositories/{repo}/discussions/last_update`` based on discussion ``updatedAt`` timestamps. This is separate from the repository-level ``last_update`` file so discussion activity is not missed if the repository's own update timestamp does not change. If you enable ``--discussions`` on an existing incremental backup, the first run performs a full discussions backup for each repository and creates the discussions checkpoint for future runs.
 
 
 About security advisories
@@ -419,14 +431,14 @@ Quietly and incrementally backup useful Github user data (public and private rep
     export FINE_ACCESS_TOKEN=SOME-GITHUB-TOKEN
     GH_USER=YOUR-GITHUB-USER
 
-    github-backup -f $FINE_ACCESS_TOKEN --prefer-ssh -o ~/github-backup/ -l error -P -i --all-starred --starred --watched --followers --following --issues --issue-comments --issue-events --pulls --pull-comments --pull-commits --labels --milestones --security-advisories --repositories --wikis --releases --assets --attachments --pull-details --gists --starred-gists $GH_USER
+    github-backup -f $FINE_ACCESS_TOKEN --prefer-ssh -o ~/github-backup/ -l error -P -i --all-starred --starred --watched --followers --following --issues --issue-comments --issue-events --pulls --pull-comments --pull-commits --labels --milestones --security-advisories --discussions --repositories --wikis --releases --assets --attachments --pull-details --gists --starred-gists $GH_USER
     
 Debug an error/block or incomplete backup into a temporary directory. Omit "incremental" to fill a previous incomplete backup. ::
 
     export FINE_ACCESS_TOKEN=SOME-GITHUB-TOKEN
     GH_USER=YOUR-GITHUB-USER
 
-    github-backup -f $FINE_ACCESS_TOKEN -o /tmp/github-backup/ -l debug -P --all-starred --starred --watched --followers --following --issues --issue-comments --issue-events --pulls --pull-comments --pull-commits --labels --milestones --repositories --wikis --releases --assets --pull-details --gists --starred-gists $GH_USER
+    github-backup -f $FINE_ACCESS_TOKEN -o /tmp/github-backup/ -l debug -P --all-starred --starred --watched --followers --following --issues --issue-comments --issue-events --pulls --pull-comments --pull-commits --labels --milestones --discussions --repositories --wikis --releases --assets --pull-details --gists --starred-gists $GH_USER
 
 Pipe a token from stdin to avoid storing it in environment variables or command history (Unix-like systems only)::
 
@@ -442,7 +454,7 @@ This tool creates backups only, there is no inbuilt restore command.
     cd /tmp/white-house/repositories/petitions/repository
     git push --mirror git@github.com:WhiteHouse/petitions.git
 
-**Issues, pull requests, comments, and other metadata** are saved as JSON files for archival purposes. The GitHub API does not support recreating this data faithfully, creating issues via the API has limitations:
+**Issues, pull requests, discussions, comments, and other metadata** are saved as JSON files for archival purposes. The GitHub API does not support recreating this data faithfully, creating issues via the API has limitations:
 
 - New issue/PR numbers are assigned (original numbers cannot be set)
 - Timestamps reflect creation time (original dates cannot be set)
