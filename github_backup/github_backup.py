@@ -2657,10 +2657,20 @@ def backup_pulls(args, repo_cwd, repository, repos_template):
     def pull_is_due_for_repository_checkpoint(pull):
         return not repository_since or pull["updated_at"] > repository_since
 
-    if not args.include_pull_details:
-        pull_states = ["open", "closed"]
-        for pull_state in pull_states:
-            query_args["state"] = pull_state
+    try:
+        if not args.include_pull_details:
+            pull_states = ["open", "closed"]
+            for pull_state in pull_states:
+                query_args["state"] = pull_state
+                for pull in retrieve_data(
+                    args, _pulls_template, query_args=query_args, lazy=True
+                ):
+                    track_newest_pull_update(pull)
+                    if pulls_since and pull["updated_at"] <= pulls_since:
+                        break
+                    if not pulls_since or pull["updated_at"] > pulls_since:
+                        pulls[pull["number"]] = pull
+        else:
             for pull in retrieve_data(
                 args, _pulls_template, query_args=query_args, lazy=True
             ):
@@ -2669,22 +2679,29 @@ def backup_pulls(args, repo_cwd, repository, repos_template):
                     break
                 if not pulls_since or pull["updated_at"] > pulls_since:
                     pulls[pull["number"]] = pull
-    else:
-        for pull in retrieve_data(
-            args, _pulls_template, query_args=query_args, lazy=True
-        ):
-            track_newest_pull_update(pull)
-            if pulls_since and pull["updated_at"] <= pulls_since:
-                break
-            if not pulls_since or pull["updated_at"] > pulls_since:
-                if pull_is_due_for_repository_checkpoint(pull):
-                    pulls[pull["number"]] = retrieve_data(
-                        args,
-                        _pulls_template + "/{}".format(pull["number"]),
-                        paginated=False,
-                    )[0]
-                else:
-                    pulls[pull["number"]] = pull
+    except HTTPError as e:
+        # Repositories with pull requests disabled return HTTP 404 for the
+        # listing endpoint; treat that as "no pull requests" rather than a
+        # fatal error. retrieve_data is lazy here, so the 404 surfaces during
+        # iteration. Only the listing call is guarded — a 404 on an individual
+        # pull's detail fetch below is a different condition and must propagate.
+        if e.code == 404:
+            logger.info("Pull requests are disabled for this repository, skipping")
+            return
+        raise
+
+    if args.include_pull_details:
+        # Replace the summary payload with the full pull detail. Done outside
+        # the disabled-feature guard above so a 404 on a single pull (e.g. one
+        # deleted between listing and fetch) is not mistaken for the whole
+        # feature being disabled, which would discard every collected pull.
+        for number in list(pulls.keys()):
+            if pull_is_due_for_repository_checkpoint(pulls[number]):
+                pulls[number] = retrieve_data(
+                    args,
+                    _pulls_template + "/{}".format(number),
+                    paginated=False,
+                )[0]
 
     logger.info("Saving {0} pull requests to disk".format(len(list(pulls.keys()))))
     # Comments from pulls API are only _review_ comments
@@ -2813,8 +2830,8 @@ def backup_security_advisories(args, repo_cwd, repository, repos_template):
 
     try:
         _advisories = retrieve_data(args, template)
-    except Exception as e:
-        if "404" in str(e):
+    except HTTPError as e:
+        if e.code == 404:
             logger.info("Security advisories are not available for this repository, skipping")
             return
         raise
@@ -2861,8 +2878,8 @@ def backup_hooks(args, repo_cwd, repository, repos_template):
     template = "{0}/{1}/hooks".format(repos_template, repository["full_name"])
     try:
         _backup_data(args, "hooks", template, output_file, hook_cwd)
-    except Exception as e:
-        if "404" in str(e):
+    except HTTPError as e:
+        if e.code == 404:
             logger.info("Unable to read hooks, skipping")
         else:
             raise e
