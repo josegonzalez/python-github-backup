@@ -1,9 +1,55 @@
 Changelog
 =========
 
-0.62.1 (2026-04-30)
+0.63.0 (2026-06-17)
 -------------------
 ------------------------
+- Skip repositories with pull requests disabled (HTTP 404) instead of
+  crashing (#511) [Rodos]
+
+  Also harden the advisories/hooks 404 checks to match HTTPError.code instead of a substring.
+- Chore(deps): bump pytest in the python-packages group.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [pytest](https://github.com/pytest-dev/pytest).
+
+
+  Updates `pytest` from 9.0.3 to 9.1.0
+  - [Release notes](https://github.com/pytest-dev/pytest/releases)
+  - [Changelog](https://github.com/pytest-dev/pytest/blob/main/CHANGELOG.rst)
+  - [Commits](https://github.com/pytest-dev/pytest/compare/9.0.3...9.1.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: pytest
+    dependency-version: 9.1.0
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump black in the python-packages group.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [black](https://github.com/psf/black).
+
+
+  Updates `black` from 26.3.1 to 26.5.1
+  - [Release notes](https://github.com/psf/black/releases)
+  - [Changelog](https://github.com/psf/black/blob/main/CHANGES.md)
+  - [Commits](https://github.com/psf/black/compare/26.3.1...26.5.1)
+
+  ---
+  updated-dependencies:
+  - dependency-name: black
+    dependency-version: 26.5.1
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+
+
+0.62.1 (2026-04-30)
+-------------------
 - Document that nothing is saved by default. [Changaco]
 - Eliminate trailing spaces. [Changaco]
 - Remove pointless and unsafe `export`s in examples. [Changaco]
