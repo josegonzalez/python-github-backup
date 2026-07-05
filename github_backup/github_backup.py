@@ -3075,7 +3075,7 @@ def backup_account(args, output_directory):
 
     if args.include_watched or args.include_everything:
         output_file = "{0}/watched.json".format(account_cwd)
-        template = "https://{0}/users/{1}/subscriptions".format(
+        template = "https://{0}/user/subscriptions".format(
             get_github_api_host(args), args.user
         )
         _backup_data(args, "watched repositories", template, output_file, account_cwd)
