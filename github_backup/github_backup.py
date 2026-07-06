@@ -12,11 +12,11 @@ import os
 import platform
 import random
 import re
-import select
 import socket
 import ssl
 import subprocess
 import sys
+import threading
 import time
 from collections.abc import Generator
 from datetime import datetime
@@ -91,31 +91,36 @@ def logging_subprocess(
     child = subprocess.Popen(
         popenargs, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **kwargs
     )
-    if sys.platform == "win32":
-        logger.info(
-            "Windows operating system detected - no subprocess logging will be returned"
-        )
 
-    log_level = {child.stdout: stdout_log_level, child.stderr: stderr_log_level}
+    def log_output(pipe, log_level):
+        # Drain the pipe from a thread so the child never blocks on a full
+        # pipe buffer (issue #519), logging each line as it arrives.
+        with pipe:
+            for line in iter(pipe.readline, b""):
+                try:
+                    logger.log(log_level, line.rstrip(b"\r\n"))
+                except Exception:
+                    # Keep draining even if logging fails, or the child
+                    # blocks on a full pipe buffer again
+                    pass
 
-    def check_io():
-        if sys.platform == "win32":
-            return
-        ready_to_read = select.select([child.stdout, child.stderr], [], [], 1000)[0]
-        for io in ready_to_read:
-            line = io.readline()
-            if not logger:
-                continue
-            if not (io == child.stderr and not line):
-                logger.log(log_level[io], line[:-1])
-
-    # keep checking stdout/stderr until the child exits
-    while child.poll() is None:
-        check_io()
-
-    check_io()  # check again to catch anything after the process exits
+    threads = [
+        threading.Thread(
+            target=log_output, args=(child.stdout, stdout_log_level), daemon=True
+        ),
+        threading.Thread(
+            target=log_output, args=(child.stderr, stderr_log_level), daemon=True
+        ),
+    ]
+    for thread in threads:
+        thread.start()
 
     rc = child.wait()
+
+    # Timeout in case a grandchild inherited the pipe handles and keeps
+    # them open past the child's exit, which would delay EOF indefinitely
+    for thread in threads:
+        thread.join(timeout=60)
 
     if rc != 0:
         print("{} returned {}:".format(popenargs[0], rc), file=sys.stderr)
