@@ -1,9 +1,89 @@
 Changelog
 =========
 
-0.63.0 (2026-06-17)
+0.64.0 (2026-07-07)
 -------------------
 ------------------------
+
+Fix
+~~~
+- Drain subprocess pipes with reader threads to prevent Windows deadlock
+  (#519) [Rodos]
+
+  On Windows the child's stdout/stderr pipes were never drained, so any
+  git operation producing more output than the pipe buffer (~8KB) hung
+  the backup at the first sizeable clone or fetch. Reader threads now
+  drain both pipes on all platforms, replacing the select() loop.
+
+  - Windows no longer hangs and now gets subprocess logging
+  - Log lines no longer carry a stray \r on Windows, and a final line
+    without a trailing newline is no longer truncated
+  - CPU no longer pinned at 100% during git operations on Windows
+
+  Adds tests covering the deadlock, log levels, and line handling.
+
+  Fixes #519
+
+Other
+~~~~~
+- Applied diff issuecomment-4900281663. [Peter Gabaldon]
+- Fix template URL for watched repositories backup. [Peter Gabaldon]
+- Chore(deps): bump setuptools in the python-packages group.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [setuptools](https://github.com/pypa/setuptools).
+
+
+  Updates `setuptools` from 82.0.1 to 83.0.0
+  - [Release notes](https://github.com/pypa/setuptools/releases)
+  - [Changelog](https://github.com/pypa/setuptools/blob/main/NEWS.rst)
+  - [Commits](https://github.com/pypa/setuptools/compare/v82.0.1...v83.0.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: setuptools
+    dependency-version: 83.0.0
+    dependency-type: direct:production
+    update-type: version-update:semver-major
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump actions/checkout from 6 to 7. [dependabot[bot]]
+
+  Bumps [actions/checkout](https://github.com/actions/checkout) from 6 to 7.
+  - [Release notes](https://github.com/actions/checkout/releases)
+  - [Changelog](https://github.com/actions/checkout/blob/main/CHANGELOG.md)
+  - [Commits](https://github.com/actions/checkout/compare/v6...v7)
+
+  ---
+  updated-dependencies:
+  - dependency-name: actions/checkout
+    dependency-version: '7'
+    dependency-type: direct:production
+    update-type: version-update:semver-major
+  ...
+- Chore(deps): bump pytest in the python-packages group.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [pytest](https://github.com/pytest-dev/pytest).
+
+
+  Updates `pytest` from 9.1.0 to 9.1.1
+  - [Release notes](https://github.com/pytest-dev/pytest/releases)
+  - [Changelog](https://github.com/pytest-dev/pytest/blob/main/CHANGELOG.rst)
+  - [Commits](https://github.com/pytest-dev/pytest/compare/9.1.0...9.1.1)
+
+  ---
+  updated-dependencies:
+  - dependency-name: pytest
+    dependency-version: 9.1.1
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  ...
+
+
+0.63.0 (2026-06-17)
+-------------------
 - Skip repositories with pull requests disabled (HTTP 404) instead of
   crashing (#511) [Rodos]
 
