@@ -3063,8 +3063,10 @@ def fetch_repository(
                 logging_subprocess(git_command, cwd=local_dir)
 
 
-def backup_account(args, output_directory):
+def backup_account(args, output_directory, authenticated_user=None):
     account_cwd = os.path.join(output_directory, "account")
+    if authenticated_user is None:
+        authenticated_user = {"login": None}
 
     if args.include_starred or args.include_everything:
         output_file = "{0}/starred.json".format(account_cwd)
@@ -3074,11 +3076,25 @@ def backup_account(args, output_directory):
         _backup_data(args, "starred repositories", template, output_file, account_cwd)
 
     if args.include_watched or args.include_everything:
-        output_file = "{0}/watched.json".format(account_cwd)
-        template = "https://{0}/user/subscriptions".format(
-            get_github_api_host(args), args.user
-        )
-        _backup_data(args, "watched repositories", template, output_file, account_cwd)
+        # GitHub deprecated /users/{username}/subscriptions; watched
+        # repositories are only available for the authenticated user via
+        # /user/subscriptions.
+        if (
+            not authenticated_user.get("login")
+            or args.user.lower() != authenticated_user["login"].lower()
+        ):
+            logger.warning(
+                "Cannot retrieve watched repositories for '%s'. GitHub only allows access to the authenticated user's watched repositories.",
+                args.user,
+            )
+        else:
+            output_file = "{0}/watched.json".format(account_cwd)
+            template = "https://{0}/user/subscriptions".format(
+                get_github_api_host(args)
+            )
+            _backup_data(
+                args, "watched repositories", template, output_file, account_cwd
+            )
 
     if args.include_followers or args.include_everything:
         output_file = "{0}/followers.json".format(account_cwd)

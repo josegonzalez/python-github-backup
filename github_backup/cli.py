@@ -81,7 +81,7 @@ def main():
     repositories = retrieve_repositories(args, authenticated_user)
     repositories = filter_repositories(args, repositories)
     backup_repositories(args, output_directory, repositories)
-    backup_account(args, output_directory)
+    backup_account(args, output_directory, authenticated_user)
 
 
 if __name__ == "__main__":
