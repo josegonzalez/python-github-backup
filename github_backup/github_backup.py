@@ -2109,7 +2109,10 @@ def backup_repositories(args, output_directory, repositories):
             )
 
             if repository.get("is_gist"):
-                # dump gist information to a file as well
+                # dump gist information to a file as well; the clone may have
+                # been skipped (e.g. DMCA-blocked or empty gist), so make sure
+                # the directory exists
+                mkdir_p(repo_cwd)
                 output_file = "{0}/gist.json".format(repo_cwd)
                 with codecs.open(output_file, "w", encoding="utf-8") as f:
                     json_dump(repository, f)
