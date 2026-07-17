@@ -1,9 +1,14 @@
 Changelog
 =========
 
-0.64.0 (2026-07-07)
+0.64.1 (2026-07-17)
 -------------------
 ------------------------
+- Fix exception when DMCA'd/empty gists were backed up. [Duncan Ogilvie]
+
+
+0.64.0 (2026-07-07)
+-------------------
 
 Fix
 ~~~
