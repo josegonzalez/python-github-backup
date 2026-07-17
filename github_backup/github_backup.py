@@ -1789,7 +1789,39 @@ def check_git_lfs_install():
         )
 
 
+# Resources fetched from their own endpoints, not from the repository listing
+# (gists and account-level data). Every other include_* flag needs the listing.
+NON_REPOSITORY_RESOURCES = frozenset(
+    {
+        "include_gists",
+        "include_starred_gists",
+        "include_starred",
+        "include_watched",
+        "include_followers",
+        "include_following",
+    }
+)
+
+
+def repository_list_needed(args):
+    """The base repository listing is only needed when a per-repository
+    resource was requested; e.g. a gists-only backup can skip it entirely.
+    Flags not listed in NON_REPOSITORY_RESOURCES default to needing it, so a
+    newly added resource can never be silently skipped."""
+    if args.repository:
+        return True
+    return any(
+        value
+        for name, value in vars(args).items()
+        if name.startswith("include_") and name not in NON_REPOSITORY_RESOURCES
+    )
+
+
 def retrieve_repositories(args, authenticated_user):
+    if not repository_list_needed(args):
+        repos = []
+        return retrieve_additional_repositories(args, authenticated_user, repos)
+
     logger.info("Retrieving repositories")
     paginated = True
     if args.user == authenticated_user["login"]:
@@ -1825,6 +1857,12 @@ def retrieve_repositories(args, authenticated_user):
             logger.warning(f"Legal notice: {e.legal_url}")
         return []
 
+    return retrieve_additional_repositories(args, authenticated_user, repos)
+
+
+def retrieve_additional_repositories(args, authenticated_user, repos):
+    """Append starred repositories, gists and starred gists to the base
+    repository list when requested."""
     if args.all_starred:
         starred_template = "https://{0}/users/{1}/starred".format(
             get_github_api_host(args), args.user
