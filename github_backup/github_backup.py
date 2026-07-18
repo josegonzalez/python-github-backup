@@ -2107,9 +2107,7 @@ def gist_backup_is_current(repository, repo_cwd, repo_dir):
     if not updated_at:
         return False
     try:
-        with codecs.open(
-            os.path.join(repo_cwd, "gist.json"), encoding="utf-8"
-        ) as f:
+        with codecs.open(os.path.join(repo_cwd, "gist.json"), encoding="utf-8") as f:
             stored = json.load(f)
     except (OSError, ValueError):
         return False
@@ -2250,9 +2248,7 @@ def backup_repositories(args, output_directory, repositories):
             continue
 
     if skipped_unchanged_gists:
-        logger.info(
-            "Skipped {0} unchanged gists".format(skipped_unchanged_gists)
-        )
+        logger.info("Skipped {0} unchanged gists".format(skipped_unchanged_gists))
 
     if incremental_resource_work_attempted:
         remove_legacy_last_update_if_migrated(
