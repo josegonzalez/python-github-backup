@@ -1,9 +1,16 @@
 Changelog
 =========
 
-0.64.1 (2026-07-17)
+0.64.2 (2026-07-18)
 -------------------
 ------------------------
+- Add tests. [Duncan Ogilvie]
+- Skip fetching gists that have not been updated. [Duncan Ogilvie]
+- Skip retrieving repositories when not necessary. [Duncan Ogilvie]
+
+
+0.64.1 (2026-07-17)
+-------------------
 - Fix exception when DMCA'd/empty gists were backed up. [Duncan Ogilvie]
 
 
