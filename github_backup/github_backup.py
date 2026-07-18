@@ -1789,7 +1789,39 @@ def check_git_lfs_install():
         )
 
 
+# Resources fetched from their own endpoints, not from the repository listing
+# (gists and account-level data). Every other include_* flag needs the listing.
+NON_REPOSITORY_RESOURCES = frozenset(
+    {
+        "include_gists",
+        "include_starred_gists",
+        "include_starred",
+        "include_watched",
+        "include_followers",
+        "include_following",
+    }
+)
+
+
+def repository_list_needed(args):
+    """The base repository listing is only needed when a per-repository
+    resource was requested; e.g. a gists-only backup can skip it entirely.
+    Flags not listed in NON_REPOSITORY_RESOURCES default to needing it, so a
+    newly added resource can never be silently skipped."""
+    if args.repository:
+        return True
+    return any(
+        value
+        for name, value in vars(args).items()
+        if name.startswith("include_") and name not in NON_REPOSITORY_RESOURCES
+    )
+
+
 def retrieve_repositories(args, authenticated_user):
+    if not repository_list_needed(args):
+        repos = []
+        return retrieve_additional_repositories(args, authenticated_user, repos)
+
     logger.info("Retrieving repositories")
     paginated = True
     if args.user == authenticated_user["login"]:
@@ -1825,6 +1857,12 @@ def retrieve_repositories(args, authenticated_user):
             logger.warning(f"Legal notice: {e.legal_url}")
         return []
 
+    return retrieve_additional_repositories(args, authenticated_user, repos)
+
+
+def retrieve_additional_repositories(args, authenticated_user, repos):
+    """Append starred repositories, gists and starred gists to the base
+    repository list when requested."""
     if args.all_starred:
         starred_template = "https://{0}/users/{1}/starred".format(
             get_github_api_host(args), args.user
@@ -2058,6 +2096,24 @@ def remove_legacy_last_update_if_migrated(
     )
 
 
+def gist_backup_is_current(repository, repo_cwd, repo_dir):
+    """Whether fetching a gist can be skipped because a clone exists and the
+    stored gist.json matches the listing's updated_at. Any edit to a gist —
+    including a git push — bumps updated_at, so this can never miss a content
+    change; at worst a comment bumps it and causes a harmless refetch."""
+    if not os.path.exists(repo_dir):
+        return False
+    updated_at = repository.get("updated_at")
+    if not updated_at:
+        return False
+    try:
+        with codecs.open(os.path.join(repo_cwd, "gist.json"), encoding="utf-8") as f:
+            stored = json.load(f)
+    except (OSError, ValueError):
+        return False
+    return stored.get("updated_at") == updated_at
+
+
 def backup_repositories(args, output_directory, repositories):
     logger.info("Backing up repositories")
     repos_template = "https://{0}/repos".format(get_github_api_host(args))
@@ -2065,6 +2121,7 @@ def backup_repositories(args, output_directory, repositories):
         args, output_directory
     )
     incremental_resource_work_attempted = False
+    skipped_unchanged_gists = 0
 
     for repository in repositories:
         if repository.get("is_gist"):
@@ -2098,20 +2155,29 @@ def backup_repositories(args, output_directory, repositories):
                 if not repository.get("is_gist")
                 else repository.get("id")
             )
-            fetch_repository(
-                repo_name,
-                repo_url,
-                repo_dir,
-                skip_existing=args.skip_existing,
-                bare_clone=args.bare_clone,
-                lfs_clone=args.lfs_clone,
-                no_prune=args.no_prune,
-            )
+            if repository.get("is_gist") and gist_backup_is_current(
+                repository, repo_cwd, repo_dir
+            ):
+                logger.debug(
+                    "Skipping gist {0} (unchanged since last backup)".format(repo_name)
+                )
+                skipped_unchanged_gists += 1
+            else:
+                fetch_repository(
+                    repo_name,
+                    repo_url,
+                    repo_dir,
+                    skip_existing=args.skip_existing,
+                    bare_clone=args.bare_clone,
+                    lfs_clone=args.lfs_clone,
+                    no_prune=args.no_prune,
+                )
 
             if repository.get("is_gist"):
-                # dump gist information to a file as well; the clone may have
-                # been skipped (e.g. DMCA-blocked or empty gist), so make sure
-                # the directory exists
+                # dump gist information to a file as well, even when the fetch
+                # was skipped, so listing metadata (fork counts etc.) stays
+                # fresh; the clone may also have been skipped entirely (e.g.
+                # DMCA-blocked or empty gist), so make sure the directory exists
                 mkdir_p(repo_cwd)
                 output_file = "{0}/gist.json".format(repo_cwd)
                 with codecs.open(output_file, "w", encoding="utf-8") as f:
@@ -2180,6 +2246,9 @@ def backup_repositories(args, output_directory, repositories):
                 logger.warning(f"Legal notice: {e.legal_url}")
             logger.info(f"Skipping remaining resources for {repository['full_name']}")
             continue
+
+    if skipped_unchanged_gists:
+        logger.info("Skipped {0} unchanged gists".format(skipped_unchanged_gists))
 
     if incremental_resource_work_attempted:
         remove_legacy_last_update_if_migrated(
