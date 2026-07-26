@@ -279,6 +279,12 @@ def parse_args(args=None):
         help="include issue events in backup",
     )
     parser.add_argument(
+        "--issue-timeline",
+        action="store_true",
+        dest="include_issue_timeline",
+        help="include issue timeline in backup (cross-references, commits and reviews; complements --issue-events)",
+    )
+    parser.add_argument(
         "--pulls",
         action="store_true",
         dest="include_pulls",
@@ -2610,6 +2616,7 @@ def backup_issues(args, repo_cwd, repository, repos_template):
     )
     comments_template = _issue_template + "/{0}/comments"
     events_template = _issue_template + "/{0}/events"
+    timeline_template = _issue_template + "/{0}/timeline"
     for number, issue in list(issues.items()):
         issue_file = "{0}/{1}.json".format(issue_cwd, number)
         if args.incremental_by_files and os.path.isfile(issue_file):
@@ -2629,6 +2636,16 @@ def backup_issues(args, repo_cwd, repository, repos_template):
         if args.include_issue_events or args.include_everything:
             template = events_template.format(number)
             issues[number]["event_data"] = retrieve_data(args, template)
+        if args.include_issue_timeline or args.include_everything:
+            template = timeline_template.format(number)
+            # "commented" timeline entries embed the full comment body, which
+            # --issue-comments already backs up; storing them twice invites the
+            # two copies to diverge.
+            issues[number]["timeline_data"] = [
+                item
+                for item in retrieve_data(args, template)
+                if item.get("event") != "commented"
+            ]
         if args.include_attachments:
             download_attachments(
                 args, issue_cwd, issues[number], number, repository, item_type="issue"
