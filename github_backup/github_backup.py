@@ -18,6 +18,7 @@ import subprocess
 import sys
 import threading
 import time
+import traceback
 from collections.abc import Generator
 from datetime import datetime
 from http.client import IncompleteRead
@@ -33,10 +34,14 @@ except ImportError:
     VERSION = "unknown"
 
 from .graphql_queries import (
+    CROSS_REFERENCE_NODE_LIMIT,
+    CROSS_REFERENCE_PAGE_SIZE,
     DISCUSSION_DETAIL_QUERY,
     DISCUSSION_LIST_QUERY,
     DISCUSSION_PAGE_SIZE,
     DISCUSSION_REPLIES_QUERY,
+    ISSUE_CROSS_REFERENCE_COUNT_QUERY,
+    PULL_CROSS_REFERENCE_COUNT_QUERY,
 )
 
 FILE_URI_PREFIX = "file://"
@@ -2575,6 +2580,141 @@ def backup_discussions(args, repo_cwd, repository):
         )
 
 
+def cross_reference_state(timeline_data):
+    """Return (count, newest timestamp) of the cross-references in a timeline."""
+    created = [
+        item.get("created_at")
+        for item in timeline_data or []
+        if item.get("event") == "cross-referenced"
+    ]
+    return len(created), max((c for c in created if c), default=None)
+
+
+def _cross_reference_page(args, repository, query, connection, use_total_count):
+    """Page one GraphQL connection, yielding {number: (count, newest)}.
+
+    totalCount honours the itemTypes filter on issues but not on pull
+    requests, so pull request cross-references are counted from the nodes.
+    """
+    owner, name = _repository_owner_name(repository)
+    state = {}
+    after = None
+    page = 1
+
+    while True:
+        variables = {
+            "owner": owner,
+            "name": name,
+            "after": after,
+            "pageSize": CROSS_REFERENCE_PAGE_SIZE,
+        }
+        if not use_total_count:
+            # Only the pull request query declares this.
+            variables["nodeLimit"] = CROSS_REFERENCE_NODE_LIMIT
+
+        data = retrieve_graphql_data(
+            args,
+            query,
+            variables,
+            log_context="cross-references {0} {1} page {2}".format(
+                repository["full_name"], connection, page
+            ),
+        )
+        repository_data = data.get("repository")
+        if repository_data is None:
+            raise Exception(
+                "Repository {0} not found in GraphQL response".format(
+                    repository["full_name"]
+                )
+            )
+
+        items = repository_data.get(connection) or {}
+        for node in _connection_nodes(items):
+            timeline = node.get("timelineItems") or {}
+            created = [n.get("createdAt") for n in timeline.get("nodes") or [] if n]
+            if use_total_count:
+                count = timeline.get("totalCount", 0)
+            elif len(created) >= CROSS_REFERENCE_NODE_LIMIT:
+                # Counted from the nodes, so it may be truncated. Compare on
+                # the timestamp alone rather than on a count we cannot trust.
+                count = None
+            else:
+                count = len(created)
+            state[node["number"]] = (count, created[-1] if created else None)
+
+        page_info = items.get("pageInfo") or {}
+        if not page_info.get("hasNextPage"):
+            break
+
+        after = page_info.get("endCursor")
+        page += 1
+
+    return state
+
+
+def retrieve_cross_reference_state(args, repository, include_pulls=False):
+    """Ask GitHub for each item's cross-reference count and newest timestamp."""
+    state = _cross_reference_page(
+        args,
+        repository,
+        ISSUE_CROSS_REFERENCE_COUNT_QUERY,
+        "issues",
+        use_total_count=True,
+    )
+    if include_pulls:
+        state.update(
+            _cross_reference_page(
+                args,
+                repository,
+                PULL_CROSS_REFERENCE_COUNT_QUERY,
+                "pullRequests",
+                use_total_count=False,
+            )
+        )
+    return state
+
+
+def find_stale_timeline_issues(args, issue_cwd, repository, include_pulls=False):
+    """Issue numbers whose stored cross-references no longer match GitHub's.
+
+    Incremental runs select issues by updated_at, which a cross-reference does
+    not change, so those issues would otherwise never be revisited.
+    """
+    if not get_graphql_auth(args):
+        # The check needs the GraphQL API, which always requires a token.
+        logger.debug("Skipping cross-reference check, no authentication")
+        return set()
+
+    try:
+        live = retrieve_cross_reference_state(args, repository, include_pulls)
+    except Exception as e:
+        logger.warning(
+            "Unable to check {0} for new cross-references, "
+            "issues referenced since the last backup may be missed: {1}".format(
+                repository["full_name"], e
+            )
+        )
+        logger.debug(traceback.format_exc())
+        return set()
+
+    stale = set()
+    for number, (count, newest) in live.items():
+        existing = read_json_file_if_exists("{0}/{1}.json".format(issue_cwd, number))
+        if existing is None:
+            continue
+        stored = cross_reference_state(existing.get("timeline_data"))
+        changed = stored[1] != newest if count is None else stored != (count, newest)
+        if changed:
+            stale.add(number)
+
+    if stale:
+        logger.info(
+            "Refreshing {0} issues with new cross-references".format(len(stale))
+        )
+        logger.debug("Stale timelines: {0}".format(sorted(stale)))
+    return stale
+
+
 def backup_issues(args, repo_cwd, repository, repos_template):
     has_issues_dir = os.path.isdir("{0}/issues/.git".format(repo_cwd))
     if args.skip_existing and has_issues_dir:
@@ -2590,6 +2730,7 @@ def backup_issues(args, repo_cwd, repository, repos_template):
     _issue_template = "{0}/{1}/issues".format(repos_template, repository["full_name"])
 
     should_include_pulls = args.include_pulls or args.include_everything
+    include_timeline = args.include_issue_timeline or args.include_everything
     issue_states = ["open", "closed"]
     for issue_state in issue_states:
         query_args = {"filter": "all", "state": issue_state}
@@ -2606,6 +2747,30 @@ def backup_issues(args, repo_cwd, repository, repos_template):
 
             issues[issue["number"]] = issue
 
+    stale_timelines = set()
+    incremental_run = args.since or args.incremental_by_files
+    if (
+        include_timeline
+        and incremental_run
+        and any(f.endswith(".json") for f in os.listdir(issue_cwd))
+    ):
+        stale_timelines = find_stale_timeline_issues(
+            args, issue_cwd, repository, include_pulls=not should_include_pulls
+        )
+        for number in sorted(stale_timelines - set(issues)):
+            try:
+                issues[number] = retrieve_data(
+                    args, "{0}/{1}".format(_issue_template, number), paginated=False
+                )[0]
+            except (HTTPError, RepositoryUnavailableError, IndexError) as e:
+                # Deleted or transferred between the sweep and this fetch. The
+                # refresh is opportunistic, so skip rather than fail the run.
+                logger.warning(
+                    "Unable to refresh cross-references for issue {0}: {1}".format(
+                        number, e
+                    )
+                )
+
     if issues_skipped:
         issues_skipped_message = " (skipped {0} pull requests)".format(issues_skipped)
 
@@ -2619,7 +2784,11 @@ def backup_issues(args, repo_cwd, repository, repos_template):
     timeline_template = _issue_template + "/{0}/timeline"
     for number, issue in list(issues.items()):
         issue_file = "{0}/{1}.json".format(issue_cwd, number)
-        if args.incremental_by_files and os.path.isfile(issue_file):
+        if (
+            args.incremental_by_files
+            and os.path.isfile(issue_file)
+            and number not in stale_timelines
+        ):
             modified = os.path.getmtime(issue_file)
             modified = datetime.fromtimestamp(modified).strftime("%Y-%m-%dT%H:%M:%SZ")
             if modified > issue["updated_at"]:
@@ -2636,7 +2805,7 @@ def backup_issues(args, repo_cwd, repository, repos_template):
         if args.include_issue_events or args.include_everything:
             template = events_template.format(number)
             issues[number]["event_data"] = retrieve_data(args, template)
-        if args.include_issue_timeline or args.include_everything:
+        if include_timeline:
             template = timeline_template.format(number)
             # "commented" timeline entries embed the full comment body, which
             # --issue-comments already backs up; storing them twice invites the
