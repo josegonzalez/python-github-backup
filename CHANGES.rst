@@ -1,9 +1,80 @@
 Changelog
 =========
 
-0.64.2 (2026-07-18)
+0.65.0 (2026-07-27)
 -------------------
 ------------------------
+- Refresh issue timelines when cross-references change (#168) [Rodos]
+
+  Cross-references do not change an issue's updated_at, so an incremental
+  run never lists the issue and never re-fetches its timeline. An issue
+  can be referenced from another repository years after its last activity
+  and the backup would never see it.
+
+  On incremental runs with --issue-timeline, ask GraphQL for each item's
+  cross-reference count and newest timestamp, compare both against what is
+  already saved, and re-fetch the timeline of anything that differs. Items
+  the since listing did not return are fetched individually. Both values
+  are needed: the count alone would miss a reference being added and
+  another deleted between runs, and the timestamp alone would miss a
+  deletion.
+
+  Pull requests are swept too when they are being stored as issues, which
+  is the case unless --pulls is used. They need their own query because
+  the issues connection excludes them, and because totalCount ignores the
+  itemTypes filter on a pull request although it honours it on an issue,
+  so their cross-references are counted from the nodes instead. Where that
+  count may have been truncated, the comparison falls back to the
+  timestamp alone rather than re-fetching on every run.
+
+  This costs one rate-limit point per 100 items against the GraphQL quota,
+  measured at 6 requests for a repository with 528 issues and pull
+  requests, and stores no new state: the comparison is against the
+  cross-references already in each item's timeline_data. A GraphQL failure
+  warns and leaves the rest of the backup unaffected.
+
+  Closes #168
+- Add --issue-timeline flag to capture cross-reference events (#168)
+  [Rodos]
+
+  The issue events endpoint never returns cross-references, so an issue
+  mentioned from another issue or pull request leaves no trace in the
+  backup. GitHub only exposes those through the timeline endpoint. Full
+  backups miss them as well as incremental ones.
+
+  Adds --issue-timeline, which stores the timeline under a separate
+  timeline_data key alongside the unmodified event_data. The two
+  endpoints are complementary rather than nested: the timeline adds
+  cross-references, commits and reviews, while events carries
+  referenced entries the timeline drops, so neither replaces the other.
+
+  Timeline entries for comments are filtered out, since --issue-comments
+  already saves the bodies. Everything else is stored verbatim. The flag
+  is included in --all.
+
+  This makes the data obtainable, but does not change incremental
+  selection: a cross-reference does not bump the referenced issue's
+  updated_at, so an incremental run still never lists it. That half of
+  the issue remains open.
+
+  References #168
+- Chore(deps): bump actions/setup-python from 6 to 7. [dependabot[bot]]
+
+  Bumps [actions/setup-python](https://github.com/actions/setup-python) from 6 to 7.
+  - [Release notes](https://github.com/actions/setup-python/releases)
+  - [Commits](https://github.com/actions/setup-python/compare/v6...v7)
+
+  ---
+  updated-dependencies:
+  - dependency-name: actions/setup-python
+    dependency-version: '7'
+    dependency-type: direct:production
+    update-type: version-update:semver-major
+  ...
+
+
+0.64.2 (2026-07-18)
+-------------------
 - Add tests. [Duncan Ogilvie]
 - Skip fetching gists that have not been updated. [Duncan Ogilvie]
 - Skip retrieving repositories when not necessary. [Duncan Ogilvie]
