@@ -41,7 +41,8 @@ CLI Help output::
                   [--incremental-by-files]
                   [--starred] [--all-starred] [--starred-skip-size-over MB]
                   [--watched] [--followers] [--following] [--all]
-                  [--issues] [--issue-comments] [--issue-events] [--pulls]
+                  [--issues] [--issue-comments] [--issue-events]
+                  [--issue-timeline] [--pulls]
                   [--pull-comments] [--pull-reviews] [--pull-commits]
                   [--pull-details]
                   [--labels] [--hooks] [--milestones] [--security-advisories]
@@ -96,6 +97,8 @@ CLI Help output::
       --issues              include issues in backup
       --issue-comments      include issue comments in backup
       --issue-events        include issue events in backup
+      --issue-timeline      include issue timeline in backup (cross-references,
+                            commits and reviews; complements --issue-events)
       --pulls               include pull requests in backup
       --pull-comments       include pull request review comments in backup
       --pull-reviews        include pull request reviews in backup
@@ -347,6 +350,27 @@ For finer control, avoid using ``--assets`` with starred repos, or use ``--skip-
 
 Alternatively, consider just storing links to starred repos in JSON format with ``--starred``.
 
+
+About issue events and the issue timeline
+-----------------------------------------
+
+Use ``--issue-events`` and ``--issue-timeline`` with ``--issues``; on their own they back up nothing.
+
+``--issue-events`` backs up GitHub's issue events endpoint under each issue's ``event_data`` key. That endpoint returns a restricted set of event types and **never** includes cross-references, so an issue that was mentioned from another issue or pull request shows no sign of it. GitHub only exposes those through the timeline.
+
+``--issue-timeline`` backs up the timeline endpoint under a separate ``timeline_data`` key. The two flags are independent: ``event_data`` keeps its existing contents and shape whether or not the timeline is enabled, so nothing that already reads it is affected.
+
+Use both flags together for a complete picture. Neither endpoint is a superset of the other, so they are complementary rather than alternatives. Only the timeline reports ``cross-referenced``, ``committed`` and ``reviewed`` entries. Only the events endpoint reliably reports ``referenced`` entries, where a commit elsewhere in the repository mentions the issue; the timeline omits many of these, substituting the issue's own ``committed`` entries instead.
+
+Note that timeline entries are not all the same shape as events. ``cross-referenced`` and ``committed`` entries have no ``id`` field, so anything consuming ``timeline_data`` should not assume one is present. ``commented`` entries are excluded from the backup because they embed the full comment body, which ``--issue-comments`` already saves.
+
+``--issue-timeline`` is included in ``--all``. On issues with many cross-references it can be noticeably larger and slower than ``--issue-events`` alone, because each ``cross-referenced`` entry embeds the referencing issue in full. On a heavily cross-referenced issue this can mean several times the API requests and many times the JSON on disk. Ordinary repositories see little difference.
+
+Incremental backups need extra help here, because being referenced from elsewhere does not change an issue's ``updated_at``. An issue can be mentioned from another repository years after its last activity, and the usual ``since`` listing will never report it as changed. On an incremental run with ``--issue-timeline``, github-backup therefore asks GitHub's GraphQL API for each item's cross-reference count and newest timestamp, compares those against what is already saved, and re-fetches the timeline of anything that differs. Pull requests are included in that check when they are being stored as issues, which is the case unless ``--pulls`` is used. The check needs no extra state on disk and also notices references that were later deleted. It costs one rate-limit point per 100 items checked, against GitHub's GraphQL quota, which is separate from the REST one. That is cheap in quota terms even on very large repositories, but it is not instant: a repository with 18,000 issues and pull requests took around 200 points and five minutes for the check alone.
+
+If you enable ``--issue-timeline`` on an existing incremental backup, cross-references on older issues are picked up automatically by that check. Timeline entries of other kinds, such as commits and reviews, are only fetched when the issue itself is updated, so run once without ``--incremental`` if you want those filled in for historical issues too.
+
+
 About pull request reviews
 --------------------------
 
@@ -450,14 +474,14 @@ Quietly and incrementally backup useful Github user data (public and private rep
     FINE_ACCESS_TOKEN=SOME-GITHUB-TOKEN
     GH_USER=YOUR-GITHUB-USER
 
-    github-backup -f $FINE_ACCESS_TOKEN --prefer-ssh -o ~/github-backup/ -l error -P -i --all-starred --starred --watched --followers --following --issues --issue-comments --issue-events --pulls --pull-comments --pull-reviews --pull-commits --labels --milestones --security-advisories --discussions --repositories --wikis --releases --assets --attachments --pull-details --gists --starred-gists $GH_USER
+    github-backup -f $FINE_ACCESS_TOKEN --prefer-ssh -o ~/github-backup/ -l error -P -i --all-starred --starred --watched --followers --following --issues --issue-comments --issue-events --issue-timeline --pulls --pull-comments --pull-reviews --pull-commits --labels --milestones --security-advisories --discussions --repositories --wikis --releases --assets --attachments --pull-details --gists --starred-gists $GH_USER
 
 Debug an error/block or incomplete backup into a temporary directory. Omit "incremental" to fill a previous incomplete backup. ::
 
     FINE_ACCESS_TOKEN=SOME-GITHUB-TOKEN
     GH_USER=YOUR-GITHUB-USER
 
-    github-backup -f $FINE_ACCESS_TOKEN -o /tmp/github-backup/ -l debug -P --all-starred --starred --watched --followers --following --issues --issue-comments --issue-events --pulls --pull-comments --pull-reviews --pull-commits --labels --milestones --discussions --repositories --wikis --releases --assets --pull-details --gists --starred-gists $GH_USER
+    github-backup -f $FINE_ACCESS_TOKEN -o /tmp/github-backup/ -l debug -P --all-starred --starred --watched --followers --following --issues --issue-comments --issue-events --issue-timeline --pulls --pull-comments --pull-reviews --pull-commits --labels --milestones --discussions --repositories --wikis --releases --assets --pull-details --gists --starred-gists $GH_USER
 
 Pipe a token from stdin to avoid storing it in environment variables or command history (Unix-like systems only)::
 

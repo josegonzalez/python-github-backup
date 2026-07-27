@@ -2,6 +2,66 @@
 
 DISCUSSION_PAGE_SIZE = 100
 
+CROSS_REFERENCE_PAGE_SIZE = 100
+
+# Cross-references do not change an issue's updatedAt, so the REST listing
+# cannot report them as changed. Count and newest timestamp are compared
+# against what is on disk: the count alone would miss an add paired with a
+# delete, the timestamp alone would miss a delete.
+ISSUE_CROSS_REFERENCE_COUNT_QUERY = """
+query($owner: String!, $name: String!, $after: String, $pageSize: Int!) {
+  repository(owner: $owner, name: $name) {
+    issues(first: $pageSize, after: $after) {
+      nodes {
+        number
+        timelineItems(last: 1, itemTypes: [CROSS_REFERENCED_EVENT]) {
+          totalCount
+          nodes {
+            ... on CrossReferencedEvent {
+              createdAt
+            }
+          }
+        }
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+    }
+  }
+}
+"""
+
+# Pull requests are stored as issues when --pulls is not used, and the issues
+# connection above excludes them. This query is shaped differently because
+# totalCount ignores itemTypes on a pull request, unlike on an issue, so the
+# cross-references have to be counted from the nodes themselves.
+CROSS_REFERENCE_NODE_LIMIT = 100
+
+PULL_CROSS_REFERENCE_COUNT_QUERY = """
+query($owner: String!, $name: String!, $after: String, $pageSize: Int!,
+      $nodeLimit: Int!) {
+  repository(owner: $owner, name: $name) {
+    pullRequests(first: $pageSize, after: $after) {
+      nodes {
+        number
+        timelineItems(last: $nodeLimit, itemTypes: [CROSS_REFERENCED_EVENT]) {
+          nodes {
+            ... on CrossReferencedEvent {
+              createdAt
+            }
+          }
+        }
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+    }
+  }
+}
+"""
+
 DISCUSSION_LIST_QUERY = """
 query($owner: String!, $name: String!, $after: String, $pageSize: Int!) {
   repository(owner: $owner, name: $name) {
