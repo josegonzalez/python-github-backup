@@ -2757,19 +2757,24 @@ def backup_issues(args, repo_cwd, repository, repos_template):
         stale_timelines = find_stale_timeline_issues(
             args, issue_cwd, repository, include_pulls=not should_include_pulls
         )
-        for number in sorted(stale_timelines - set(issues)):
-            try:
-                issues[number] = retrieve_data(
-                    args, "{0}/{1}".format(_issue_template, number), paginated=False
-                )[0]
-            except (HTTPError, RepositoryUnavailableError, IndexError) as e:
-                # Deleted or transferred between the sweep and this fetch. The
-                # refresh is opportunistic, so skip rather than fail the run.
-                logger.warning(
-                    "Unable to refresh cross-references for issue {0}: {1}".format(
-                        number, e
-                    )
-                )
+
+    # Issues selected only by the cross-reference sweep have not otherwise
+    # changed. Reuse their complete stored payload and refresh only timeline_data.
+    # Fetching the issue, comments, events and attachments again turns the first
+    # --issue-timeline run into a near-full backup and can discard optional data
+    # when the corresponding flags are absent.
+    timeline_only_issues = stale_timelines - set(issues)
+    for number in sorted(timeline_only_issues):
+        existing = read_json_file_if_exists(
+            "{0}/{1}.json".format(issue_cwd, number)
+        )
+        if existing is None:
+            logger.warning(
+                "Unable to refresh cross-references for issue {0}: "
+                "stored issue data is unreadable".format(number)
+            )
+            continue
+        issues[number] = existing
 
     if issues_skipped:
         issues_skipped_message = " (skipped {0} pull requests)".format(issues_skipped)
@@ -2784,6 +2789,7 @@ def backup_issues(args, repo_cwd, repository, repos_template):
     timeline_template = _issue_template + "/{0}/timeline"
     for number, issue in list(issues.items()):
         issue_file = "{0}/{1}.json".format(issue_cwd, number)
+        timeline_only_refresh = number in timeline_only_issues
         if (
             args.incremental_by_files
             and os.path.isfile(issue_file)
@@ -2799,10 +2805,14 @@ def backup_issues(args, repo_cwd, repository, repos_template):
                 )
                 continue
 
-        if args.include_issue_comments or args.include_everything:
+        if not timeline_only_refresh and (
+            args.include_issue_comments or args.include_everything
+        ):
             template = comments_template.format(number)
             issues[number]["comment_data"] = retrieve_data(args, template)
-        if args.include_issue_events or args.include_everything:
+        if not timeline_only_refresh and (
+            args.include_issue_events or args.include_everything
+        ):
             template = events_template.format(number)
             issues[number]["event_data"] = retrieve_data(args, template)
         if include_timeline:
@@ -2815,7 +2825,7 @@ def backup_issues(args, repo_cwd, repository, repos_template):
                 for item in retrieve_data(args, template)
                 if item.get("event") != "commented"
             ]
-        if args.include_attachments:
+        if args.include_attachments and not timeline_only_refresh:
             download_attachments(
                 args, issue_cwd, issues[number], number, repository, item_type="issue"
             )
