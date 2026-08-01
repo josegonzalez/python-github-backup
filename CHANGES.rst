@@ -1,9 +1,33 @@
 Changelog
 =========
 
-0.65.0 (2026-07-27)
+0.65.1 (2026-08-01)
 -------------------
 ------------------------
+- Fix timeline not being properly incremental. [Duncan Ogilvie]
+- Chore(deps): bump twine from 6.2.0 to 7.0.0 in the python-packages
+  group. [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [twine](https://github.com/pypa/twine).
+
+
+  Updates `twine` from 6.2.0 to 7.0.0
+  - [Release notes](https://github.com/pypa/twine/releases)
+  - [Changelog](https://github.com/pypa/twine/blob/main/docs/changelog.rst)
+  - [Commits](https://github.com/pypa/twine/compare/6.2.0...7.0.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: twine
+    dependency-version: 7.0.0
+    dependency-type: direct:production
+    update-type: version-update:semver-major
+    dependency-group: python-packages
+  ...
+
+
+0.65.0 (2026-07-27)
+-------------------
 - Refresh issue timelines when cross-references change (#168) [Rodos]
 
   Cross-references do not change an issue's updated_at, so an incremental
