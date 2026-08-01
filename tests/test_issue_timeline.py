@@ -274,12 +274,24 @@ def test_graphql_failure_warns_and_continues(
 def test_stale_issue_backed_up_though_since_excludes_it(
     create_args, tmp_path, monkeypatch
 ):
-    """The whole point: an issue since cannot see is still refreshed."""
-    _stored(tmp_path, 7, [])
+    """A sweep-only issue refreshes just its timeline and preserves its data."""
+    issue_cwd = tmp_path / "issues"
+    issue_cwd.mkdir()
+    stored = _issue(
+        7,
+        body="stored body",
+        comment_data=[{"id": 1, "body": "stored comment"}],
+        event_data=[{"id": 2, "event": "referenced"}],
+        timeline_data=[],
+    )
+    (issue_cwd / "7.json").write_text(json.dumps(stored))
     args = _sweep_args(
         create_args,
         include_issues=True,
+        include_issue_comments=True,
+        include_issue_events=True,
         include_issue_timeline=True,
+        include_attachments=True,
         since="2026-07-01T00:00:00Z",
     )
     timeline = [_xref("2026-07-20T00:00:00Z")]
@@ -287,22 +299,35 @@ def test_stale_issue_backed_up_though_since_excludes_it(
     monkeypatch.setattr(
         github_backup,
         "retrieve_data",
-        _fake_retrieve(
-            {"/issues": [], "/issues/7": [_issue(7)], "/7/timeline": timeline}, calls
-        ),
+        _fake_retrieve({"/issues": [], "/7/timeline": timeline}, calls),
     )
     monkeypatch.setattr(
         github_backup,
         "retrieve_graphql_data",
         _graphql_state({7: (1, "2026-07-20T00:00:00Z")}),
     )
+    attachment_calls = []
+    monkeypatch.setattr(
+        github_backup,
+        "download_attachments",
+        lambda *args, **kwargs: attachment_calls.append((args, kwargs)),
+    )
 
     github_backup.backup_issues(
         args, str(tmp_path), {"full_name": "owner/repo"}, "https://api.github.com/repos"
     )
 
-    saved = json.loads((tmp_path / "issues" / "7.json").read_text())
+    saved = json.loads((issue_cwd / "7.json").read_text())
     assert saved["timeline_data"] == timeline
+    assert saved["body"] == "stored body"
+    assert saved["comment_data"] == stored["comment_data"]
+    assert saved["event_data"] == stored["event_data"]
+    assert calls == [
+        "https://api.github.com/repos/owner/repo/issues",
+        "https://api.github.com/repos/owner/repo/issues",
+        "https://api.github.com/repos/owner/repo/issues/7/timeline",
+    ]
+    assert attachment_calls == []
 
 
 def test_sweep_follows_pagination_cursors(create_args, tmp_path, monkeypatch):
