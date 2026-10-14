@@ -37,29 +37,30 @@ Show the CLI help output::
 CLI Help output::
 
     github-backup [-h] [-t TOKEN_CLASSIC] [-f TOKEN_FINE] [--token-from-gh]
-                  [-q] [--as-app] [-o OUTPUT_DIRECTORY] [-l LOG_LEVEL] [-i]
-                  [--incremental-by-files]
-                  [--starred] [--all-starred] [--starred-skip-size-over MB]
-                  [--watched] [--followers] [--following] [--all]
-                  [--issues] [--issue-comments] [--issue-events]
-                  [--issue-timeline] [--pulls]
-                  [--pull-comments] [--pull-reviews] [--pull-commits]
-                  [--pull-details]
-                  [--labels] [--hooks] [--milestones] [--security-advisories]
-                  [--discussions] [--repositories] [--bare] [--no-prune]
-                  [--lfs] [--wikis] [--gists] [--starred-gists]
-                  [--skip-archived] [--skip-existing]
-                  [-L [LANGUAGES ...]] [-N NAME_REGEX] [-H GITHUB_HOST]
-                  [-O] [-R REPOSITORY] [-P] [-F] [--prefer-ssh] [-v]
-                  [--keychain-name OSX_KEYCHAIN_ITEM_NAME]
-                  [--keychain-account OSX_KEYCHAIN_ITEM_ACCOUNT]
-                  [--releases] [--latest-releases NUMBER_OF_LATEST_RELEASES]
-                  [--skip-prerelease] [--assets]
-                  [--skip-assets-on [SKIP_ASSETS_ON ...]] [--attachments]
-                  [--throttle-limit THROTTLE_LIMIT]
-                  [--throttle-pause THROTTLE_PAUSE]
-                  [--exclude [EXCLUDE ...]] [--retries MAX_RETRIES]
-                  USER
+			 [-q] [--as-app] [--as-app-dynamic-token] [--app-id APP_ID]
+			 [--app-installation-id APP_INSTALLATION_ID]
+			 [--app-installation-secret APP_INSTALLATION_SECRET]
+			 [-o OUTPUT_DIRECTORY] [-l LOG_LEVEL] [-i]
+			 [--incremental-by-files] [--starred] [--all-starred]
+			 [--starred-skip-size-over MB] [--watched] [--followers]
+			 [--following] [--all] [--issues] [--issue-comments]
+			 [--issue-events] [--issue-timeline] [--pulls]
+			 [--pull-comments] [--pull-reviews] [--pull-commits]
+			 [--pull-details] [--labels] [--hooks] [--milestones]
+			 [--security-advisories] [--discussions] [--repositories]
+			 [--bare] [--no-prune] [--lfs] [--wikis] [--gists]
+			 [--starred-gists] [--skip-archived] [--skip-existing]
+			 [-L [LANGUAGES ...]] [-N NAME_REGEX] [-H GITHUB_HOST] [-O]
+			 [-R REPOSITORY] [-P] [-F] [--prefer-ssh] [-v]
+			 [--keychain-name OSX_KEYCHAIN_ITEM_NAME]
+			 [--keychain-account OSX_KEYCHAIN_ITEM_ACCOUNT] [--releases]
+			 [--latest-releases NUMBER_OF_LATEST_RELEASES]
+			 [--skip-prerelease] [--assets]
+			 [--skip-assets-on [SKIP_ASSETS_ON ...]] [--attachments]
+			 [--throttle-limit THROTTLE_LIMIT]
+			 [--throttle-pause THROTTLE_PAUSE] [--exclude [EXCLUDE ...]]
+			 [--retries MAX_RETRIES]
+			 USER
 
     Backup a github account
 
@@ -68,28 +69,38 @@ CLI Help output::
 
     options:
       -h, --help            show this help message and exit
-      -t, --token TOKEN_CLASSIC
-                            personal access, OAuth, or JSON Web token, or path to
-                            token (file://...)
-      -f, --token-fine TOKEN_FINE
-                            fine-grained personal access token (github_pat_....),
-                            or path to token (file://...)
+      -t TOKEN_CLASSIC, --token TOKEN_CLASSIC
+			    personal access, OAuth, or JSON Web token, or path to
+			    token (file://...)
+      -f TOKEN_FINE, --token-fine TOKEN_FINE
+			    fine-grained personal access token (github_pat_....), or
+			    path to token (file://...)
       --token-from-gh       read token from GitHub CLI (gh auth token)
-      -q, --quiet           supress log messages less severe than warning, e.g.
-                            info
+      -q, --quiet           supress log messages less severe than warning, e.g. info
       --as-app              authenticate as github app instead of as a user.
-      -o, --output-directory OUTPUT_DIRECTORY
-                            directory at which to backup the repositories
-      -l, --log-level LOG_LEVEL
-                            log level to use (default: info, possible levels:
-                            debug, info, warning, error, critical)
+      --as-app-dynamic-token
+			    authenticate as github app, gets token dynamically with
+			    refresh; arguments --app-id, --app-installation-id and
+			    --app-installation-secret must be set.
+      --app-id APP_ID       github app id for option --as-app-dynamic-token.
+      --app-installation-id APP_INSTALLATION_ID
+			    github app installation id for option --as-app-dynamic-
+			    token.
+      --app-installation-secret APP_INSTALLATION_SECRET
+			    github app installation secret or path to secret
+			    (file://...) for option --as-app-dynamic-token.
+      -o OUTPUT_DIRECTORY, --output-directory OUTPUT_DIRECTORY
+			    directory at which to backup the repositories
+      -l LOG_LEVEL, --log-level LOG_LEVEL
+			    log level to use (default: info, possible levels: debug,
+			    info, warning, error, critical)
       -i, --incremental     incremental backup
       --incremental-by-files
-                            incremental backup based on modification date of files
+			    incremental backup based on modification date of files
       --starred             include JSON output of starred repositories in backup
       --all-starred         include starred repositories in backup [*]
       --starred-skip-size-over MB
-                            skip starred repositories larger than this size in MB
+			    skip starred repositories larger than this size in MB
       --watched             include JSON output of watched repositories in backup
       --followers           include JSON output of followers in backup
       --following           include JSON output of following users in backup
@@ -98,72 +109,72 @@ CLI Help output::
       --issue-comments      include issue comments in backup
       --issue-events        include issue events in backup
       --issue-timeline      include issue timeline in backup (cross-references,
-                            commits and reviews; complements --issue-events)
+			    commits and reviews; complements --issue-events)
       --pulls               include pull requests in backup
       --pull-comments       include pull request review comments in backup
       --pull-reviews        include pull request reviews in backup
       --pull-commits        include pull request commits in backup
       --pull-details        include more pull request details in backup [*]
       --labels              include labels in backup
-      --hooks               include hooks in backup (works only when
-                            authenticated)
+      --hooks               include hooks in backup (works only when authenticated)
       --milestones          include milestones in backup
       --security-advisories
-                            include security advisories in backup
+			    include security advisories in backup
       --discussions         include discussions in backup
       --repositories        include repository clone in backup
       --bare                clone bare repositories
       --no-prune            disable prune option for git fetch
-      --lfs                 clone LFS repositories (requires Git LFS to be
-                            installed, https://git-lfs.github.com) [*]
+      --lfs                 clone LFS repositories (requires Git LFS to be installed,
+			    https://git-lfs.github.com) [*]
       --wikis               include wiki clone in backup
       --gists               include gists in backup [*]
       --starred-gists       include starred gists in backup [*]
       --skip-archived       skip project if it is archived
       --skip-existing       skip project if a backup directory exists
-      -L, --languages [LANGUAGES ...]
-                            only allow these languages
-      -N, --name-regex NAME_REGEX
-                            python regex to match names against
-      -H, --github-host GITHUB_HOST
-                            GitHub Enterprise hostname
+      -L [LANGUAGES ...], --languages [LANGUAGES ...]
+			    only allow these languages
+      -N NAME_REGEX, --name-regex NAME_REGEX
+			    python regex to match names against
+      -H GITHUB_HOST, --github-host GITHUB_HOST
+			    GitHub Enterprise hostname
       -O, --organization    whether or not this is an organization user
-      -R, --repository REPOSITORY
-                            name of repository to limit backup to
+      -R REPOSITORY, --repository REPOSITORY
+			    name of repository to limit backup to
       -P, --private         include private repositories [*]
       -F, --fork            include forked repositories [*]
       --prefer-ssh          Clone repositories using SSH instead of HTTPS
       -v, --version         show program's version number and exit
       --keychain-name OSX_KEYCHAIN_ITEM_NAME
-                            OSX ONLY: name field of password item in OSX keychain
-                            that holds the personal access or OAuth token
+			    OSX ONLY: name field of password item in OSX keychain that
+			    holds the personal access or OAuth token
       --keychain-account OSX_KEYCHAIN_ITEM_ACCOUNT
-                            OSX ONLY: account field of password item in OSX
-                            keychain that holds the personal access or OAuth token
+			    OSX ONLY: account field of password item in OSX keychain
+			    that holds the personal access or OAuth token
       --releases            include release information, not including assets or
-                            binaries
+			    binaries
       --latest-releases NUMBER_OF_LATEST_RELEASES
-                            include certain number of the latest releases; only
-                            applies if including releases
+			    include certain number of the latest releases; only
+			    applies if including releases
       --skip-prerelease     skip prerelease and draft versions; only applies if
-                            including releases
-      --assets              include assets alongside release information; only
-                            applies if including releases
+			    including releases
+      --assets              include assets alongside release information; only applies
+			    if including releases
       --skip-assets-on [SKIP_ASSETS_ON ...]
-                            skip asset downloads for these repositories
-      --attachments         download user-attachments from issues, pull requests,
-                            and discussions
+			    skip asset downloads for these repositories
+      --attachments         download user-attachments from issues, pull requests, and
+			    discussions [*]
       --throttle-limit THROTTLE_LIMIT
-                            start throttling of GitHub API requests after this
-                            amount of API requests remain
+			    start throttling of GitHub API requests after this amount
+			    of API requests remain
       --throttle-pause THROTTLE_PAUSE
-                            wait this amount of seconds when API request
-                            throttling is active (default: 30.0, requires
-                            --throttle-limit to be set)
+			    wait this amount of seconds when API request throttling is
+			    active (default: 30.0, requires --throttle-limit to be
+			    set)
       --exclude [EXCLUDE ...]
-                            names of repositories to exclude
+			    names of repositories to exclude
       --retries MAX_RETRIES
-                            maximum number of retries for API calls (default: 5)
+			    maximum number of retries for API calls (default: 5)
+
 
 Usage Details
 =============
@@ -223,6 +234,14 @@ Store the App ID as a repository variable and the private key contents as a secr
     - run: github-backup myorg -t ${{ steps.app-token.outputs.token }} --as-app -o ./backup --all
 
 Note: Installation tokens expire after 1 hour. For long-running backups, use a fine-grained personal access token instead.
+
+**Dynamically renewing Github App tokens:**
+
+Github app installation authentication is also useful for large organization backups, since higher rate limits are possible: `<https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api>`_.
+
+To dynamically regenerate tokens before the one hour expiration, use the option ``--as-app-dynamic-token`` along with the options ``--app-id`` and ``--app-installation-id`` and ``--app-installation-secret``.
+
+NOTE: this token type can't currently back up gists.
 
 
 Prefer SSH

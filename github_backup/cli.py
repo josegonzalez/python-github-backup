@@ -4,18 +4,23 @@
 import logging
 import os
 import sys
+from datetime import datetime, timedelta
+import threading
+import pause
 
 from github_backup.github_backup import (
     backup_account,
     backup_repositories,
     check_git_lfs_install,
     filter_repositories,
+    get_app_installation_token,
     get_auth,
     get_authenticated_user,
     logger,
     mkdir_p,
     parse_args,
     retrieve_repositories,
+    FILE_URI_PREFIX
 )
 
 # INFO and DEBUG go to stdout, WARNING and above go to stderr
@@ -35,17 +40,13 @@ stderr_handler.setFormatter(log_format)
 
 logging.basicConfig(level=logging.INFO, handlers=[stdout_handler, stderr_handler])
 
+# In minutes
+app_installation_token_refresh_interval = 55
 
 def main():
     """Main entry point for github-backup CLI."""
     args = parse_args()
-
-    if args.private and not get_auth(args):
-        logger.warning(
-            "The --private flag has no effect without authentication. "
-            "Use -t/--token or -f/--token-fine to authenticate."
-        )
-
+    
     # Issue #477: Fine-grained PATs cannot download all attachment types from
     # private repos. Image attachments will be retried via Markdown API workaround.
     if args.include_attachments and args.token_fine:
@@ -71,6 +72,52 @@ def main():
         log_level = logging.getLevelName(args.log_level.upper())
         if isinstance(log_level, int):
             logger.root.setLevel(log_level)
+
+    def refresh_app_installation_token(args):
+        while True:
+            refresh_time = datetime.now() + timedelta(minutes=app_installation_token_refresh_interval)
+            logger.info("App installation token refresh time: " + str(refresh_time))
+            pause.until(refresh_time)
+            logger.info("Refreshing app installation token")
+            args.token_classic = get_app_installation_token(
+                app_id=args.app_id,
+                installation_id=args.app_installation_id,
+                installation_secret=args.app_installation_secret
+            )
+    
+    if args.as_app_dynamic_token:
+        if not (args.app_id and args.app_installation_id and args.app_installation_secret):
+            raise Exception(
+                "Arguments --app-id, --app-installation-id and --app-installation-secret must be set for --as-app-dynamic-token."
+            )
+        if args.include_gists:
+            logger.warning(
+                "Downloading gists with an app installation token doesn't work. "
+                "Disabling --gists option."
+            )
+            args.include_gists = False
+        if args.app_installation_secret.startswith(FILE_URI_PREFIX):
+            secret_path = args.app_installation_secret.removeprefix(FILE_URI_PREFIX)
+            with open(secret_path) as f:
+                args.app_installation_secret = f.read()
+        args.token_classic = get_app_installation_token(
+            app_id=args.app_id,
+            installation_id=args.app_installation_id,
+            installation_secret=args.app_installation_secret
+        )
+        args.as_app = True
+        refresh_app_installation_token_thread = threading.Thread(
+            target=refresh_app_installation_token,
+            args=(args,),
+            daemon=True
+        )
+        refresh_app_installation_token_thread.start()
+    
+    if args.private and not get_auth(args):
+        logger.warning(
+            "The --private flag has no effect without authentication. "
+            "Use -t/--token or -f/--token-fine to authenticate."
+        )
 
     if not args.as_app:
         logger.info("Backing up user {0} to {1}".format(args.user, output_directory))
