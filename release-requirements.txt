@@ -9,7 +9,7 @@ pytest==9.1.1
 # Release & Publishing
 twine==7.0.0
 gitchangelog==3.0.4
-setuptools==84.2.0
+setuptools==84.2.1
 
 # Documentation
 restructuredtext-lint==2.0.2
