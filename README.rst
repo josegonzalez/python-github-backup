@@ -37,7 +37,10 @@ Show the CLI help output::
 CLI Help output::
 
     github-backup [-h] [-t TOKEN_CLASSIC] [-f TOKEN_FINE] [--token-from-gh]
-                  [-q] [--as-app] [-o OUTPUT_DIRECTORY] [-l LOG_LEVEL] [-i]
+                  [-q] [--as-app] [--app-id APP_ID]
+                  [--app-private-key APP_PRIVATE_KEY]
+                  [--app-installation-id APP_INSTALLATION_ID]
+                  [-o OUTPUT_DIRECTORY] [-l LOG_LEVEL] [-i]
                   [--incremental-by-files]
                   [--starred] [--all-starred] [--starred-skip-size-over MB]
                   [--watched] [--followers] [--following] [--all]
@@ -78,6 +81,14 @@ CLI Help output::
       -q, --quiet           supress log messages less severe than warning, e.g.
                             info
       --as-app              authenticate as github app instead of as a user.
+      --app-id APP_ID       github app id or client id; creates and refreshes
+                            installation tokens (implies --as-app)
+      --app-private-key APP_PRIVATE_KEY
+                            path to the github app private key (.pem), optionally
+                            as file://...
+      --app-installation-id APP_INSTALLATION_ID
+                            id of the github app installation to back up
+                            (default: looked up from the user or organization)
       -o, --output-directory OUTPUT_DIRECTORY
                             directory at which to backup the repositories
       -l, --log-level LOG_LEVEL
@@ -212,9 +223,19 @@ For a user account (no ``--organization``), ``--as-app`` lists the repositories 
 7. Go to *Install App* in your app's settings
 8. Select the account/organization and which repositories to back up
 
-**CI/CD usage with GitHub Actions:**
+**Using the app's private key:**
 
-Store the App ID as a repository variable and the private key contents as a secret, then use ``actions/create-github-app-token``::
+Pass the App ID and private key file, and github-backup creates installation tokens itself, refreshing them before they expire so long-running backups keep working::
+
+    github-backup myorg --organization --app-id 12345 --app-private-key /path/to/app.private-key.pem -o ./backup --all
+
+The app's installation on the user or organization being backed up is looked up automatically. To skip the lookup, pass ``--app-installation-id`` with the number at the end of the installation's settings URL (``.../settings/installations/<id>``).
+
+``--app-id`` implies ``--as-app`` and cannot be combined with ``-t``, ``-f``, ``--token-from-gh`` or the keychain options. The ``iss`` claim of the signed JWT is set to the value of ``--app-id``, so the app's client ID works there too. The JWT is signed by the ``openssl`` command line tool, which must be on your ``PATH`` (the Docker image includes it).
+
+**Using an existing installation token:**
+
+If something else already creates the installation token, pass it with ``-t`` and ``--as-app``. In GitHub Actions, store the App ID as a repository variable and the private key contents as a secret, then use ``actions/create-github-app-token``::
 
     - uses: actions/create-github-app-token@v1
       id: app-token
@@ -224,7 +245,7 @@ Store the App ID as a repository variable and the private key contents as a secr
 
     - run: github-backup myorg -t ${{ steps.app-token.outputs.token }} --as-app -o ./backup --all
 
-Note: Installation tokens expire after 1 hour. For long-running backups, use a fine-grained personal access token instead.
+Note: Installation tokens passed with ``-t`` expire after 1 hour and are not refreshed. For backups that may run longer, use ``--app-private-key`` instead.
 
 
 Prefer SSH
