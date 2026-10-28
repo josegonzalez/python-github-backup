@@ -20,11 +20,13 @@ import threading
 import time
 import traceback
 from collections.abc import Generator
-from datetime import datetime
+from datetime import datetime, timezone
 from http.client import IncompleteRead
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode, urlparse
 from urllib.request import HTTPRedirectHandler, Request, build_opener, urlopen
+import jwt
+import requests
 
 try:
     from . import __version__
@@ -194,6 +196,27 @@ def parse_args(args=None):
         action="store_true",
         dest="as_app",
         help="authenticate as github app instead of as a user.",
+    )
+    parser.add_argument(
+        "--as-app-dynamic-token",
+        action="store_true",
+        dest="as_app_dynamic_token",
+        help="authenticate as github app, gets token dynamically with refresh; arguments --app-id, --app-installation-id and --app-installation-secret must be set."
+    )
+    parser.add_argument(
+        "--app-id",
+        dest="app_id",
+        help="github app id for option --as-app-dynamic-token."
+    )
+    parser.add_argument(
+        "--app-installation-id",
+        dest="app_installation_id",
+        help="github app installation id for option --as-app-dynamic-token."
+    )
+    parser.add_argument(
+        "--app-installation-secret",
+        dest="app_installation_secret",
+        help="github app installation secret or path to secret (file://...) for option --as-app-dynamic-token."
     )
     parser.add_argument(
         "-o",
@@ -524,10 +547,41 @@ def parse_args(args=None):
     )
     return parser.parse_args(args)
 
+def get_app_installation_token(app_id, installation_id, installation_secret):
+    logger.info("Getting github app installation token")
+    signing_key = jwt.jwk_from_pem( bytes(installation_secret, encoding="utf-8") )
+    now = int(datetime.now().timestamp())
+    payload = {
+        "iat": now,
+        "exp": now + 600,
+        "iss": app_id
+    }
+    jwt_instance = jwt.JWT()
+    encoded_jwt = jwt_instance.encode(payload, signing_key, alg="RS256")
+    response = requests.post(
+        "https://api.github.com/app/installations/" f"{installation_id}/access_tokens",
+        headers={
+            "Authorization": f"Bearer {encoded_jwt}",
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+        },
+    )
+    if not 200 <= response.status_code < 300:
+        raise RuntimeError(
+            "Unable to get token. Status code was "
+            f"{response.status_code}, body was {response.text}."
+        )
+    r = response.json()
+    expires_at = datetime.strptime(r["expires_at"], "%Y-%m-%dT%H:%M:%S%z")
+    time_till_expiry = expires_at - datetime.now(timezone.utc)
+    expiry_date = datetime.fromtimestamp(expires_at.timestamp())
+    logger.debug("Github token: " + r["token"])
+    logger.info("Github app installation token expires in " + str(time_till_expiry.seconds) + " seconds, at " + expiry_date.isoformat())
+    return r["token"]
 
 def get_auth(args, encode=True, for_git_cli=False):
     auth = None
-
+    
     if args.osx_keychain_item_name:
         if not args.osx_keychain_item_account:
             raise Exception(
@@ -674,7 +728,6 @@ def read_token_from_gh_cli(args):
 
     args._token_from_gh_value = token
     return token
-
 
 def get_github_repo_url(args, repository):
     if repository.get("is_gist"):
