@@ -1,9 +1,132 @@
 Changelog
 =========
 
-0.65.1 (2026-08-01)
+0.66.0 (2026-10-28)
 -------------------
 ------------------------
+- List a user's private repositories when authenticated as a GitHub App.
+  [AC Capehart, Claude Opus 5.5]
+
+  With --as-app there is no authenticated user, so a user-account backup
+  fell through to /users/{user}/repos, which only returns public
+  repositories. --private silently backed up nothing private.
+
+  An installation token can list everything the installation can access
+  via /installation/repositories, private repositories included. Org
+  backups keep using /orgs/{org}/repos, and -R still fetches the single
+  repository directly.
+- Chore(deps): bump setuptools. [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [setuptools](https://github.com/pypa/setuptools).
+
+
+  Updates `setuptools` from 84.2.0 to 84.2.1
+  - [Release notes](https://github.com/pypa/setuptools/releases)
+  - [Changelog](https://github.com/pypa/setuptools/blob/main/NEWS.rst)
+  - [Commits](https://github.com/pypa/setuptools/compare/v84.2.0...v84.2.1)
+
+  ---
+  updated-dependencies:
+  - dependency-name: setuptools
+    dependency-version: 84.2.1
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump setuptools. [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [setuptools](https://github.com/pypa/setuptools).
+
+
+  Updates `setuptools` from 84.0.0 to 84.2.0
+  - [Release notes](https://github.com/pypa/setuptools/releases)
+  - [Changelog](https://github.com/pypa/setuptools/blob/main/NEWS.rst)
+  - [Commits](https://github.com/pypa/setuptools/compare/v84.0.0...v84.2.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: setuptools
+    dependency-version: 84.2.0
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump black. [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [black](https://github.com/psf/black).
+
+
+  Updates `black` from 26.10.0 to 26.10.1
+  - [Release notes](https://github.com/psf/black/releases)
+  - [Changelog](https://github.com/psf/black/blob/main/CHANGES.md)
+  - [Commits](https://github.com/psf/black/compare/26.10.0...26.10.1)
+
+  ---
+  updated-dependencies:
+  - dependency-name: black
+    dependency-version: 26.10.1
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump black. [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [black](https://github.com/psf/black).
+
+
+  Updates `black` from 26.5.1 to 26.10.0
+  - [Release notes](https://github.com/psf/black/releases)
+  - [Changelog](https://github.com/psf/black/blob/main/CHANGES.md)
+  - [Commits](https://github.com/psf/black/compare/26.5.1...26.10.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: black
+    dependency-version: 26.10.0
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump flake8 in the python-packages group.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [flake8](https://github.com/pycqa/flake8).
+
+
+  Updates `flake8` from 7.3.0 to 7.4.1
+  - [Commits](https://github.com/pycqa/flake8/compare/7.3.0...7.4.1)
+
+  ---
+  updated-dependencies:
+  - dependency-name: flake8
+    dependency-version: 7.4.1
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+- Chore(deps): bump setuptools in the python-packages group.
+  [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [setuptools](https://github.com/pypa/setuptools).
+
+
+  Updates `setuptools` from 83.0.0 to 84.0.0
+  - [Release notes](https://github.com/pypa/setuptools/releases)
+  - [Changelog](https://github.com/pypa/setuptools/blob/main/NEWS.rst)
+  - [Commits](https://github.com/pypa/setuptools/compare/v83.0.0...v84.0.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: setuptools
+    dependency-version: 84.0.0
+    dependency-type: direct:production
+    update-type: version-update:semver-major
+    dependency-group: python-packages
+  ...
+
+
+0.65.1 (2026-08-01)
+-------------------
 - Fix timeline not being properly incremental. [Duncan Ogilvie]
 - Chore(deps): bump twine from 6.2.0 to 7.0.0 in the python-packages
   group. [dependabot[bot]]
