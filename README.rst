@@ -199,6 +199,8 @@ GitHub Apps
 
 GitHub Apps are ideal for organization backups in CI/CD. Tokens are scoped to specific repositories and expire after 1 hour.
 
+For a user account (no ``--organization``), ``--as-app`` lists the repositories the installation can access, so private repositories are included.
+
 **One-time setup:**
 
 1. Create a GitHub App at *Settings -> Developer Settings -> GitHub Apps -> New GitHub App*

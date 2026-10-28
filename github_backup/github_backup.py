@@ -1838,6 +1838,11 @@ def retrieve_repositories(args, authenticated_user):
     if args.user == authenticated_user["login"]:
         # we must use the /user/repos API to be able to access private repos
         template = "https://{0}/user/repos".format(get_github_api_host(args))
+    elif args.as_app and not args.organization:
+        # /users/{user}/repos is public-only; the installation sees private repos too
+        template = "https://{0}/installation/repositories".format(
+            get_github_api_host(args)
+        )
     else:
         if args.private and not args.organization:
             logger.warning(
@@ -1867,6 +1872,10 @@ def retrieve_repositories(args, authenticated_user):
         if e.legal_url:
             logger.warning(f"Legal notice: {e.legal_url}")
         return []
+
+    if template.endswith("/installation/repositories"):
+        # Each page is {"total_count": ..., "repositories": [...]}
+        repos = [repo for page in repos for repo in page["repositories"]]
 
     return retrieve_additional_repositories(args, authenticated_user, repos)
 
