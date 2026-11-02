@@ -4,7 +4,7 @@ black==26.10.1
 flake8==7.4.1
 
 # Testing
-pytest==9.1.1
+pytest==9.2.0
 
 # Release & Publishing
 twine==7.0.0
