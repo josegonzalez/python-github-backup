@@ -3155,6 +3155,15 @@ def backup_hooks(args, repo_cwd, repository, repos_template):
     if not auth:
         logger.info("Skipping hooks since no authentication provided")
         return
+    # Reading hooks needs admin access, and GitHub returns 404 without it.
+    # Skip the request when the repository listing says we aren't an admin.
+    if repository.get("permissions", {}).get("admin") is False:
+        logger.info(
+            "Skipping hooks for {0} since admin access is required".format(
+                repository["full_name"]
+            )
+        )
+        return
     hook_cwd = os.path.join(repo_cwd, "hooks")
     output_file = "{0}/hooks.json".format(hook_cwd)
     template = "{0}/{1}/hooks".format(repos_template, repository["full_name"])
@@ -3162,7 +3171,12 @@ def backup_hooks(args, repo_cwd, repository, repos_template):
         _backup_data(args, "hooks", template, output_file, hook_cwd)
     except HTTPError as e:
         if e.code == 404:
-            logger.info("Unable to read hooks, skipping")
+            logger.info(
+                "Unable to read hooks for {0}, skipping (requires admin access, "
+                "or Webhooks read permission for fine-grained tokens)".format(
+                    repository["full_name"]
+                )
+            )
         else:
             raise e
 

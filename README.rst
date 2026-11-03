@@ -407,11 +407,9 @@ If the incremental argument is used, per-resource checkpoints are only advanced 
 
 It's therefore recommended to only use the incremental argument if the output/result is being actively monitored, or complimented with periodic full non-incremental runs, to avoid unexpected missing data in a regular backup runs.
 
-**Starred public repo hooks blocking**
+**Hooks need admin access**
 
-Since the ``--all`` argument includes ``--hooks``, if you use ``--all`` and ``--all-starred`` together to clone a users starred public repositories, the backup will likely error and block the backup continuing.
-
-This is due to needing the correct permission for ``--hooks`` on public repos.
+Reading a repository's hooks requires admin access to it, and fine-grained tokens also need the Webhooks read permission. Since the ``--all`` argument includes ``--hooks``, repositories you don't administer, such as starred repositories with ``--all-starred``, are skipped for hooks and the rest of the backup continues.
 
 
 "bare" is actually "mirror"
