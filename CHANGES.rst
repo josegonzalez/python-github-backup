@@ -1,9 +1,38 @@
 Changelog
 =========
 
-0.66.0 (2026-10-28)
+0.66.1 (2026-11-03)
 -------------------
 ------------------------
+- Skip hooks for repositories without admin access instead of logging a
+  404 error (#532) [Rodos]
+
+  Reading hooks needs admin access, and GitHub returns 404 without it. When the
+  repository listing says the token isn't an admin, skip hooks without making the
+  request. The 404 skip message now names the repository and the permission it
+  needs, and the README note about hooks blocking starred backups is updated.
+- Chore(deps): bump pytest. [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [pytest](https://github.com/pytest-dev/pytest).
+
+
+  Updates `pytest` from 9.1.1 to 9.2.0
+  - [Release notes](https://github.com/pytest-dev/pytest/releases)
+  - [Changelog](https://github.com/pytest-dev/pytest/blob/main/CHANGELOG.rst)
+  - [Commits](https://github.com/pytest-dev/pytest/compare/9.1.1...9.2.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: pytest
+    dependency-version: 9.2.0
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+
+
+0.66.0 (2026-10-28)
+-------------------
 - List a user's private repositories when authenticated as a GitHub App.
   [AC Capehart, Claude Opus 5.5]
 
