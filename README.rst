@@ -9,7 +9,7 @@ The package can be used to backup an *entire* `Github <https://github.com/>`_ or
 Requirements
 ============
 
-- Python 3.10 or higher
+- Python 3.11 or higher
 - GIT 1.9+
 
 Installation
