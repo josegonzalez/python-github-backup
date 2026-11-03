@@ -20,7 +20,7 @@ import threading
 import time
 import traceback
 from collections.abc import Generator
-from datetime import datetime
+from datetime import datetime, timezone
 from http.client import IncompleteRead
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode, urlparse
@@ -2004,7 +2004,7 @@ def get_repository_checkpoint_time(repository):
     if timestamps:
         return max(timestamps)
 
-    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.localtime())
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
 
 def resource_backup_exists(resource_cwd):
@@ -2525,7 +2525,9 @@ def backup_discussions(args, repo_cwd, repository):
 
         if args.incremental_by_files and os.path.isfile(discussion_file):
             modified = os.path.getmtime(discussion_file)
-            modified = datetime.fromtimestamp(modified).strftime("%Y-%m-%dT%H:%M:%SZ")
+            modified = datetime.fromtimestamp(modified, timezone.utc).strftime(
+                "%Y-%m-%dT%H:%M:%SZ"
+            )
             if modified > summary["updatedAt"]:
                 logger.info(
                     "Skipping discussion {0} because it wasn't modified since last backup".format(
@@ -2805,7 +2807,9 @@ def backup_issues(args, repo_cwd, repository, repos_template):
             and number not in stale_timelines
         ):
             modified = os.path.getmtime(issue_file)
-            modified = datetime.fromtimestamp(modified).strftime("%Y-%m-%dT%H:%M:%SZ")
+            modified = datetime.fromtimestamp(modified, timezone.utc).strftime(
+                "%Y-%m-%dT%H:%M:%SZ"
+            )
             if modified > issue["updated_at"]:
                 logger.info(
                     "Skipping issue {0} because it wasn't modified since last backup".format(
@@ -3006,7 +3010,9 @@ def backup_pulls(args, repo_cwd, repository, repos_template):
 
         if args.incremental_by_files and os.path.isfile(pull_file):
             modified = os.path.getmtime(pull_file)
-            modified = datetime.fromtimestamp(modified).strftime("%Y-%m-%dT%H:%M:%SZ")
+            modified = datetime.fromtimestamp(modified, timezone.utc).strftime(
+                "%Y-%m-%dT%H:%M:%SZ"
+            )
             if modified > pull["updated_at"] and not needs_review_backfill:
                 logger.info(
                     "Skipping pull request {0} because it wasn't modified since last backup".format(
