@@ -1,9 +1,26 @@
 Changelog
 =========
 
-0.66.1 (2026-11-03)
+0.67.0 (2026-11-04)
 -------------------
 ------------------------
+- Drop support for Python 3.10 (end of life) [Rodos]
+
+  Python 3.10 reached end of life on 2026-10-01 and no longer receives
+  security fixes. Require Python 3.11 or higher, and remove 3.10 from the
+  package classifiers and the CI test and lint matrices.
+- Fix --incremental-by-files skipping updated items east of UTC. [Rodos]
+
+  The modification time of a saved issue, pull request or discussion was
+  formatted in local time but labelled UTC, then compared with GitHub's UTC
+  updated_at. East of UTC, items updated within the offset after they were saved
+  were skipped and their changes missed; west of UTC, unchanged items were
+  fetched again. The checkpoint time used when a repository has no updated_at or
+  pushed_at had the same local-time mistake.
+
+
+0.66.1 (2026-11-03)
+-------------------
 - Skip hooks for repositories without admin access instead of logging a
   404 error (#532) [Rodos]
 
