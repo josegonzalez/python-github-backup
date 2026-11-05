@@ -1,7 +1,7 @@
 # Linting & Formatting
 autopep8==2.3.2
 black==26.10.1
-flake8==7.4.1
+flake8==7.5.0
 
 # Testing
 pytest==9.2.0
