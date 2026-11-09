@@ -1,9 +1,44 @@
 Changelog
 =========
 
-0.67.0 (2026-11-04)
+0.68.0 (2026-11-09)
 -------------------
 ------------------------
+- Create GitHub App installation tokens from the app's private key. [AC
+  Capehart, Claude Opus 5.5]
+
+  --as-app only accepts an installation token created elsewhere. Those
+  expire after an hour, so long backups fail part way through. With
+  --app-id and --app-private-key, github-backup creates the token itself
+  and replaces it ten minutes before it expires. The installation is
+  looked up from the user or organization being backed up, unless
+  --app-installation-id names it.
+
+  The JWT is signed by the openssl command line tool so the project keeps
+  zero runtime dependencies; the Docker image now installs openssl. A
+  missing key file or openssl is reported by parse_args before any work
+  starts. API requests resolve auth per request, and wiki clones rebuild
+  their URL, so both pick up a refreshed token mid-run.
+- Chore(deps): bump flake8. [dependabot[bot]]
+
+  Bumps the python-packages group with 1 update: [flake8](https://github.com/pycqa/flake8).
+
+
+  Updates `flake8` from 7.4.1 to 7.5.0
+  - [Commits](https://github.com/pycqa/flake8/compare/7.4.1...7.5.0)
+
+  ---
+  updated-dependencies:
+  - dependency-name: flake8
+    dependency-version: 7.5.0
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: python-packages
+  ...
+
+
+0.67.0 (2026-11-04)
+-------------------
 - Drop support for Python 3.10 (end of life) [Rodos]
 
   Python 3.10 reached end of life on 2026-10-01 and no longer receives
