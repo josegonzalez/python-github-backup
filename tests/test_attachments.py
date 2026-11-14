@@ -398,37 +398,75 @@ class TestJWTWorkaround:
 
         assert result is None
 
-    def test_needs_jwt_only_for_fine_grained_private_assets(self):
-        """needs_jwt is True only for fine-grained + private + /assets/ URL."""
-        assets_url = "https://github.com/user-attachments/assets/abc123"
-        files_url = "https://github.com/user-attachments/files/123/doc.pdf"
-        token_fine = "github_pat_test"
-        private = True
-        public = False
+    @pytest.mark.parametrize(
+        "token, private, url, expected",
+        [
+            # Fine-grained PAT (#477)
+            ("fine", True, "https://github.com/user-attachments/assets/abc123", True),
+            ("fine", True, "https://github.com/user-attachments/files/123/doc.pdf", False),
+            ("fine", False, "https://github.com/user-attachments/assets/abc123", False),
+            # GitHub App installation token gets the same 404 as a fine-grained PAT
+            ("app", True, "https://github.com/user-attachments/assets/abc123", True),
+            ("app", True, "https://github.com/user-attachments/files/123/doc.pdf", False),
+            ("app", False, "https://github.com/user-attachments/assets/abc123", False),
+            # Older repo-scoped image URLs render to the same JWT-signed URLs
+            ("fine", True, "https://github.com/testuser/testrepo/assets/123/abc-def", True),
+            ("app", True, "https://github.com/testuser/testrepo/assets/123/abc-def", True),
+            ("app", True, "https://github.com/testuser/testrepo/files/123/doc.pdf", False),
+            # Classic tokens download private attachments directly
+            ("classic", True, "https://github.com/user-attachments/assets/abc123", False),
+            ("classic", True, "https://github.com/testuser/testrepo/assets/123/abc-def", False),
+        ],
+    )
+    def test_needs_jwt_workaround(self, create_args, token, private, url, expected):
+        """Only fine-grained and App tokens on private repos use the workaround, and only for images."""
+        args = create_args()
+        if token == "fine":
+            args.token_fine = "github_pat_test"
+        elif token == "app":
+            args.as_app = True
+            args.token_classic = "ghs_test"
+        else:
+            args.token_classic = "ghp_test"
+        repository = {"full_name": "testuser/testrepo", "private": private}
 
-        # Fine-grained + private + assets = True
-        needs_jwt = (
-            token_fine is not None
-            and private
-            and "github.com/user-attachments/assets/" in assets_url
-        )
-        assert needs_jwt is True
+        assert github_backup.needs_jwt_workaround(args, repository, url) is expected
 
-        # Fine-grained + private + files = False
-        needs_jwt = (
-            token_fine is not None
-            and private
-            and "github.com/user-attachments/assets/" in files_url
-        )
-        assert needs_jwt is False
+    def test_jwt_workaround_uses_app_installation_token(self, attachment_test_setup):
+        """With --as-app, the Markdown API is called with the installation token."""
+        setup = attachment_test_setup
+        setup["args"].as_app = True
+        setup["args"].token_classic = "ghs_test"
+        setup["repository"]["private"] = True
 
-        # Fine-grained + public + assets = False
-        needs_jwt = (
-            token_fine is not None
-            and public
-            and "github.com/user-attachments/assets/" in assets_url
+        issue_data = {"body": "https://github.com/user-attachments/assets/abc123"}
+        jwt_url = "https://private-user-images.githubusercontent.com/123/abc.png?jwt=token"
+
+        with patch(
+            "github_backup.github_backup.get_jwt_signed_url_via_markdown_api",
+            return_value=jwt_url,
+        ) as markdown_api, patch(
+            "github_backup.github_backup.download_attachment_file",
+            return_value={"success": True, "http_status": 200, "url": jwt_url},
+        ) as download:
+            github_backup.download_attachments(
+                setup["args"], setup["issue_cwd"], issue_data, 123, setup["repository"]
+            )
+
+        markdown_api.assert_called_once_with(
+            "https://github.com/user-attachments/assets/abc123",
+            "ghs_test",
+            "testuser/testrepo",
         )
-        assert needs_jwt is False
+        # The JWT-signed URL is downloaded without the installation token
+        download.assert_called_once()
+        assert download.call_args.args[0] == jwt_url
+        assert download.call_args.kwargs["auth"] is None
+
+        manifest_path = os.path.join(setup["issue_cwd"], "attachments", "123", "manifest.json")
+        with open(manifest_path) as f:
+            manifest = json.load(f)
+        assert manifest["attachments"][0]["jwt_workaround"] is True
 
     def test_jwt_workaround_sets_manifest_flag(self, attachment_test_setup):
         """Successful JWT workaround sets jwt_workaround flag in manifest."""
