@@ -1420,6 +1420,25 @@ def download_attachment_file(url, path, auth, as_app=False, fine=False):
     return metadata
 
 
+def needs_jwt_workaround(args, repository, url):
+    """Whether an attachment must be fetched through a JWT-signed URL.
+
+    Fine-grained PATs (#477) and GitHub App installation tokens get a 404 when
+    downloading attachments from private repositories directly, while classic
+    tokens do not. Image attachments, in both the modern
+    github.com/user-attachments/assets/* and the older
+    github.com/{owner}/{repo}/assets/* format, can be fetched through the
+    JWT-signed URL that the Markdown API renders for them. /files/ URLs cannot.
+    """
+    if args.token_fine is None and not args.as_app:
+        return False
+    if not repository.get("private", False):
+        return False
+    return "github.com/user-attachments/assets/" in url or bool(
+        re.match(r"https://github\.com/[^/]+/[^/]+/assets/\d+/", url)
+    )
+
+
 def get_jwt_signed_url_via_markdown_api(url, token, repo_context):
     """Convert a user-attachments/assets URL to a JWT-signed URL via Markdown API.
 
@@ -1427,8 +1446,9 @@ def get_jwt_signed_url_via_markdown_api(url, token, repo_context):
     JWT-signed private-user-images.githubusercontent.com URLs that work
     without token authentication.
 
-    This is a workaround for issue #477 where fine-grained PATs cannot
-    download user-attachments URLs from private repos directly.
+    This is a workaround for issue #477 where fine-grained PATs (and GitHub
+    App installation tokens) cannot download attachments from private repos
+    directly.
 
     Limitations:
     - Only works for /assets/ URLs (images)
@@ -1436,8 +1456,8 @@ def get_jwt_signed_url_via_markdown_api(url, token, repo_context):
     - JWT URLs expire after ~5 minutes
 
     Args:
-        url: The github.com/user-attachments/assets/UUID URL
-        token: Raw fine-grained PAT (github_pat_...)
+        url: The image attachment URL (user-attachments/assets or repo assets)
+        token: Raw fine-grained PAT (github_pat_...) or App installation token
         repo_context: Repository context as "owner/repo"
 
     Returns:
@@ -1832,16 +1852,7 @@ def download_attachments(
         filename = get_attachment_filename(url)
         filepath = os.path.join(attachments_dir, filename)
 
-        # Issue #477: Fine-grained PATs cannot download user-attachments/assets
-        # from private repos directly (404). Use Markdown API workaround to get
-        # a JWT-signed URL. Only works for /assets/ (images), not /files/.
-        needs_jwt = (
-            args.token_fine is not None
-            and repository.get("private", False)
-            and "github.com/user-attachments/assets/" in url
-        )
-
-        if not needs_jwt:
+        if not needs_jwt_workaround(args, repository, url):
             # NORMAL download path
             metadata = download_attachment_file(
                 url,
@@ -1851,7 +1862,7 @@ def download_attachments(
                 fine=args.token_fine is not None,
             )
         elif jwt_url := get_jwt_signed_url_via_markdown_api(
-            url, args.token_fine, repository["full_name"]
+            url, get_auth(args, encode=False), repository["full_name"]
         ):
             # JWT needed and extracted, download via JWT
             metadata = download_attachment_file(
@@ -1865,8 +1876,8 @@ def download_attachments(
                 "url": url,
                 "success": False,
                 "skipped_at": datetime.now(timezone.utc).isoformat(),
-                "error": "Fine-grained token cannot download private repo attachments. "
-                "Markdown API workaround failed. Use --token-classic instead.",
+                "error": "Fine-grained and GitHub App tokens cannot download private repo "
+                "attachments. Markdown API workaround failed. Use --token-classic instead.",
             }
             logger.warning(
                 "Skipping attachment {0}: {1}".format(url, metadata["error"])
