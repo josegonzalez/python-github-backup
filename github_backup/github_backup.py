@@ -2378,7 +2378,7 @@ def backup_repositories(args, output_directory, repositories):
                 backup_issues(args, repo_cwd, repository, repos_template)
                 write_resource_last_update(args, issue_cwd, repository)
 
-            if repository["has_pull_requests"] and (args.include_pulls or args.include_everything):
+            if repository.get("has_pull_requests", True) and (args.include_pulls or args.include_everything):
                 incremental_resource_work_attempted = True
                 pulls_cwd = os.path.join(repo_cwd, "pulls")
                 args.since = read_resource_last_update(
