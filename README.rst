@@ -533,6 +533,8 @@ Development
 
 This project is considered feature complete for the primary maintainer @josegonzalez. If you would like a bugfix or enhancement, pull requests are welcome. Feel free to contact the maintainer for consulting estimates if you'd like to sponsor the work instead.
 
+If you use a coding agent, point it at `AGENTS.md <AGENTS.md>`_, which collects the conventions that reviews of past pull requests have settled on.
+
 Contibuters
 -----------
 
@@ -553,7 +555,7 @@ To run the test suite::
 To run linting::
 
     pip install flake8
-    flake8 --ignore=E501
+    flake8 --ignore=E501,E203,W503
 
 
 .. |PyPI| image:: https://img.shields.io/pypi/v/github-backup.svg
