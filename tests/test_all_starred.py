@@ -30,6 +30,9 @@ class TestAllStarredCloning:
             "private": False,
             "fork": False,
             "has_wiki": False,
+            "has_issues": True,
+            "has_pull_requests": True,
+            "has_discussions": True,
             "is_starred": True,  # This flag is set for starred repos
         }
 
@@ -56,6 +59,9 @@ class TestAllStarredCloning:
             "private": False,
             "fork": False,
             "has_wiki": False,
+            "has_issues": True,
+            "has_pull_requests": True,
+            "has_discussions": True,
             "is_starred": True,
         }
 
@@ -80,6 +86,9 @@ class TestAllStarredCloning:
             "private": False,
             "fork": False,
             "has_wiki": False,
+            "has_issues": True,
+            "has_pull_requests": True,
+            "has_discussions": True,
             # No is_starred flag
         }
 
@@ -103,6 +112,9 @@ class TestAllStarredCloning:
             "private": False,
             "fork": False,
             "has_wiki": False,
+            "has_issues": True,
+            "has_pull_requests": True,
+            "has_discussions": True,
         }
 
         with patch('github_backup.github_backup.mkdir_p'):
