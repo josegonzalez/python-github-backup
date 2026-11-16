@@ -337,3 +337,89 @@ def test_pagination_picks_up_refreshed_token(app_args):
 
     assert results == [{"id": 1}, {"id": 2}]
     assert page_auth == [b"token ghs_1", b"token ghs_2"]
+
+
+def rate_limited_403():
+    reset = int(time.time()) + 900
+    return HTTPError(
+        url="https://api.github.com/test",
+        code=403,
+        msg="rate limit exceeded",
+        hdrs={"x-ratelimit-remaining": "0", "x-ratelimit-reset": str(reset)},
+        fp=None,
+    )
+
+
+@pytest.fixture
+def token_rotates_during_wait():
+    """The installation token is replaced while a retry is waiting, as happens
+    when the rate limit resets after the token has expired."""
+    current = {"token": "ghs_1"}
+
+    def sleep(seconds):
+        current["token"] = "ghs_2"
+
+    with patch(
+        "github_backup.github_backup.get_app_installation_token",
+        side_effect=lambda args: current["token"],
+    ), patch("github_backup.github_backup.time.sleep", side_effect=sleep):
+        yield
+
+
+def test_rate_limit_retry_picks_up_refreshed_token(app_args, token_rotates_during_wait):
+    """Retrying after a rate-limit wait sends the token that is current after the
+    wait, not the one the request was first built with."""
+    sent_auth = []
+
+    def mock_urlopen(request, *args, **kwargs):
+        sent_auth.append(request.get_header("Authorization"))
+        if len(sent_auth) == 1:
+            raise rate_limited_403()
+        return MockHTTPResponse([{"id": 1}])
+
+    with patch("github_backup.github_backup.urlopen", side_effect=mock_urlopen):
+        results = github_backup.retrieve_data(
+            app_args, "https://api.github.com/orgs/testorg/repos"
+        )
+
+    assert results == [{"id": 1}]
+    assert sent_auth == [b"token ghs_1", b"token ghs_2"]
+
+
+def test_graphql_rate_limit_retry_picks_up_refreshed_token(
+    app_args, token_rotates_during_wait
+):
+    sent_auth = []
+
+    def mock_urlopen(request, *args, **kwargs):
+        sent_auth.append(request.get_header("Authorization"))
+        if len(sent_auth) == 1:
+            raise rate_limited_403()
+        return MockHTTPResponse({"data": {"ok": True}})
+
+    with patch("github_backup.github_backup.urlopen", side_effect=mock_urlopen):
+        data = github_backup.retrieve_graphql_data(app_args, "query { ok }")
+
+    assert data == {"ok": True}
+    assert sent_auth == ["bearer ghs_1", "bearer ghs_2"]
+
+
+def test_graphql_rate_limited_error_retry_picks_up_refreshed_token(
+    app_args, token_rotates_during_wait
+):
+    """GraphQL can also report the rate limit as a RATE_LIMITED error in a 200."""
+    sent_auth = []
+
+    def mock_urlopen(request, *args, **kwargs):
+        sent_auth.append(request.get_header("Authorization"))
+        if len(sent_auth) == 1:
+            return MockHTTPResponse(
+                {"errors": [{"type": "RATE_LIMITED", "message": "rate limited"}]}
+            )
+        return MockHTTPResponse({"data": {"ok": True}})
+
+    with patch("github_backup.github_backup.urlopen", side_effect=mock_urlopen):
+        data = github_backup.retrieve_graphql_data(app_args, "query { ok }")
+
+    assert data == {"ok": True}
+    assert sent_auth == ["bearer ghs_1", "bearer ghs_2"]

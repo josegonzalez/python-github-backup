@@ -901,23 +901,31 @@ def retrieve_data(args, template, query_args=None, paginated=True, lazy=False):
 
         next_url = None
 
+        def build_request(auth):
+            return _construct_request(
+                per_page=per_page if paginated else None,
+                query_args=query_args,
+                template=next_url or template,
+                auth=auth,
+                as_app=args.as_app,
+                fine=args.token_fine is not None,
+            )
+
         while True:
             # FIRST: Fetch response
 
             for attempt in range(args.max_retries + 1):
-                # Resolved per request so long runs pick up refreshed app tokens
+                # Resolved per request (and again before each retry) so long
+                # runs pick up refreshed app tokens
                 auth = get_auth(args, encode=not args.as_app)
-                request = _construct_request(
-                    per_page=per_page if paginated else None,
-                    query_args=query_args,
-                    template=next_url or template,
-                    auth=auth,
-                    as_app=args.as_app,
-                    fine=args.token_fine is not None,
-                )
                 try:
                     http_response = make_request_with_retry(
-                        request, auth, args.max_retries
+                        build_request(auth),
+                        auth,
+                        args.max_retries,
+                        rebuild_request=lambda: build_request(
+                            get_auth(args, encode=not args.as_app)
+                        ),
                     )
                 except HTTPError as exc:
                     if exc.code == 451:
@@ -1028,17 +1036,29 @@ def retrieve_graphql_data(args, query, variables=None, log_context=None):
     ).encode("utf-8")
     endpoint = get_github_graphql_url(args)
 
-    for attempt in range(args.max_retries + 1):
+    def build_request(auth):
         request = Request(endpoint, data=payload, method="POST")
         request.add_header("Accept", "application/json")
         request.add_header("Content-Type", "application/json")
         request.add_header("Authorization", "bearer " + auth)
+        return request
+
+    for attempt in range(args.max_retries + 1):
+        if attempt:
+            # Resolved again after a retry wait so long runs pick up refreshed
+            # app tokens
+            auth = get_graphql_auth(args)
         log_url = endpoint
         if log_context:
             log_url = "{0} ({1})".format(log_url, log_context)
         logger.info("Requesting {0}".format(log_url))
 
-        http_response = make_request_with_retry(request, auth, args.max_retries)
+        http_response = make_request_with_retry(
+            build_request(auth),
+            auth,
+            args.max_retries,
+            rebuild_request=lambda: build_request(get_graphql_auth(args)),
+        )
 
         status = http_response.getcode()
         if status != 200:
@@ -1097,8 +1117,14 @@ def retrieve_graphql_data(args, query, variables=None, log_context=None):
     )  # pragma: no cover
 
 
-def make_request_with_retry(request, auth, max_retries=5):
-    """Make HTTP request with automatic retry for transient errors."""
+def make_request_with_retry(request, auth, max_retries=5, rebuild_request=None):
+    """Make HTTP request with automatic retry for transient errors.
+
+    If given, rebuild_request is called to build the request again before each
+    retry. A rate-limit wait can last longer than a GitHub App installation
+    token, so callers that resolve credentials per request use it to resend
+    with the token that is current after the wait.
+    """
 
     def is_retryable_status(status_code, headers):
         # Server errors are always retryable
@@ -1110,6 +1136,8 @@ def make_request_with_retry(request, auth, max_retries=5):
         return False
 
     for attempt in range(max_retries + 1):
+        if attempt and rebuild_request is not None:
+            request = rebuild_request()
         try:
             return urlopen(request, context=https_ctx)
 
