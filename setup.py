@@ -48,6 +48,7 @@ setup(
         "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: 3.13",
         "Programming Language :: Python :: 3.14",
+        "Programming Language :: Python :: 3.15",
     ],
     description="backup a github user or organization",
     long_description=open_file("README.rst").read(),
