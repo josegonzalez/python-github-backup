@@ -1,6 +1,5 @@
 """Tests for json_dump_if_changed functionality."""
 
-import codecs
 import json
 import os
 import tempfile
@@ -25,7 +24,7 @@ class TestJsonDumpIfChanged:
             assert os.path.exists(output_file)
 
             # Verify content matches expected format
-            with codecs.open(output_file, "r", encoding="utf-8") as f:
+            with open(output_file, "r", encoding="utf-8", newline="") as f:
                 content = f.read()
                 loaded = json.loads(content)
                 assert loaded == test_data
@@ -67,7 +66,7 @@ class TestJsonDumpIfChanged:
             assert result2 is True
 
             # Verify new content
-            with codecs.open(output_file, "r", encoding="utf-8") as f:
+            with open(output_file, "r", encoding="utf-8", newline="") as f:
                 loaded = json.load(f)
                 assert loaded == test_data2
 
@@ -79,7 +78,7 @@ class TestJsonDumpIfChanged:
 
             github_backup.json_dump_if_changed(test_data, output_file)
 
-            with codecs.open(output_file, "r", encoding="utf-8") as f:
+            with open(output_file, "r", encoding="utf-8", newline="") as f:
                 content = f.read()
 
             # Check for consistent formatting:
@@ -111,7 +110,7 @@ class TestJsonDumpIfChanged:
             assert not os.path.exists(temp_file)
 
             # Verify content
-            with codecs.open(output_file, "r", encoding="utf-8") as f:
+            with open(output_file, "r", encoding="utf-8", newline="") as f:
                 loaded = json.load(f)
                 assert loaded == test_data
 
@@ -130,7 +129,7 @@ class TestJsonDumpIfChanged:
             assert result is True
 
             # Verify Unicode is preserved
-            with codecs.open(output_file, "r", encoding="utf-8") as f:
+            with open(output_file, "r", encoding="utf-8", newline="") as f:
                 loaded = json.load(f)
                 assert loaded == test_data
 
@@ -154,7 +153,7 @@ class TestJsonDumpIfChanged:
             assert result is True
 
             # Verify structure is preserved
-            with codecs.open(output_file, "r", encoding="utf-8") as f:
+            with open(output_file, "r", encoding="utf-8", newline="") as f:
                 loaded = json.load(f)
                 assert loaded == test_data
 
@@ -173,7 +172,7 @@ class TestJsonDumpIfChanged:
             assert result is True
 
             # Verify new content was written
-            with codecs.open(output_file, "r", encoding="utf-8") as f:
+            with open(output_file, "r", encoding="utf-8", newline="") as f:
                 loaded = json.load(f)
                 assert loaded == test_data
 
