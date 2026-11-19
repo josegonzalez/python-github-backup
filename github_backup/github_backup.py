@@ -5,7 +5,6 @@ from __future__ import print_function
 import argparse
 import base64
 import calendar
-import codecs
 import json
 import logging
 import os
@@ -2304,7 +2303,7 @@ def gist_backup_is_current(repository, repo_cwd, repo_dir):
     if not updated_at:
         return False
     try:
-        with codecs.open(os.path.join(repo_cwd, "gist.json"), encoding="utf-8") as f:
+        with open(os.path.join(repo_cwd, "gist.json"), encoding="utf-8", newline="") as f:
             stored = json.load(f)
     except (OSError, ValueError):
         return False
@@ -2377,7 +2376,7 @@ def backup_repositories(args, output_directory, repositories):
                 # DMCA-blocked or empty gist), so make sure the directory exists
                 mkdir_p(repo_cwd)
                 output_file = "{0}/gist.json".format(repo_cwd)
-                with codecs.open(output_file, "w", encoding="utf-8") as f:
+                with open(output_file, "w", encoding="utf-8", newline="") as f:
                     json_dump(repository, f)
 
                 continue  # don't try to back anything else for a gist; it doesn't exist
@@ -3021,7 +3020,7 @@ def backup_issues(args, repo_cwd, repository, repos_template):
                 args, issue_cwd, issues[number], number, repository, item_type="issue"
             )
 
-        with codecs.open(issue_file + ".temp", "w", encoding="utf-8") as f:
+        with open(issue_file + ".temp", "w", encoding="utf-8", newline="") as f:
             json_dump(issue, f)
         os.replace(issue_file + ".temp", issue_file)  # Atomic write
 
@@ -3040,7 +3039,7 @@ def read_json_file_if_exists(path):
         return None
 
     try:
-        with codecs.open(path, "r", encoding="utf-8") as f:
+        with open(path, "r", encoding="utf-8", newline="") as f:
             return json.load(f)
     except (OSError, UnicodeDecodeError, json.decoder.JSONDecodeError) as e:
         logger.debug("Error reading existing JSON file {0}: {1}".format(path, e))
@@ -3230,7 +3229,7 @@ def backup_pulls(args, repo_cwd, repository, repos_template):
 
         restore_existing_pull_optional_data(pull, existing_pull)
 
-        with codecs.open(pull_file + ".temp", "w", encoding="utf-8") as f:
+        with open(pull_file + ".temp", "w", encoding="utf-8", newline="") as f:
             json_dump(pull, f)
         os.replace(pull_file + ".temp", pull_file)  # Atomic write
 
@@ -3646,7 +3645,7 @@ def json_dump_if_changed(data, output_file_path):
     # Check if file exists and compare content
     if os.path.exists(output_file_path):
         try:
-            with codecs.open(output_file_path, "r", encoding="utf-8") as f:
+            with open(output_file_path, "r", encoding="utf-8", newline="") as f:
                 existing_content = f.read()
             if existing_content == new_content:
                 logger.debug(
@@ -3663,7 +3662,7 @@ def json_dump_if_changed(data, output_file_path):
 
     # Write the file atomically using temp file + rename
     temp_file = output_file_path + ".temp"
-    with codecs.open(temp_file, "w", encoding="utf-8") as f:
+    with open(temp_file, "w", encoding="utf-8", newline="") as f:
         f.write(new_content)
     os.replace(temp_file, output_file_path)  # Atomic write
     return True
