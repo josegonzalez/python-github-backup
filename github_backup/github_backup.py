@@ -41,7 +41,9 @@ from .graphql_queries import (
     DISCUSSION_PAGE_SIZE,
     DISCUSSION_REPLIES_QUERY,
     ISSUE_CROSS_REFERENCE_COUNT_QUERY,
+    PULL_COMMENTS_QUERY,
     PULL_CROSS_REFERENCE_COUNT_QUERY,
+    PULL_PAGE_SIZE,
 )
 
 FILE_URI_PREFIX = "file://"
@@ -2394,7 +2396,7 @@ def backup_repositories(args, output_directory, repositories):
                     lfs_clone=args.lfs_clone,
                     no_prune=args.no_prune,
                 )
-            if args.include_issues or args.include_everything:
+            if repository["has_issues"] and (args.include_issues or args.include_everything):
                 incremental_resource_work_attempted = True
                 issue_cwd = os.path.join(repo_cwd, "issues")
                 args.since = read_resource_last_update(
@@ -2403,7 +2405,7 @@ def backup_repositories(args, output_directory, repositories):
                 backup_issues(args, repo_cwd, repository, repos_template)
                 write_resource_last_update(args, issue_cwd, repository)
 
-            if args.include_pulls or args.include_everything:
+            if repository.get("has_pull_requests", True) and (args.include_pulls or args.include_everything):
                 incremental_resource_work_attempted = True
                 pulls_cwd = os.path.join(repo_cwd, "pulls")
                 args.since = read_resource_last_update(
@@ -2412,7 +2414,7 @@ def backup_repositories(args, output_directory, repositories):
                 backup_pulls(args, repo_cwd, repository, repos_template)
                 write_resource_last_update(args, pulls_cwd, repository)
 
-            if args.include_discussions or args.include_everything:
+            if repository["has_discussions"] and (args.include_discussions or args.include_everything):
                 backup_discussions(args, repo_cwd, repository)
 
             if args.include_milestones or args.include_everything:
@@ -3171,7 +3173,6 @@ def backup_pulls(args, repo_cwd, repository, repos_template):
     # regular comments need to be fetched via issue API.
     # For backwards compatibility with versions <= 0.41.0
     # keep name "comment_data" for review comments
-    comments_regular_template = _issue_template + "/{0}/comments"
     comments_template = _pulls_template + "/{0}/comments"
     commits_template = _pulls_template + "/{0}/commits"
     reviews_template = _pulls_template + "/{0}/reviews"
@@ -3202,8 +3203,49 @@ def backup_pulls(args, repo_cwd, repository, repos_template):
         if (
             args.include_pull_comments or args.include_everything
         ) and should_fetch_non_review_data:
-            template = comments_regular_template.format(number)
-            pulls[number]["comment_regular_data"] = retrieve_data(args, template)
+            after = None
+            comments_page = 1
+            comments = []
+            comment_total_count = 0
+            owner, name = _repository_owner_name(repository)
+            while True:
+                data = retrieve_graphql_data(
+                    args,
+                    PULL_COMMENTS_QUERY,
+                    {
+                        "owner": owner,
+                        "name": name,
+                        "number": number,
+                        "after": after,
+                        "pageSize": PULL_PAGE_SIZE,
+                    },
+                    log_context="pull request {0}#{1} comments page {2}".format(
+                        repository["full_name"], number, comments_page
+                    ),
+                )
+                repository_data = data.get("repository") or {}
+                pr_data = repository_data.get("pullRequest")
+                if pr_data is None:
+                    raise Exception(
+                        "Pull request #{0} not found in {1}".format(
+                            number, repository["full_name"]
+                        )
+                    )
+
+                comments_connection = pr_data.get("comments") or {}
+                comment_total_count = comments_connection.get(
+                    "totalCount", comment_total_count
+                )
+                comments.extend(_connection_nodes(comments_connection))
+
+                page_info = comments_connection.get("pageInfo") or {}
+                if not page_info.get("hasNextPage"):
+                    break
+
+                after = page_info.get("endCursor")
+                comments_page += 1
+            pulls[number]["comment_regular_data"] = comments
+
             template = comments_template.format(number)
             pulls[number]["comment_data"] = retrieve_data(args, template)
         if include_pull_reviews:
@@ -3257,7 +3299,13 @@ def backup_milestones(args, repo_cwd, repository, repos_template):
 
     query_args = {"state": "all"}
 
-    _milestones = retrieve_data(args, template, query_args=query_args)
+    try:
+        _milestones = retrieve_data(args, template, query_args=query_args)
+    except HTTPError as e:
+        if e.code == 404:
+            logger.info("Milestones are not available for this repository, skipping")
+            return
+        raise
 
     milestones = {}
     for milestone in _milestones:
@@ -3330,7 +3378,13 @@ def backup_labels(args, repo_cwd, repository, repos_template):
     label_cwd = os.path.join(repo_cwd, "labels")
     output_file = "{0}/labels.json".format(label_cwd)
     template = "{0}/{1}/labels".format(repos_template, repository["full_name"])
-    _backup_data(args, "labels", template, output_file, label_cwd)
+    try:
+        _backup_data(args, "labels", template, output_file, label_cwd)
+    except HTTPError as e:
+        if e.code == 404:
+            logger.info("Labels are not available for this repository, skipping")
+            return
+        raise
 
 
 def backup_hooks(args, repo_cwd, repository, repos_template):
@@ -3375,7 +3429,13 @@ def backup_releases(args, repo_cwd, repository, repos_template, include_assets=F
     query_args = {}
 
     release_template = "{0}/{1}/releases".format(repos_template, repository_fullname)
-    releases = retrieve_data(args, release_template, query_args=query_args)
+    try:
+        releases = retrieve_data(args, release_template, query_args=query_args)
+    except HTTPError as e:
+        if e.code == 404:
+            logger.info("Releases are not available for this repository, skipping")
+            return
+        raise
 
     if args.skip_prerelease:
         releases = [r for r in releases if not r["prerelease"] and not r["draft"]]
