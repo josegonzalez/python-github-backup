@@ -3325,7 +3325,6 @@ def backup_milestones(args, repo_cwd, repository, repos_template):
         return
 
     logger.info("Retrieving {0} milestones".format(repository["full_name"]))
-    mkdir_p(repo_cwd, milestone_cwd)
 
     template = "{0}/{1}/milestones".format(repos_template, repository["full_name"])
 
@@ -3338,6 +3337,8 @@ def backup_milestones(args, repo_cwd, repository, repos_template):
             logger.info("Milestones are not available for this repository, skipping")
             return
         raise
+
+    mkdir_p(repo_cwd, milestone_cwd)
 
     milestones = {}
     for milestone in _milestones:
@@ -3453,10 +3454,8 @@ def backup_hooks(args, repo_cwd, repository, repos_template):
 def backup_releases(args, repo_cwd, repository, repos_template, include_assets=False):
     repository_fullname = repository["full_name"]
 
-    # give release files somewhere to live & log intent
-    release_cwd = os.path.join(repo_cwd, "releases")
+    # log intent
     logger.info("Retrieving {0} releases".format(repository_fullname))
-    mkdir_p(repo_cwd, release_cwd)
 
     query_args = {}
 
@@ -3468,6 +3467,10 @@ def backup_releases(args, repo_cwd, repository, repos_template, include_assets=F
             logger.info("Releases are not available for this repository, skipping")
             return
         raise
+
+    # give release files somewhere to live
+    release_cwd = os.path.join(repo_cwd, "releases")
+    mkdir_p(repo_cwd, release_cwd)
 
     if args.skip_prerelease:
         releases = [r for r in releases if not r["prerelease"] and not r["draft"]]
@@ -3686,9 +3689,9 @@ def _backup_data(args, name, template, output_file, output_directory):
     skip_existing = args.skip_existing
     if not skip_existing or not os.path.exists(output_file):
         logger.info("Retrieving {0} {1}".format(args.user, name))
-        mkdir_p(output_directory)
         data = retrieve_data(args, template)
 
+        mkdir_p(output_directory)
         if json_dump_if_changed(data, output_file):
             logger.info("Saved {0} {1} to disk".format(len(data), name))
         else:
