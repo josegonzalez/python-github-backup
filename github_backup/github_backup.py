@@ -3052,6 +3052,51 @@ def get_pull_reviews_since(args, pulls_cwd):
     return args_since or reviews_since, reviews_since, reviews_last_update_path
 
 
+def get_pull_comments_with_graphql(args, repository, number):
+    after = None
+    comments_page = 1
+    comments = []
+    comment_total_count = 0
+    owner, name = _repository_owner_name(repository)
+    while True:
+        data = retrieve_graphql_data(
+            args,
+            PULL_COMMENTS_QUERY,
+            {
+                "owner": owner,
+                "name": name,
+                "number": number,
+                "after": after,
+                "pageSize": PULL_PAGE_SIZE,
+            },
+            log_context="pull request {0}#{1} comments page {2}".format(
+                repository["full_name"], number, comments_page
+            ),
+        )
+        repository_data = data.get("repository") or {}
+        pr_data = repository_data.get("pullRequest")
+        if pr_data is None:
+            raise Exception(
+                "Pull request #{0} not found in {1}".format(
+                    number, repository["full_name"]
+                )
+            )
+
+        comments_connection = pr_data.get("comments") or {}
+        comment_total_count = comments_connection.get(
+            "totalCount", comment_total_count
+        )
+        comments.extend(_connection_nodes(comments_connection))
+
+        page_info = comments_connection.get("pageInfo") or {}
+        if not page_info.get("hasNextPage"):
+            break
+
+        after = page_info.get("endCursor")
+        comments_page += 1
+    return comments
+
+
 def backup_pulls(args, repo_cwd, repository, repos_template):
     has_pulls_dir = os.path.isdir("{0}/pulls/.git".format(repo_cwd))
     if args.skip_existing and has_pulls_dir:
@@ -3146,6 +3191,7 @@ def backup_pulls(args, repo_cwd, repository, repos_template):
     # regular comments need to be fetched via issue API.
     # For backwards compatibility with versions <= 0.41.0
     # keep name "comment_data" for review comments
+    comments_regular_template = _issue_template + "/{0}/comments"
     comments_template = _pulls_template + "/{0}/comments"
     commits_template = _pulls_template + "/{0}/commits"
     reviews_template = _pulls_template + "/{0}/reviews"
@@ -3176,6 +3222,19 @@ def backup_pulls(args, repo_cwd, repository, repos_template):
         if (
             args.include_pull_comments or args.include_everything
         ) and should_fetch_non_review_data:
+            template = comments_regular_template.format(number)
+            try:
+                pulls[number]["comment_regular_data"] = retrieve_data(args, template)
+            except HTTPError as e:
+                # Issue #547: REST API endpoint for regular comments on temporary
+                # private forks returns 404. There's nothing in repo data that would
+                # indicate that repo is private temporary fork so best we can do is
+                # limit this special case a bit more by limiting it to private repos.
+                if not repository.get("private", False) or e.code != 404:
+                    raise
+                pulls[number]["comment_regular_data"] = get_pull_comments_with_graphql(
+                    args, repository, number
+                )
             after = None
             comments_page = 1
             comments = []
