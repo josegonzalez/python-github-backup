@@ -1,9 +1,69 @@
 Changelog
 =========
 
-0.68.0 (2026-11-09)
+0.69.0 (2026-11-26)
 -------------------
 ------------------------
+- Test GraphQL pagination in pull comments retrieval. [Jakub Kuczys]
+- Avoid making empty dirs for labels, milestones, and releases. [Jakub
+  Kuczys]
+- Add end-to-end test. [Jakub Kuczys]
+- Try REST API for comments before GraphQL. [Jakub Kuczys]
+- Assume has_pull_requests may not be present per API docs. [Jakub
+  Kuczys]
+- Add missing fields to test cases. [Jakub Kuczys]
+- Fix handling of temporary private forks. [Jakub Kuczys]
+- Use the Markdown API workaround for GitHub App tokens and repo-scoped
+  image URLs. [Claude Opus 5.5, Takahiro Yamashita]
+
+  GitHub App installation tokens get the same 404 as fine-grained PATs when
+  downloading attachments from private repositories (#477), but the workaround
+  was only used with -f. Older github.com/{owner}/{repo}/assets/* image URLs
+  also 404 with both token types and render to the same JWT-signed URLs.
+
+  Move the check into needs_jwt_workaround() so it can be tested directly,
+  and pass the current token from get_auth() so App tokens are refreshed.
+
+  The README now also notes that the workaround needs read access to
+  contents: without it, POST /markdown returns 200 but leaves the image URLs
+  unsigned.
+- Add Python 3.15 to CI and classifiers. [Rodos]
+
+  Python 3.15 was released on 2026-10-09 and already works. Add it to the
+  package classifiers and the CI test and lint matrices.
+- Replace deprecated codecs.open with open. [Rodos]
+
+  codecs.open() is deprecated since Python 3.14 and warns on every call.
+  Use the built-in open() with newline="" instead, which like codecs.open()
+  does not translate line endings, so the files written are unchanged on
+  every platform.
+- Resolve the app token again when retrying after a rate-limit wait.
+  [Claude Opus 5.5, Takahiro Yamashita]
+
+  make_request_with_retry resent the Request it was given, so a retry kept
+  the Authorization header from the first attempt. With --app-id the rate
+  limit window and the installation token both start at the beginning of
+  the run, so when the limit is used up within that hour, the wait for
+  x-ratelimit-reset ends right after the token expires and the retry fails
+  with 401, which stops the backup.
+
+  make_request_with_retry now takes an optional rebuild_request callable
+  and uses it to build each retry. retrieve_data and retrieve_graphql_data
+  pass one that resolves the token through get_auth again, which creates a
+  new installation token when the cached one is about to expire.
+
+  retrieve_graphql_data also resolved the token once per call, so its own
+  retry on a RATE_LIMITED error had the same problem. It now resolves the
+  token again for each attempt after the first.
+- Add AGENTS.md with contribution guidance for coding agents. [Rodos]
+
+  Document the conventions that reviews of past pull requests have settled
+  on, so agent-written contributions follow them and are easier to review.
+  Point to it from the README, and match the README flake8 command to CI.
+
+
+0.68.0 (2026-11-09)
+-------------------
 - Create GitHub App installation tokens from the app's private key. [AC
   Capehart, Claude Opus 5.5]
 
