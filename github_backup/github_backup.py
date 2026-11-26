@@ -3273,48 +3273,6 @@ def backup_pulls(args, repo_cwd, repository, repos_template):
                 pulls[number]["comment_regular_data"] = get_pull_comments_with_graphql(
                     args, repository, number
                 )
-            after = None
-            comments_page = 1
-            comments = []
-            comment_total_count = 0
-            owner, name = _repository_owner_name(repository)
-            while True:
-                data = retrieve_graphql_data(
-                    args,
-                    PULL_COMMENTS_QUERY,
-                    {
-                        "owner": owner,
-                        "name": name,
-                        "number": number,
-                        "after": after,
-                        "pageSize": PULL_PAGE_SIZE,
-                    },
-                    log_context="pull request {0}#{1} comments page {2}".format(
-                        repository["full_name"], number, comments_page
-                    ),
-                )
-                repository_data = data.get("repository") or {}
-                pr_data = repository_data.get("pullRequest")
-                if pr_data is None:
-                    raise Exception(
-                        "Pull request #{0} not found in {1}".format(
-                            number, repository["full_name"]
-                        )
-                    )
-
-                comments_connection = pr_data.get("comments") or {}
-                comment_total_count = comments_connection.get(
-                    "totalCount", comment_total_count
-                )
-                comments.extend(_connection_nodes(comments_connection))
-
-                page_info = comments_connection.get("pageInfo") or {}
-                if not page_info.get("hasNextPage"):
-                    break
-
-                after = page_info.get("endCursor")
-                comments_page += 1
-            pulls[number]["comment_regular_data"] = comments
 
             template = comments_template.format(number)
             pulls[number]["comment_data"] = retrieve_data(args, template)
