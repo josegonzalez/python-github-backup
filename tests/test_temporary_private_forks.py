@@ -26,6 +26,23 @@ def _repo(name, updated_at, pushed_at=None):
     }
 
 
+def _pull_comments_page(comment_nodes, total_count, has_next=False):
+    return {
+        "repository": {
+            "pullRequest": {
+                "comments": {
+                    "totalCount": total_count,
+                    "nodes": comment_nodes,
+                    "pageInfo": {
+                        "hasNextPage": has_next,
+                        "endCursor": "COMMENTS2" if has_next else None,
+                    },
+                },
+            }
+        }
+    }
+
+
 # This is an end-to-end test of a full repository backup that's supposed to ensure that
 # everything in the process can handle most of the REST API endpoints returning 404s
 # without raising errors.
@@ -46,17 +63,7 @@ def test_temporary_private_fork_backup_handles_limited_api_endpoints_with_no_err
 
     def fake_retrieve_graphql_data(args, query, variables=None, log_context=None):
         if query == github_backup.PULL_COMMENTS_QUERY:
-            return {
-                "repository": {
-                    "pullRequest": {
-                        "comments": {
-                            "totalCount": 1,
-                            "nodes": regular_comments,
-                            "pageInfo": {"hasNextPage": False, "endCursor": None},
-                        },
-                    },
-                },
-            }
+            return _pull_comments_page(regular_comments, len(regular_comments))
         else:
             raise AssertionError(f"request made with unknown query: {query}")
 
@@ -95,3 +102,35 @@ def test_temporary_private_fork_backup_handles_limited_api_endpoints_with_no_err
     assert pr_data["comment_regular_data"] == regular_comments
     assert pr_data["comment_data"] == review_comments
     assert pr_data["commit_data"] == commits
+
+
+def test_get_pull_comments_with_graphql_paginates(create_args):
+    args = create_args()
+    repository = {"full_name": "owner/repo"}
+
+    comment_1 = {"id": "comment-1", "body": "first comment"}
+    comment_2 = {"id": "comment-2", "body": "second comment"}
+    comment_3 = {"id": "comment-3", "body": "third comment"}
+    total_count = 3
+
+    responses = [
+        _pull_comments_page([comment_1, comment_2], total_count, has_next=True),
+        _pull_comments_page([comment_3], total_count, has_next=False),
+    ]
+
+    with patch(
+        "github_backup.github_backup.retrieve_graphql_data", side_effect=responses
+    ) as mock_retrieve:
+        comment_data = github_backup.get_pull_comments_with_graphql(
+            args, repository, 42
+        )
+
+    assert len(comment_data) == total_count
+    assert comment_data[0]["body"] == "first comment"
+    assert comment_data[1]["body"] == "second comment"
+    assert comment_data[2]["body"] == "third comment"
+    assert mock_retrieve.call_count == 2
+    assert [call.kwargs["log_context"] for call in mock_retrieve.call_args_list] == [
+        "pull request owner/repo#42 comments page 1",
+        "pull request owner/repo#42 comments page 2",
+    ]
