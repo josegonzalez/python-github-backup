@@ -1,6 +1,7 @@
 """GraphQL query templates used by github-backup."""
 
 DISCUSSION_PAGE_SIZE = 100
+PULL_PAGE_SIZE = 100
 
 CROSS_REFERENCE_PAGE_SIZE = 100
 
@@ -59,6 +60,72 @@ query($owner: String!, $name: String!, $after: String, $pageSize: Int!,
       }
     }
   }
+}
+"""
+
+PULL_COMMENTS_QUERY = """
+query($owner: String!, $name: String!, $number: Int!, $after: String, $pageSize: Int!) {
+  repository(owner: $owner, name: $name) {
+    pullRequest(number: $number) {
+      comments(first: $pageSize, after: $after) {
+        totalCount
+        nodes {
+          ...IssueCommentFields
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+      }
+    }
+  }
+}
+
+fragment ActorFields on Actor {
+  avatarUrl
+  login
+  resourcePath
+  url
+}
+
+fragment ReactionGroupFields on ReactionGroup {
+  content
+  reactors {
+    totalCount
+  }
+}
+
+fragment IssueCommentFields on IssueComment {
+  author {
+    ...ActorFields
+  }
+  authorAssociation
+  body
+  bodyHTML
+  bodyText
+  createdAt
+  createdViaEmail
+  databaseId
+  editor {
+    ...ActorFields
+  }
+  id
+  includesCreatedEdit
+  isMinimized
+  isPinned
+  lastEditedAt
+  minimizedReason
+  pinnedAt
+  pinnedBy {
+    ...ActorFields
+  }
+  publishedAt
+  reactionGroups {
+    ...ReactionGroupFields
+  }
+  resourcePath
+  updatedAt
+  url
 }
 """
 

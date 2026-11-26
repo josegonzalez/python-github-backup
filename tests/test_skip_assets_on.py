@@ -22,6 +22,9 @@ class TestSkipAssetsOn:
             "private": False,
             "fork": False,
             "has_wiki": False,
+            "has_issues": True,
+            "has_pull_requests": True,
+            "has_discussions": True,
         }
 
     def _create_mock_release(self, tag="v1.0.0"):

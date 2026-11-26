@@ -15,6 +15,9 @@ def _repo(name, updated_at, pushed_at=None):
         "private": False,
         "fork": False,
         "has_wiki": False,
+        "has_issues": True,
+        "has_pull_requests": True,
+        "has_discussions": True,
         "updated_at": updated_at,
         "pushed_at": pushed_at,
     }
