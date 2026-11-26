@@ -134,3 +134,43 @@ def test_get_pull_comments_with_graphql_paginates(create_args):
         "pull request owner/repo#42 comments page 1",
         "pull request owner/repo#42 comments page 2",
     ]
+
+
+def test_backup_pulls_uses_rest_api_for_comments_when_possible(
+    create_args, tmp_path, monkeypatch
+):
+    args = create_args(include_pulls=True, include_pull_comments=True)
+    repository = {"full_name": "owner/repo"}
+    pull_file = tmp_path / "pulls" / "1.json"
+    inline_comment = {"id": 10, "body": "inline comment"}
+    regular_comment = {"id": 11, "body": "regular comment"}
+
+    def fake_retrieve_data(
+        passed_args, template, query_args=None, paginated=True, **kwargs
+    ):
+        if template == "https://api.github.com/repos/owner/repo/pulls":
+            if query_args["state"] == "open":
+                return [
+                    {
+                        "number": 1,
+                        "updated_at": "2026-02-01T00:00:00Z",
+                        "title": "PR with comments",
+                    }
+                ]
+            return []
+        if template == "https://api.github.com/repos/owner/repo/pulls/1/comments":
+            return [inline_comment]
+        if template == "https://api.github.com/repos/owner/repo/issues/1/comments":
+            return [regular_comment]
+        raise AssertionError("Unexpected template: {0}".format(template))
+
+    monkeypatch.setattr(github_backup, "retrieve_data", fake_retrieve_data)
+
+    github_backup.backup_pulls(
+        args, tmp_path, repository, "https://api.github.com/repos"
+    )
+
+    pr_data = json.loads(pull_file.read_text())
+
+    assert pr_data["comment_data"] == [inline_comment]
+    assert pr_data["comment_regular_data"] == [regular_comment]
