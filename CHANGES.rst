@@ -1,9 +1,16 @@
 Changelog
 =========
 
-0.69.0 (2026-11-26)
+0.69.1 (2026-11-27)
 -------------------
 ------------------------
+- Add regression test. [Jakub Kuczys]
+- Fix duplicated code that resulted in data getting overridden. [Jakub
+  Kuczys]
+
+
+0.69.0 (2026-11-26)
+-------------------
 - Test GraphQL pagination in pull comments retrieval. [Jakub Kuczys]
 - Avoid making empty dirs for labels, milestones, and releases. [Jakub
   Kuczys]
